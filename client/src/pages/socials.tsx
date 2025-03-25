@@ -29,238 +29,7 @@ import {
   Eye
 } from "lucide-react";
 
-// Mock data for now - would be replaced with actual API data
-const mockSocialData = {
-  overview: {
-    totalFollowers: 123500,
-    followerGrowth: 3.2,
-    totalEngagement: 45670,
-    engagementRate: 2.8,
-    totalReach: 789000,
-    reachGrowth: 5.1,
-    totalImpressions: 1245000,
-    impressionGrowth: 4.3
-  },
-  platforms: {
-    instagram: {
-      followers: 50000,
-      growth: 2.3,
-      engagement: 12500,
-      engagementRate: 3.1,
-      posts: 245,
-      avgLikes: 1200,
-      avgComments: 85
-    },
-    twitter: {
-      followers: 28500,
-      growth: 1.5,
-      engagement: 8700,
-      engagementRate: 1.9,
-      tweets: 420,
-      avgLikes: 320,
-      avgRetweets: 45
-    },
-    facebook: {
-      followers: 32000,
-      growth: 0.8,
-      engagement: 9500,
-      engagementRate: 1.2,
-      posts: 180,
-      avgLikes: 380,
-      avgComments: 65
-    },
-    linkedin: {
-      followers: 12500,
-      growth: 4.2,
-      engagement: 3200,
-      engagementRate: 2.5,
-      posts: 120,
-      avgLikes: 250,
-      avgComments: 38
-    },
-    youtube: {
-      subscribers: 8500,
-      growth: 5.7,
-      views: 325000,
-      avgViews: 5600,
-      videos: 58,
-      avgLikes: 420,
-      avgComments: 75
-    }
-  },
-  advertising: {
-    totalSpend: 125000,
-    roiPercentage: 324,
-    impressions: 8500000,
-    clicks: 185000,
-    ctr: 2.17,
-    cpc: 0.68,
-    conversions: 12800,
-    conversionRate: 6.9,
-    platforms: {
-      instagram: 42000,
-      facebook: 35000,
-      twitter: 18000,
-      linkedin: 22000,
-      google: 8000
-    },
-    monthly: [
-      { month: "Jan", spend: 9500, roi: 31000, ctr: 2.1 },
-      { month: "Feb", spend: 10200, roi: 33500, ctr: 2.2 },
-      { month: "Mar", spend: 9800, roi: 32000, ctr: 2.0 },
-      { month: "Apr", spend: 10500, roi: 34000, ctr: 2.1 },
-      { month: "May", spend: 11200, roi: 36500, ctr: 2.2 },
-      { month: "Jun", spend: 12000, roi: 39000, ctr: 2.3 },
-      { month: "Jul", spend: 12500, roi: 40500, ctr: 2.3 },
-      { month: "Aug", spend: 13000, roi: 42000, ctr: 2.2 },
-      { month: "Sep", spend: 12800, roi: 41500, ctr: 2.1 },
-      { month: "Oct", spend: 12000, roi: 39000, ctr: 2.0 },
-      { month: "Nov", spend: 11500, roi: 37000, ctr: 2.1 },
-    ]
-  },
-  topPosts: [
-    { 
-      id: 1, 
-      platform: "instagram", 
-      date: "2023-11-15", 
-      type: "carousel", 
-      engagement: 3245,
-      engagementRate: 6.5,
-      likes: 2850,
-      comments: 395,
-      shares: 450,
-      saves: 230,
-      impressions: 62000,
-      content: "New product launch - SyncMoney Premium Card 💳"
-    },
-    { 
-      id: 2, 
-      platform: "twitter", 
-      date: "2023-11-10", 
-      type: "text", 
-      engagement: 1550,
-      engagementRate: 5.4,
-      likes: 920,
-      comments: 230,
-      retweets: 400,
-      impressions: 28500,
-      content: "Exciting news! We've just reached 50K happy customers! Thank you for your support 🎉"
-    },
-    { 
-      id: 3, 
-      platform: "facebook", 
-      date: "2023-11-05", 
-      type: "video", 
-      engagement: 2100,
-      engagementRate: 6.5,
-      likes: 1250,
-      comments: 350,
-      shares: 500,
-      views: 32000,
-      impressions: 45000,
-      content: "How SyncMoney helps you save $500/month"
-    },
-    { 
-      id: 4, 
-      platform: "linkedin", 
-      date: "2023-11-02", 
-      type: "article", 
-      engagement: 1850,
-      engagementRate: 8.2,
-      likes: 1200,
-      comments: 150,
-      shares: 500,
-      impressions: 22500,
-      content: "SyncMoney named as Top Financial Innovation of 2023"
-    },
-    { 
-      id: 5, 
-      platform: "youtube", 
-      date: "2023-10-28", 
-      type: "video", 
-      engagement: 2800,
-      engagementRate: 7.0,
-      likes: 1800,
-      comments: 320,
-      shares: 680,
-      views: 42000,
-      impressions: 65000,
-      content: "SyncMoney App Walkthrough - Complete Guide"
-    }
-  ],
-  adCampaigns: [
-    {
-      id: 1,
-      name: "Holiday Special",
-      platform: "instagram",
-      status: "active",
-      spend: 18500,
-      impressions: 1250000,
-      clicks: 36500,
-      ctr: 2.92,
-      cpc: 0.51,
-      conversions: 3200,
-      conversionRate: 8.8,
-      roi: 54000
-    },
-    {
-      id: 2,
-      name: "App Install Campaign",
-      platform: "facebook",
-      status: "active",
-      spend: 22000,
-      impressions: 1650000,
-      clicks: 42000,
-      ctr: 2.55,
-      cpc: 0.52,
-      conversions: 3800,
-      conversionRate: 9.0,
-      roi: 65000
-    },
-    {
-      id: 3,
-      name: "Business Solutions",
-      platform: "linkedin",
-      status: "active",
-      spend: 16500,
-      impressions: 850000,
-      clicks: 22000,
-      ctr: 2.59,
-      cpc: 0.75,
-      conversions: 1800,
-      conversionRate: 8.2,
-      roi: 48000
-    },
-    {
-      id: 4,
-      name: "Retargeting Campaign",
-      platform: "facebook",
-      status: "paused",
-      spend: 8500,
-      impressions: 620000,
-      clicks: 15000,
-      ctr: 2.42,
-      cpc: 0.57,
-      conversions: 1200,
-      conversionRate: 8.0,
-      roi: 28000
-    },
-    {
-      id: 5,
-      name: "Brand Awareness",
-      platform: "twitter",
-      status: "completed",
-      spend: 12000,
-      impressions: 980000,
-      clicks: 19500,
-      ctr: 1.99,
-      cpc: 0.62,
-      conversions: 1100,
-      conversionRate: 5.6,
-      roi: 32000
-    }
-  ]
-};
+// Helper functions and component for the social media dashboard
 
 // Helper function to get platform icon
 const getPlatformIcon = (platform: string) => {
@@ -303,6 +72,7 @@ const getPlatformColor = (platform: string) => {
 export default function SocialsPage() {
   const [timeframe, setTimeframe] = useState("30days");
   const [activePlatform, setActivePlatform] = useState("all");
+  const [campaignStatus, setCampaignStatus] = useState("all");
   
   // Fetch social media data from API
   const { data, isLoading } = useQuery({
@@ -311,6 +81,30 @@ export default function SocialsPage() {
       const response = await fetch(`/api/social/data?timeframe=${timeframe}&platform=${activePlatform}`);
       if (!response.ok) {
         throw new Error('Failed to fetch social media data');
+      }
+      return response.json();
+    }
+  });
+  
+  // Fetch social media posts
+  const { data: postsData } = useQuery({
+    queryKey: ["social-posts", activePlatform],
+    queryFn: async () => {
+      const response = await fetch(`/api/social/posts?platform=${activePlatform}&limit=10`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch social media posts');
+      }
+      return response.json();
+    }
+  });
+  
+  // Fetch ad campaigns
+  const { data: campaignsData } = useQuery({
+    queryKey: ["social-campaigns", campaignStatus],
+    queryFn: async () => {
+      const response = await fetch(`/api/social/campaigns?status=${campaignStatus}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch ad campaigns');
       }
       return response.json();
     }
@@ -971,14 +765,27 @@ export default function SocialsPage() {
           </Card>
           
           <Card>
-            <CardHeader>
-              <CardTitle>Active Ad Campaigns</CardTitle>
-              <CardDescription>Currently running campaigns and their performance</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <div>
+                <CardTitle>Ad Campaigns</CardTitle>
+                <CardDescription>View and filter advertising campaigns</CardDescription>
+              </div>
+              <Select value={campaignStatus} onValueChange={setCampaignStatus}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All campaigns</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="paused">Paused</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                </SelectContent>
+              </Select>
             </CardHeader>
             <CardContent>
               <DataTable 
                 columns={adCampaignsColumns}
-                data={data?.adCampaigns || []}
+                data={campaignsData || []}
                 searchableColumns={["name", "platform", "status"]}
                 placeholder="Search campaigns..."
               />
@@ -996,7 +803,7 @@ export default function SocialsPage() {
             <CardContent>
               <DataTable 
                 columns={topPostsColumns}
-                data={data?.topPosts || []}
+                data={postsData || []}
                 searchableColumns={["content", "platform", "type"]}
                 placeholder="Search posts..."
               />
