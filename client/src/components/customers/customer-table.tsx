@@ -12,7 +12,7 @@ interface CustomerTableProps {
 }
 
 export function CustomerTable({ customers, isLoading }: CustomerTableProps) {
-  const navigate = useNavigate();
+  const [_, navigate] = useLocation();
 
   const columns = [
     {
