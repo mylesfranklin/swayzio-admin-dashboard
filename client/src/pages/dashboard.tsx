@@ -11,6 +11,7 @@ import { formatCurrency } from "@/lib/utils";
 import { AreaChartData } from "@/components/ui/area-chart";
 import { PieChartData } from "@/components/ui/pie-chart";
 import { apiRequest } from "@/lib/queryClient";
+import { KitNewsletter } from "@/components/newsletter/kit-newsletter";
 
 const Dashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -237,6 +238,12 @@ const Dashboard: React.FC = () => {
         subscriptionData={subscriptionData}
         isLoading={isLoading}
       />
+
+      {/* Kit Newsletter Section */}
+      <div className="mb-6">
+        <h2 className="text-xl font-bold mb-4">Newsletter Analytics</h2>
+        <KitNewsletter />
+      </div>
 
       {/* Recent Customer Activity */}
       <RecentActivity activities={recentActivities} isLoading={isLoading} />
