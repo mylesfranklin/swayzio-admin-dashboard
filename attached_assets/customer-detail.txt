@@ -1,0 +1,179 @@
+// app/customers/[id]/page.jsx
+"use client"
+
+import { useEffect, useState } from "react"
+import { useParams } from "next/navigation"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
+import { 
+  Bell, Calendar, CreditCard, Download, History, RefreshCw, User,
+  Phone, Mail, Building, MapPin, Link, DollarSign, Tag
+} from "lucide-react"
+
+import HubSpotService from "@/services/hubspot-service"
+import StripeService from "@/services/stripe-service"
+
+export default function CustomerDetail() {
+  const params = useParams()
+  const customerId = params.id
+
+  const [loading, setLoading] = useState(true)
+  const [customer, setCustomer] = useState(null)
+  const [activities, setActivities] = useState([])
+  const [subscriptions, setSubscriptions] = useState([])
+  const [invoices, setInvoices] = useState([])
+  const [syncStatus, setSyncStatus] = useState(null)
+
+  useEffect(() => {
+    async function fetchCustomerData() {
+      try {
+        setLoading(true)
+        
+        // Initialize our services (in a real app, we'd use environment variables for API keys)
+        const hubspotService = new HubSpotService('demo-api-key')
+        const stripeService = new StripeService('demo-api-key')
+        
+        // For demo purposes, we're assuming the HubSpot ID is the customerId from the URL
+        // In a real app, we'd have proper ID mapping between systems
+        const hubspotContact = await hubspotService.getContactById(customerId)
+        
+        // Find the corresponding Stripe customer via HubSpot ID
+        // In our demo, we're just using a fixed mapping for sample data
+        let stripeCustomerId = null
+        if (customerId === '1') {
+          stripeCustomerId = 'cus_abc123'
+        } else if (customerId === '2') {
+          stripeCustomerId = 'cus_def456'
+        }
+        
+        let stripeCustomer = null
+        if (stripeCustomerId) {
+          stripeCustomer = await stripeService.getCustomerById(stripeCustomerId)
+        }
+        
+        // Combine data from both systems
+        setCustomer({
+          id: customerId,
+          hubspotId: hubspotContact.id,
+          stripeId: stripeCustomer?.id,
+          name: `${hubspotContact.properties.firstname} ${hubspotContact.properties.lastname}`,
+          email: hubspotContact.properties.email,
+          phone: hubspotContact.properties.phone,
+          company: hubspotContact.properties.company,
+          createdAt: hubspotContact.properties.createdate,
+          lastModified: hubspotContact.properties.lastmodifieddate,
+          stage: hubspotContact.properties.lifecyclestage,
+          status: hubspotContact.properties.hs_lead_status,
+          address: stripeCustomer?.address,
+          paymentMethods: stripeCustomer?.sources?.data || [],
+          metadata: {
+            ...hubspotContact.properties,
+            ...(stripeCustomer?.metadata || {})
+          }
+        })
+        
+        // Fetch activities from HubSpot
+        const activitiesData = await hubspotService.getContactActivities(customerId)
+        setActivities(activitiesData.activities || [])
+        
+        // Fetch financial data from Stripe if available
+        if (stripeCustomerId) {
+          const subscriptionsData = await stripeService.getCustomerSubscriptions(stripeCustomerId)
+          setSubscriptions(subscriptionsData.data || [])
+          
+          const invoicesData = await stripeService.getCustomerInvoices(stripeCustomerId)
+          setInvoices(invoicesData.data || [])
+          
+          // Set sync status
+          setSyncStatus({
+            lastSynced: new Date().toISOString(),
+            status: 'synced',
+            systems: ['HubSpot', 'Stripe']
+          })
+        } else {
+          setSyncStatus({
+            status: 'not_connected',
+            systems: ['HubSpot']
+          })
+        }
+      } catch (error) {
+        console.error('Error fetching customer data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchCustomerData()
+  }, [customerId])
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Loading customer data...</div>
+  }
+
+  if (!customer) {
+    return <div className="flex items-center justify-center h-screen">Customer not found</div>
+  }
+
+  // Format currency
+  const formatCurrency = (amount, currency = 'usd') => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency.toUpperCase(),
+    }).format(amount / 100)
+  }
+  
+  // Format date
+  const formatDate = (date) => {
+    if (!date) return 'N/A'
+    
+    let dateObj
+    if (typeof date === 'number') {
+      // Unix timestamp
+      dateObj = new Date(date * 1000)
+    } else {
+      // ISO string
+      dateObj = new Date(date)
+    }
+    
+    return dateObj.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+  }
+
+  return (
+    <div className="flex-1 space-y-4 p-8 pt-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-3xl font-bold tracking-tight">Customer Details</h2>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Refresh
+          </Button>
+          <Button size="sm" variant="outline">
+            <Download className="mr-2 h-4 w-4" />
+            Export
+          </Button>
+          <Button size="sm">
+            <Bell className="mr-2 h-4 w-4" />
+            Notify
+          </Button>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Customer Profile */}
+        <Card className="col-span-1">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-xl font-bold">Profile</CardTitle>
+            <Badge variant={customer.stripeId ? "default" : "outline"}>
+              {customer.stripeId ? "Connected" : "Not Connected"}
+            </Badge>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center space-y-4 mb-6

@@ -1,0 +1,552 @@
+// services/stripe-service.js
+
+/**
+ * Stripe Integration Service
+ * 
+ * This service handles integration with the Stripe API to fetch and
+ * manage customer payment data, including subscriptions, invoices, and payment methods.
+ */
+
+class StripeService {
+  constructor(apiKey) {
+    this.apiKey = apiKey;
+    this.baseUrl = 'https://api.stripe.com/v1';
+  }
+
+  /**
+   * Fetch all customers from Stripe
+   * @param {Object} options - Pagination and filtering options
+   * @returns {Promise<Array>} - List of customers
+   */
+  async getCustomers(options = {}) {
+    try {
+      // In a real implementation, this would make an actual API call
+      // For now, we'll return mock data for demonstration
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      return {
+        customers: [
+          {
+            id: 'cus_abc123',
+            email: 'john.doe@example.com',
+            name: 'John Doe',
+            created: 1642233000, // Unix timestamp
+            metadata: {
+              hubspot_id: '1',
+              company: 'Acme Inc'
+            },
+            currency: 'usd',
+            default_source: 'card_xyz789',
+            tax_exempt: 'none',
+            tax_ids: []
+          },
+          {
+            id: 'cus_def456',
+            email: 'jane.smith@example.com',
+            name: 'Jane Smith',
+            created: 1679463300, // Unix timestamp
+            metadata: {
+              hubspot_id: '2',
+              company: 'XYZ Corp'
+            },
+            currency: 'usd',
+            default_source: 'card_abc123',
+            tax_exempt: 'none',
+            tax_ids: []
+          },
+          {
+            id: 'cus_ghi789',
+            email: 'robert.johnson@example.com',
+            name: 'Robert Johnson',
+            created: 1686034800, // Unix timestamp
+            metadata: {
+              hubspot_id: '3',
+              company: 'Johnson & Co'
+            },
+            currency: 'usd',
+            default_source: 'card_def456',
+            tax_exempt: 'none',
+            tax_ids: []
+          }
+        ],
+        has_more: false,
+        url: '/v1/customers'
+      };
+    } catch (error) {
+      console.error('Error fetching customers from Stripe:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch a single customer by ID
+   * @param {string} customerId - Stripe customer ID
+   * @returns {Promise<Object>} - Customer details
+   */
+  async getCustomerById(customerId) {
+    try {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Mock data for demonstration
+      const customersData = {
+        'cus_abc123': {
+          id: 'cus_abc123',
+          email: 'john.doe@example.com',
+          name: 'John Doe',
+          created: 1642233000,
+          metadata: {
+            hubspot_id: '1',
+            company: 'Acme Inc'
+          },
+          address: {
+            line1: '123 Main St',
+            city: 'Anytown',
+            state: 'CA',
+            postal_code: '94107',
+            country: 'US'
+          },
+          balance: 0,
+          currency: 'usd',
+          default_source: 'card_xyz789',
+          delinquent: false,
+          description: 'Enterprise customer',
+          discount: null,
+          invoice_prefix: 'ABC123',
+          phone: '(555) 123-4567',
+          shipping: null,
+          sources: {
+            data: [
+              {
+                id: 'card_xyz789',
+                object: 'card',
+                brand: 'visa',
+                country: 'US',
+                exp_month: 12,
+                exp_year: 2024,
+                last4: '4242',
+                funding: 'credit'
+              }
+            ]
+          }
+        },
+        'cus_def456': {
+          id: 'cus_def456',
+          email: 'jane.smith@example.com',
+          name: 'Jane Smith',
+          created: 1679463300,
+          metadata: {
+            hubspot_id: '2',
+            company: 'XYZ Corp'
+          },
+          address: {
+            line1: '456 Oak St',
+            city: 'Somewhere',
+            state: 'NY',
+            postal_code: '10001',
+            country: 'US'
+          },
+          balance: 0,
+          currency: 'usd',
+          default_source: 'card_abc123',
+          delinquent: false,
+          description: 'Premium customer',
+          discount: null,
+          invoice_prefix: 'DEF456',
+          phone: '(555) 987-6543',
+          shipping: null,
+          sources: {
+            data: [
+              {
+                id: 'card_abc123',
+                object: 'card',
+                brand: 'mastercard',
+                country: 'US',
+                exp_month: 10,
+                exp_year: 2025,
+                last4: '5555',
+                funding: 'credit'
+              }
+            ]
+          }
+        }
+      };
+      
+      if (customersData[customerId]) {
+        return customersData[customerId];
+      } else {
+        throw new Error(`Customer with ID ${customerId} not found`);
+      }
+    } catch (error) {
+      console.error(`Error fetching customer with ID ${customerId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch subscriptions for a customer
+   * @param {string} customerId - Stripe customer ID
+   * @param {Object} options - Pagination and filtering options
+   * @returns {Promise<Array>} - List of subscriptions
+   */
+  async getCustomerSubscriptions(customerId, options = {}) {
+    try {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 400));
+      
+      // Mock data for demonstration
+      const subscriptionsData = {
+        'cus_abc123': [
+          {
+            id: 'sub_xyz123',
+            customer: 'cus_abc123',
+            status: 'active',
+            created: 1642250000,
+            current_period_start: 1664582400,
+            current_period_end: 1667260799,
+            items: {
+              data: [
+                {
+                  id: 'si_abc123',
+                  price: {
+                    id: 'price_xyz123',
+                    product: 'prod_enterprise',
+                    nickname: 'Enterprise Plan',
+                    unit_amount: 39900,
+                    currency: 'usd',
+                    recurring: {
+                      interval: 'month',
+                      interval_count: 1
+                    }
+                  },
+                  quantity: 1
+                }
+              ]
+            },
+            default_payment_method: 'card_xyz789',
+            latest_invoice: 'in_latest123',
+            cancel_at_period_end: false,
+            collection_method: 'charge_automatically',
+            metadata: {
+              seats: '10'
+            }
+          }
+        ],
+        'cus_def456': [
+          {
+            id: 'sub_abc456',
+            customer: 'cus_def456',
+            status: 'active',
+            created: 1679520000,
+            current_period_start: 1664582400,
+            current_period_end: 1667260799,
+            items: {
+              data: [
+                {
+                  id: 'si_def456',
+                  price: {
+                    id: 'price_abc456',
+                    product: 'prod_premium',
+                    nickname: 'Premium Plan',
+                    unit_amount: 19900,
+                    currency: 'usd',
+                    recurring: {
+                      interval: 'month',
+                      interval_count: 1
+                    }
+                  },
+                  quantity: 1
+                }
+              ]
+            },
+            default_payment_method: 'card_abc123',
+            latest_invoice: 'in_latest456',
+            cancel_at_period_end: false,
+            collection_method: 'charge_automatically',
+            metadata: {
+              seats: '5'
+            }
+          }
+        ]
+      };
+      
+      if (subscriptionsData[customerId]) {
+        return {
+          data: subscriptionsData[customerId],
+          has_more: false,
+          url: `/v1/customers/${customerId}/subscriptions`
+        };
+      } else {
+        return {
+          data: [],
+          has_more: false,
+          url: `/v1/customers/${customerId}/subscriptions`
+        };
+      }
+    } catch (error) {
+      console.error(`Error fetching subscriptions for customer with ID ${customerId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch invoices for a customer
+   * @param {string} customerId - Stripe customer ID
+   * @param {Object} options - Pagination and filtering options
+   * @returns {Promise<Array>} - List of invoices
+   */
+  async getCustomerInvoices(customerId, options = {}) {
+    try {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 400));
+      
+      // Mock data for demonstration
+      const invoicesData = {
+        'cus_abc123': [
+          {
+            id: 'in_xyz123',
+            customer: 'cus_abc123',
+            status: 'paid',
+            created: 1664582400,
+            due_date: 1664582400,
+            amount_due: 39900,
+            amount_paid: 39900,
+            amount_remaining: 0,
+            currency: 'usd',
+            number: 'INV-001',
+            paid: true,
+            period_start: 1661990400,
+            period_end: 1664582399,
+            lines: {
+              data: [
+                {
+                  description: 'Enterprise Plan - Oct 2023',
+                  amount: 39900,
+                  currency: 'usd',
+                  period: {
+                    start: 1661990400,
+                    end: 1664582399
+                  }
+                }
+              ]
+            },
+            payment_intent: 'pi_xyz123'
+          },
+          {
+            id: 'in_xyz456',
+            customer: 'cus_abc123',
+            status: 'paid',
+            created: 1662060000,
+            due_date: 1662060000,
+            amount_due: 39900,
+            amount_paid: 39900,
+            amount_remaining: 0,
+            currency: 'usd',
+            number: 'INV-002',
+            paid: true,
+            period_start: 1659312000,
+            period_end: 1661990399,
+            lines: {
+              data: [
+                {
+                  description: 'Enterprise Plan - Sep 2023',
+                  amount: 39900,
+                  currency: 'usd',
+                  period: {
+                    start: 1659312000,
+                    end: 1661990399
+                  }
+                }
+              ]
+            },
+            payment_intent: 'pi_xyz456'
+          }
+        ],
+        'cus_def456': [
+          {
+            id: 'in_abc123',
+            customer: 'cus_def456',
+            status: 'paid',
+            created: 1664582400,
+            due_date: 1664582400,
+            amount_due: 19900,
+            amount_paid: 19900,
+            amount_remaining: 0,
+            currency: 'usd',
+            number: 'INV-003',
+            paid: true,
+            period_start: 1661990400,
+            period_end: 1664582399,
+            lines: {
+              data: [
+                {
+                  description: 'Premium Plan - Oct 2023',
+                  amount: 19900,
+                  currency: 'usd',
+                  period: {
+                    start: 1661990400,
+                    end: 1664582399
+                  }
+                }
+              ]
+            },
+            payment_intent: 'pi_abc123'
+          }
+        ]
+      };
+      
+      if (invoicesData[customerId]) {
+        return {
+          data: invoicesData[customerId],
+          has_more: false,
+          url: `/v1/customers/${customerId}/invoices`
+        };
+      } else {
+        return {
+          data: [],
+          has_more: false,
+          url: `/v1/customers/${customerId}/invoices`
+        };
+      }
+    } catch (error) {
+      console.error(`Error fetching invoices for customer with ID ${customerId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new customer in Stripe
+   * @param {Object} customerData - Customer information
+   * @returns {Promise<Object>} - Created customer
+   */
+  async createCustomer(customerData) {
+    try {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 600));
+      
+      // In a real implementation, this would make an actual API call
+      console.log('Creating customer in Stripe:', customerData);
+      
+      // Generate a mock response
+      return {
+        id: 'cus_new123',
+        email: customerData.email,
+        name: customerData.name,
+        created: Math.floor(Date.now() / 1000),
+        metadata: customerData.metadata || {},
+        currency: customerData.currency || 'usd'
+      };
+    } catch (error) {
+      console.error('Error creating customer in Stripe:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update an existing customer in Stripe
+   * @param {string} customerId - Stripe customer ID
+   * @param {Object} customerData - Updated customer information
+   * @returns {Promise<Object>} - Updated customer
+   */
+  async updateCustomer(customerId, customerData) {
+    try {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // In a real implementation, this would make an actual API call
+      console.log(`Updating customer with ID ${customerId} in Stripe:`, customerData);
+      
+      // Mock existing customer data
+      const existingCustomer = {
+        id: customerId,
+        email: 'old.email@example.com',
+        name: 'Old Name',
+        created: 1642233000,
+        metadata: {
+          hubspot_id: '1',
+          company: 'Old Company'
+        },
+        currency: 'usd'
+      };
+      
+      // Generate a mock response with updated data
+      return {
+        ...existingCustomer,
+        ...customerData,
+        // Don't override these fields
+        id: customerId,
+        created: existingCustomer.created
+      };
+    } catch (error) {
+      console.error(`Error updating customer with ID ${customerId} in Stripe:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Link Stripe customer with HubSpot contact
+   * @param {string} stripeCustomerId - Stripe customer ID
+   * @param {string} hubspotContactId - HubSpot contact ID
+   * @returns {Promise<Object>} - Link result
+   */
+  async linkCustomerWithHubspot(stripeCustomerId, hubspotContactId) {
+    try {
+      // In a real implementation, this would:
+      // 1. Update Stripe customer metadata with HubSpot ID
+      // 2. Possibly update HubSpot contact with Stripe ID
+      
+      console.log(`Linking Stripe customer ${stripeCustomerId} with HubSpot contact ${hubspotContactId}`);
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Return mock result
+      return {
+        success: true,
+        stripeCustomerId,
+        hubspotContactId,
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error(`Error linking Stripe customer ${stripeCustomerId} with HubSpot contact ${hubspotContactId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Sync Stripe and HubSpot data
+   * @param {Object} mapping - Mapping between Stripe and HubSpot IDs
+   * @returns {Promise<Object>} - Sync result
+   */
+  async syncWithHubspot(mapping) {
+    try {
+      // In a real implementation, this would:
+      // 1. Fetch data from both Stripe and HubSpot
+      // 2. Update records in both systems as needed
+      
+      console.log('Syncing Stripe and HubSpot data:', mapping);
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Return mock result
+      return {
+        success: true,
+        syncedCustomers: mapping.length,
+        timestamp: new Date().toISOString(),
+        details: mapping.map(item => ({
+          stripeCustomerId: item.stripeId,
+          hubspotContactId: item.hubspotId,
+          status: 'synced'
+        }))
+      };
+    } catch (error) {
+      console.error('Error syncing Stripe and HubSpot data:', error);
+      throw error;
+    }
+  }
+}
+
+export default StripeService;
