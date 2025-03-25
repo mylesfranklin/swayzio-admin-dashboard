@@ -301,6 +301,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== Social Media Routes =====
+  
+  // Get social media data
+  app.get("/api/social/data", async (req, res) => {
+    try {
+      const timeframe = req.query.timeframe as string;
+      const platform = req.query.platform as string;
+      const data = await storage.getSocialMediaData(timeframe, platform);
+      res.json(data);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get social media posts
+  app.get("/api/social/posts", async (req, res) => {
+    try {
+      const platform = req.query.platform as string;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+      const posts = await storage.getSocialPosts(platform, limit);
+      res.json(posts);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get social media ad campaigns
+  app.get("/api/social/campaigns", async (req, res) => {
+    try {
+      const status = req.query.status as string;
+      const campaigns = await storage.getSocialAdCampaigns(status);
+      res.json(campaigns);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Create social media post
+  app.post("/api/social/posts", async (req, res) => {
+    try {
+      const result = await storage.createSocialPost(req.body);
+      res.status(201).json(result);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Update social media post
+  app.patch("/api/social/posts/:id", async (req, res) => {
+    try {
+      const result = await storage.updateSocialPost(req.params.id, req.body);
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Delete social media post
+  app.delete("/api/social/posts/:id", async (req, res) => {
+    try {
+      const result = await storage.deleteSocialPost(req.params.id);
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // ===== Webhook Routes =====
   
   // HubSpot webhook endpoint

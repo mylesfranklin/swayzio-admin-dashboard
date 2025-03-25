@@ -1057,6 +1057,292 @@ export class MemStorage implements IStorage {
     // In a real implementation, this would process Stripe webhook data
     console.log("Received Stripe webhook:", data);
   }
+  
+  // Social media methods
+  async getSocialMediaData(timeframe: string = "30days", platform: string = "all"): Promise<any> {
+    // This would typically fetch data from social media APIs
+    // For now, return structured data that matches the UI requirements
+    return {
+      overview: {
+        totalFollowers: 123500,
+        followerGrowth: 3.2,
+        totalEngagement: 45670,
+        engagementRate: 2.8,
+        totalReach: 789000,
+        reachGrowth: 5.1,
+        totalImpressions: 1245000,
+        impressionGrowth: 4.3
+      },
+      platforms: {
+        instagram: {
+          followers: 50000,
+          growth: 2.3,
+          engagement: 12500,
+          engagementRate: 3.1,
+          posts: 245,
+          avgLikes: 1200,
+          avgComments: 85
+        },
+        twitter: {
+          followers: 28500,
+          growth: 1.5,
+          engagement: 8700,
+          engagementRate: 1.9,
+          tweets: 420,
+          avgLikes: 320,
+          avgRetweets: 45
+        },
+        facebook: {
+          followers: 32000,
+          growth: 0.8,
+          engagement: 9500,
+          engagementRate: 1.2,
+          posts: 180,
+          avgLikes: 380,
+          avgComments: 65
+        },
+        linkedin: {
+          followers: 12500,
+          growth: 4.2,
+          engagement: 3200,
+          engagementRate: 2.5,
+          posts: 120,
+          avgLikes: 250,
+          avgComments: 38
+        },
+        youtube: {
+          subscribers: 8500,
+          growth: 5.7,
+          views: 325000,
+          avgViews: 5600,
+          videos: 58,
+          avgLikes: 420,
+          avgComments: 75
+        }
+      },
+      advertising: {
+        totalSpend: 125000,
+        roiPercentage: 324,
+        impressions: 8500000,
+        clicks: 185000,
+        ctr: 2.17,
+        cpc: 0.68,
+        conversions: 12800,
+        conversionRate: 6.9,
+        platforms: {
+          instagram: 42000,
+          facebook: 35000,
+          twitter: 18000,
+          linkedin: 22000,
+          google: 8000
+        },
+        monthly: [
+          { month: "Jan", spend: 9500, roi: 31000, ctr: 2.1 },
+          { month: "Feb", spend: 10200, roi: 33500, ctr: 2.2 },
+          { month: "Mar", spend: 9800, roi: 32000, ctr: 2.0 },
+          { month: "Apr", spend: 10500, roi: 34000, ctr: 2.1 },
+          { month: "May", spend: 11200, roi: 36500, ctr: 2.2 },
+          { month: "Jun", spend: 12000, roi: 39000, ctr: 2.3 },
+          { month: "Jul", spend: 12500, roi: 40500, ctr: 2.3 },
+          { month: "Aug", spend: 13000, roi: 42000, ctr: 2.2 },
+          { month: "Sep", spend: 12800, roi: 41500, ctr: 2.1 },
+          { month: "Oct", spend: 12000, roi: 39000, ctr: 2.0 },
+          { month: "Nov", spend: 11500, roi: 37000, ctr: 2.1 },
+        ]
+      }
+    };
+  }
+
+  async getSocialPosts(platform: string = "all", limit: number = 10): Promise<any> {
+    // This would fetch posts from social media APIs
+    // Returning representative data for development
+    const allPosts = [
+      { 
+        id: "1", 
+        platform: "instagram", 
+        date: "2023-11-15", 
+        type: "carousel", 
+        engagement: 3245,
+        engagementRate: 6.5,
+        likes: 2850,
+        comments: 395,
+        shares: 450,
+        saves: 230,
+        impressions: 62000,
+        content: "New product launch - SyncMoney Premium Card 💳"
+      },
+      { 
+        id: "2", 
+        platform: "twitter", 
+        date: "2023-11-10", 
+        type: "text", 
+        engagement: 1550,
+        engagementRate: 5.4,
+        likes: 920,
+        comments: 230,
+        retweets: 400,
+        impressions: 28500,
+        content: "Exciting news! We've just reached 50K happy customers! Thank you for your support 🎉"
+      },
+      { 
+        id: "3", 
+        platform: "facebook", 
+        date: "2023-11-05", 
+        type: "video", 
+        engagement: 2100,
+        engagementRate: 6.5,
+        likes: 1250,
+        comments: 350,
+        shares: 500,
+        views: 32000,
+        impressions: 45000,
+        content: "How SyncMoney helps you save $500/month"
+      },
+      { 
+        id: "4", 
+        platform: "linkedin", 
+        date: "2023-11-02", 
+        type: "article", 
+        engagement: 1850,
+        engagementRate: 8.2,
+        likes: 1200,
+        comments: 150,
+        shares: 500,
+        impressions: 22500,
+        content: "SyncMoney named as Top Financial Innovation of 2023"
+      },
+      { 
+        id: "5", 
+        platform: "youtube", 
+        date: "2023-10-28", 
+        type: "video", 
+        engagement: 2800,
+        engagementRate: 7.0,
+        likes: 1800,
+        comments: 320,
+        shares: 680,
+        views: 42000,
+        impressions: 65000,
+        content: "SyncMoney App Walkthrough - Complete Guide"
+      }
+    ];
+
+    if (platform === "all") {
+      return allPosts.slice(0, limit);
+    } else {
+      return allPosts.filter(post => post.platform === platform).slice(0, limit);
+    }
+  }
+
+  async getSocialAdCampaigns(status: string = "all"): Promise<any> {
+    // This would fetch ad campaigns from ad platforms
+    // Returning representative data for the UI
+    const allCampaigns = [
+      {
+        id: "1",
+        name: "Holiday Special",
+        platform: "instagram",
+        status: "active",
+        spend: 18500,
+        impressions: 1250000,
+        clicks: 36500,
+        ctr: 2.92,
+        cpc: 0.51,
+        conversions: 3200,
+        conversionRate: 8.8,
+        roi: 54000
+      },
+      {
+        id: "2",
+        name: "App Install Campaign",
+        platform: "facebook",
+        status: "active",
+        spend: 22000,
+        impressions: 1650000,
+        clicks: 42000,
+        ctr: 2.55,
+        cpc: 0.52,
+        conversions: 3800,
+        conversionRate: 9.0,
+        roi: 65000
+      },
+      {
+        id: "3",
+        name: "Business Solutions",
+        platform: "linkedin",
+        status: "active",
+        spend: 16500,
+        impressions: 850000,
+        clicks: 22000,
+        ctr: 2.59,
+        cpc: 0.75,
+        conversions: 1800,
+        conversionRate: 8.2,
+        roi: 48000
+      },
+      {
+        id: "4",
+        name: "Retargeting Campaign",
+        platform: "facebook",
+        status: "paused",
+        spend: 8500,
+        impressions: 620000,
+        clicks: 15000,
+        ctr: 2.42,
+        cpc: 0.57,
+        conversions: 1200,
+        conversionRate: 8.0,
+        roi: 28000
+      },
+      {
+        id: "5",
+        name: "Brand Awareness",
+        platform: "twitter",
+        status: "completed",
+        spend: 12000,
+        impressions: 980000,
+        clicks: 19500,
+        ctr: 1.99,
+        cpc: 0.62,
+        conversions: 1100,
+        conversionRate: 5.6,
+        roi: 32000
+      }
+    ];
+
+    if (status === "all") {
+      return allCampaigns;
+    } else {
+      return allCampaigns.filter(campaign => campaign.status === status);
+    }
+  }
+
+  async createSocialPost(data: any): Promise<any> {
+    // In a real implementation, this would create a post via the social media API
+    console.log("Creating social post:", data);
+    return {
+      id: Math.random().toString(36).substring(7),
+      ...data,
+      date: new Date().toISOString().split('T')[0],
+      status: "scheduled"
+    };
+  }
+
+  async updateSocialPost(id: string, data: any): Promise<any> {
+    // In a real implementation, this would update a post via the social media API
+    console.log(`Updating social post ${id}:`, data);
+    return {
+      id,
+      ...data,
+      updatedAt: new Date().toISOString()
+    };
+  }
+
+  async deleteSocialPost(id: string): Promise<any> {
+    // In a real implementation, this would delete a post via the social media API
+    console.log(`Deleting social post ${id}`);
+    return { success: true, message: `Post ${id} deleted successfully` };
+  }
 }
 
 export const storage = new MemStorage();

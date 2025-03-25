@@ -304,12 +304,15 @@ export default function SocialsPage() {
   const [timeframe, setTimeframe] = useState("30days");
   const [activePlatform, setActivePlatform] = useState("all");
   
-  // Simulate API call to fetch data
+  // Fetch social media data from API
   const { data, isLoading } = useQuery({
     queryKey: ["socials", timeframe, activePlatform],
     queryFn: async () => {
-      // In a real app, this would be an API call
-      return mockSocialData;
+      const response = await fetch(`/api/social/data?timeframe=${timeframe}&platform=${activePlatform}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch social media data');
+      }
+      return response.json();
     }
   });
 
