@@ -11,6 +11,16 @@ const stripe = process.env.STRIPE_SECRET_KEY
   : null;
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // SEO Analytics endpoint
+  app.get("/api/seo/analytics", async (req, res) => {
+    try {
+      const domain = req.query.domain as string || "syncmoney.ai";
+      const data = await storage.getSeoAnalytics(domain);
+      res.json(data);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
   // ===== Customer Routes =====
   
   // Get all customers

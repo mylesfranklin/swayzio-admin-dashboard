@@ -78,6 +78,9 @@ export interface IStorage {
   updateSocialPost(id: string, data: any): Promise<any>;
   deleteSocialPost(id: string): Promise<any>;
   
+  // SEO Analytics
+  getSeoAnalytics(domain?: string): Promise<any>;
+  
   // Webhook handling
   handleHubSpotWebhook(data: any): Promise<void>;
   handleStripeWebhook(data: any): Promise<void>;
@@ -1342,6 +1345,145 @@ export class MemStorage implements IStorage {
     // In a real implementation, this would delete a post via the social media API
     console.log(`Deleting social post ${id}`);
     return { success: true, message: `Post ${id} deleted successfully` };
+  }
+  
+  async getSeoAnalytics(domain: string = "syncmoney.ai"): Promise<any> {
+    // Simulated data for SEO analytics
+    // In a real implementation, this would fetch from actual SEO analytics APIs
+    
+    const domains = {
+      "syncmoney.ai": {
+        seoScore: 84,
+        organicTrafficGrowth: 12.4,
+        top10Keywords: 28,
+        backlinks: 156,
+        pageLoadTime: 1.2,
+        mobileScore: 92,
+        
+        keywordRankings: [
+          { keyword: "digital finance app", position: 1, change: 2 },
+          { keyword: "money sync application", position: 2, change: 1 },
+          { keyword: "banking sync tools", position: 3, change: 0 },
+          { keyword: "financial data aggregator", position: 5, change: 3 },
+          { keyword: "best finance tracking app", position: 7, change: -2 }
+        ],
+        
+        pagePerformance: [
+          { page: "/features", title: "Features Overview", visitors: 12845, change: 18.2 },
+          { page: "/pricing", title: "Pricing Plans", visitors: 9342, change: 7.5 },
+          { page: "/blog/financial-tips", title: "Top 10 Financial Tips", visitors: 8127, change: 22.3 },
+          { page: "/resources", title: "Resource Center", visitors: 6985, change: -3.1 },
+          { page: "/about", title: "About Us", visitors: 5421, change: 5.2 }
+        ],
+        
+        organicTraffic: [
+          { month: "Jan", visitors: 38500, conversion: 3.2 },
+          { month: "Feb", visitors: 42300, conversion: 3.3 },
+          { month: "Mar", visitors: 45100, conversion: 3.4 },
+          { month: "Apr", visitors: 43200, conversion: 3.3 },
+          { month: "May", visitors: 48700, conversion: 3.5 },
+          { month: "Jun", visitors: 54200, conversion: 3.7 },
+          { month: "Jul", visitors: 58900, conversion: 3.8 },
+          { month: "Aug", visitors: 63500, conversion: 3.9 },
+          { month: "Sep", visitors: 67200, conversion: 4.0 },
+          { month: "Oct", visitors: 72800, conversion: 4.1 },
+          { month: "Nov", visitors: 76400, conversion: 4.2 },
+          { month: "Dec", visitors: 78900, conversion: 4.2 }
+        ],
+        
+        technicalSeo: {
+          mobileFriendly: { status: "passed", issues: 0 },
+          https: { status: "passed", issues: 0 },
+          brokenLinks: { status: "passed", issues: 0 },
+          imageOptimization: { status: "warning", issues: 2 },
+          sitemap: { status: "passed", issues: 0 },
+          coreWebVitals: { status: "warning", issues: 1 }
+        },
+        
+        searchVisibility: {
+          google: 94,
+          bing: 78,
+          yahoo: 72,
+          duckduckgo: 65
+        },
+        
+        backlinks: [
+          { domain: "finance.example.com", count: 28 },
+          { domain: "techcrunch.com", count: 24 },
+          { domain: "forbes.com", count: 19 },
+          { domain: "investopedia.com", count: 15 },
+          { domain: "entrepreneur.com", count: 12 },
+          { domain: "others", count: 58 }
+        ]
+      },
+      
+      "swayzio.com": {
+        seoScore: 78,
+        organicTrafficGrowth: 8.7,
+        top10Keywords: 22,
+        backlinks: 124,
+        pageLoadTime: 1.4,
+        mobileScore: 88,
+        
+        keywordRankings: [
+          { keyword: "music storage app", position: 3, change: 1 },
+          { keyword: "AI powered music storage", position: 1, change: 2 },
+          { keyword: "music organization platform", position: 4, change: -1 },
+          { keyword: "intelligent music library", position: 2, change: 3 },
+          { keyword: "music search AI", position: 5, change: 0 }
+        ],
+        
+        pagePerformance: [
+          { page: "/features", title: "Features Overview", visitors: 10245, change: 12.4 },
+          { page: "/pricing", title: "Pricing Plans", visitors: 8632, change: 5.8 },
+          { page: "/blog/music-organization", title: "Music Organization Tips", visitors: 7345, change: 18.9 },
+          { page: "/ai-search", title: "AI Search Technology", visitors: 6213, change: 22.7 },
+          { page: "/about", title: "About Us", visitors: 4532, change: 3.2 }
+        ],
+        
+        organicTraffic: [
+          { month: "Jan", visitors: 32400, conversion: 2.8 },
+          { month: "Feb", visitors: 34100, conversion: 2.9 },
+          { month: "Mar", visitors: 36500, conversion: 3.0 },
+          { month: "Apr", visitors: 35800, conversion: 3.0 },
+          { month: "May", visitors: 38200, conversion: 3.1 },
+          { month: "Jun", visitors: 42500, conversion: 3.2 },
+          { month: "Jul", visitors: 45200, conversion: 3.3 },
+          { month: "Aug", visitors: 48900, conversion: 3.4 },
+          { month: "Sep", visitors: 52300, conversion: 3.5 },
+          { month: "Oct", visitors: 56700, conversion: 3.6 },
+          { month: "Nov", visitors: 59800, conversion: 3.7 },
+          { month: "Dec", visitors: 63400, conversion: 3.8 }
+        ],
+        
+        technicalSeo: {
+          mobileFriendly: { status: "passed", issues: 0 },
+          https: { status: "passed", issues: 0 },
+          brokenLinks: { status: "warning", issues: 3 },
+          imageOptimization: { status: "warning", issues: 5 },
+          sitemap: { status: "passed", issues: 0 },
+          coreWebVitals: { status: "warning", issues: 2 }
+        },
+        
+        searchVisibility: {
+          google: 88,
+          bing: 72,
+          yahoo: 68,
+          duckduckgo: 59
+        },
+        
+        backlinks: [
+          { domain: "musictech.com", count: 22 },
+          { domain: "billboard.com", count: 18 },
+          { domain: "spotify.com", count: 15 },
+          { domain: "soundcloud.com", count: 13 },
+          { domain: "wired.com", count: 10 },
+          { domain: "others", count: 46 }
+        ]
+      }
+    };
+    
+    return domains[domain] || domains["syncmoney.ai"];
   }
 }
 
