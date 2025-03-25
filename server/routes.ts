@@ -1,6 +1,14 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import Stripe from "stripe";
 import { storage } from "./storage";
+
+if (!process.env.STRIPE_SECRET_KEY) {
+  console.warn('Missing required Stripe secret: STRIPE_SECRET_KEY');
+}
+const stripe = process.env.STRIPE_SECRET_KEY 
+  ? new Stripe(process.env.STRIPE_SECRET_KEY)
+  : null;
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // ===== Customer Routes =====
@@ -313,6 +321,139 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(200).send("OK");
     } catch (error: any) {
       console.error("Stripe webhook error:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // ===== Stripe Payment Routes =====
+  
+  // Create a payment intent for one-time payments
+  app.post("/api/create-payment-intent", async (req, res) => {
+    try {
+      if (!stripe) {
+        return res.status(500).json({ message: "Stripe is not configured" });
+      }
+      
+      const { amount, customerId } = req.body;
+      
+      if (!amount) {
+        return res.status(400).json({ message: "Amount is required" });
+      }
+      
+      const paymentIntentOptions: Stripe.PaymentIntentCreateParams = {
+        amount: Math.round(amount * 100), // Convert to cents
+        currency: "usd",
+      };
+      
+      // Add customer ID if available
+      if (customerId) {
+        paymentIntentOptions.customer = customerId;
+      }
+      
+      const paymentIntent = await stripe.paymentIntents.create(paymentIntentOptions);
+      
+      res.json({ 
+        clientSecret: paymentIntent.client_secret,
+        id: paymentIntent.id
+      });
+    } catch (error: any) {
+      console.error("Error creating payment intent:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Create a subscription
+  app.post('/api/create-subscription', async (req, res) => {
+    try {
+      if (!stripe) {
+        return res.status(500).json({ message: "Stripe is not configured" });
+      }
+      
+      const { customerId, priceId, email, name } = req.body;
+      
+      if (!priceId) {
+        return res.status(400).json({ message: "Price ID is required" });
+      }
+      
+      let stripeCustomerId = customerId;
+      
+      // If no customer ID is provided but we have email, create a new customer
+      if (!stripeCustomerId && email) {
+        const customerData: Stripe.CustomerCreateParams = {
+          email,
+          metadata: {}
+        };
+        
+        if (name) {
+          customerData.name = name;
+        }
+        
+        const customer = await stripe.customers.create(customerData);
+        stripeCustomerId = customer.id;
+      }
+      
+      if (!stripeCustomerId) {
+        return res.status(400).json({ message: "Customer ID or email is required" });
+      }
+      
+      // Create the subscription
+      const subscription = await stripe.subscriptions.create({
+        customer: stripeCustomerId,
+        items: [{
+          price: priceId,
+        }],
+        payment_behavior: 'default_incomplete',
+        expand: ['latest_invoice.payment_intent'],
+      });
+      
+      // Get the client secret from the payment intent
+      let clientSecret = null;
+      if (typeof subscription.latest_invoice !== 'string') {
+        const paymentIntent = subscription.latest_invoice?.payment_intent;
+        if (paymentIntent && typeof paymentIntent !== 'string') {
+          clientSecret = paymentIntent.client_secret;
+        }
+      }
+      
+      res.json({
+        subscriptionId: subscription.id,
+        clientSecret,
+        customerId: stripeCustomerId
+      });
+    } catch (error: any) {
+      console.error("Error creating subscription:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Cancel a subscription
+  app.post('/api/cancel-subscription', async (req, res) => {
+    try {
+      if (!stripe) {
+        return res.status(500).json({ message: "Stripe is not configured" });
+      }
+      
+      const { subscriptionId, cancelImmediately } = req.body;
+      
+      if (!subscriptionId) {
+        return res.status(400).json({ message: "Subscription ID is required" });
+      }
+      
+      let subscription;
+      
+      if (cancelImmediately) {
+        // Cancel immediately
+        subscription = await stripe.subscriptions.cancel(subscriptionId);
+      } else {
+        // Cancel at period end
+        subscription = await stripe.subscriptions.update(subscriptionId, {
+          cancel_at_period_end: true
+        });
+      }
+      
+      res.json({ subscription });
+    } catch (error: any) {
+      console.error("Error cancelling subscription:", error);
       res.status(500).json({ message: error.message });
     }
   });

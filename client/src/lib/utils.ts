@@ -80,7 +80,7 @@ export function getStatusColor(status: string): {
     "open deal": { bg: "bg-indigo-100", text: "text-indigo-800" },
     "unqualified": { bg: "bg-red-100", text: "text-red-800" },
     "attempted to contact": { bg: "bg-purple-100", text: "text-purple-800" },
-    "connected": { bg: "bg-cyan-100", text: "text-cyan-800" },
+    "contact_connected": { bg: "bg-cyan-100", text: "text-cyan-800" },
     "bad timing": { bg: "bg-gray-100", text: "text-gray-800" },
     
     // Subscription statuses

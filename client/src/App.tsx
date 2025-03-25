@@ -14,6 +14,7 @@ import CustomersList from "@/pages/customers/index";
 import CustomerDetails from "@/pages/customers/[id]";
 import HubSpotIntegration from "@/pages/integrations/hubspot";
 import StripeIntegration from "@/pages/integrations/stripe";
+import StripeCheckoutPage from "@/pages/integrations/stripe-checkout";
 import SyncStatus from "@/pages/sync-status";
 import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/customers/:id" component={CustomerDetails} />
       <Route path="/integrations/hubspot" component={HubSpotIntegration} />
       <Route path="/integrations/stripe" component={StripeIntegration} />
+      <Route path="/integrations/stripe-checkout" component={StripeCheckoutPage} />
       <Route path="/sync-status" component={SyncStatus} />
       <Route path="/settings" component={Settings} />
       <Route component={NotFound} />

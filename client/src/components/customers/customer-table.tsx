@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "wouter";
+import { useLocation } from "wouter";
 import { DataTable } from "@/components/ui/data-table";
 import { StatusBadge } from "@/components/ui/badge-custom";
 import { formatDate, getInitials } from "@/lib/utils";

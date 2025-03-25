@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/badge-custom";
 import { cn, formatRelativeTime, getInitials } from "@/lib/utils";
-import { useNavigate } from "wouter";
+import { useLocation } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export interface Activity {
@@ -28,7 +28,7 @@ export function RecentActivity({
   isLoading = false,
   className,
 }: RecentActivityProps) {
-  const navigate = useNavigate();
+  const [_, navigate] = useLocation();
 
   return (
     <Card className={className}>
