@@ -70,6 +70,14 @@ export interface IStorage {
   getSettings(): Promise<any>;
   updateSettings(settings: any): Promise<any>;
   
+  // Social media methods
+  getSocialMediaData(timeframe?: string, platform?: string): Promise<any>;
+  getSocialPosts(platform?: string, limit?: number): Promise<any>;
+  getSocialAdCampaigns(status?: string): Promise<any>;
+  createSocialPost(data: any): Promise<any>;
+  updateSocialPost(id: string, data: any): Promise<any>;
+  deleteSocialPost(id: string): Promise<any>;
+  
   // Webhook handling
   handleHubSpotWebhook(data: any): Promise<void>;
   handleStripeWebhook(data: any): Promise<void>;

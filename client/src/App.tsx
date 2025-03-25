@@ -17,6 +17,7 @@ import StripeIntegration from "@/pages/integrations/stripe";
 import StripeCheckoutPage from "@/pages/integrations/stripe-checkout";
 import SyncStatus from "@/pages/sync-status";
 import Settings from "@/pages/settings";
+import SocialsPage from "@/pages/socials";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -29,6 +30,7 @@ function Router() {
       <Route path="/integrations/stripe" component={StripeIntegration} />
       <Route path="/integrations/stripe-checkout" component={StripeCheckoutPage} />
       <Route path="/sync-status" component={SyncStatus} />
+      <Route path="/socials" component={SocialsPage} />
       <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>

@@ -8,6 +8,7 @@ import {
   CreditCard,
   Activity,
   Settings,
+  Share2,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -41,6 +42,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
           title: "Customers",
           href: "/customers",
           icon: <Users className="mr-3 h-5 w-5" />,
+        },
+        {
+          title: "Socials",
+          href: "/socials",
+          icon: <Share2 className="mr-3 h-5 w-5" />,
         },
       ],
     },
