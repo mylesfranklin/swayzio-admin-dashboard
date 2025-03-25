@@ -18,15 +18,21 @@ import {
   Youtube, 
   Linkedin, 
   TrendingUp, 
+  TrendingDown,
   Users, 
   Share2, 
   DollarSign, 
   BarChart3,
   Heart,
   MessageSquare,
+  MessageCircle,
   Repeat2,
   Bookmark,
-  Eye
+  Eye,
+  Download,
+  FileText,
+  Video,
+  Image
 } from "lucide-react";
 
 // Helper functions and component for the social media dashboard
@@ -284,6 +290,73 @@ export default function SocialsPage() {
           <Button variant="outline">Export Report</Button>
         </div>
       </div>
+      
+      {/* SyncMoney Featured Section */}
+      <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 overflow-hidden">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="p-6 md:w-2/3">
+            <div className="flex items-center gap-3">
+              <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-200">
+                Featured Brand
+              </Badge>
+              <h2 className="text-2xl font-bold text-blue-900">@syncmoney</h2>
+            </div>
+            <p className="text-blue-700 mt-2 mb-4">Our flagship financial service brand with the largest following across all platforms</p>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="bg-white p-3 rounded-lg shadow-sm border border-blue-100">
+                <p className="text-sm text-blue-600 font-medium">Followers</p>
+                <p className="text-2xl font-bold text-blue-900">{data?.platforms?.instagram?.followers?.toLocaleString() || "50,000"}</p>
+                <p className="text-xs text-green-600">+{data?.platforms?.instagram?.growth || "2.3"}% growth</p>
+              </div>
+              <div className="bg-white p-3 rounded-lg shadow-sm border border-blue-100">
+                <p className="text-sm text-blue-600 font-medium">Eng. Rate</p>
+                <p className="text-2xl font-bold text-blue-900">{data?.platforms?.instagram?.engagementRate || "3.1"}%</p>
+                <p className="text-xs text-blue-600">Industry avg: 2.2%</p>
+              </div>
+              <div className="bg-white p-3 rounded-lg shadow-sm border border-blue-100">
+                <p className="text-sm text-blue-600 font-medium">Avg. Likes</p>
+                <p className="text-2xl font-bold text-blue-900">{data?.platforms?.instagram?.avgLikes?.toLocaleString() || "1,200"}</p>
+                <p className="text-xs text-blue-600">{data?.platforms?.instagram?.posts || "245"} posts</p>
+              </div>
+              <div className="bg-white p-3 rounded-lg shadow-sm border border-blue-100">
+                <p className="text-sm text-blue-600 font-medium">Ad Spend</p>
+                <p className="text-2xl font-bold text-blue-900">${(data?.advertising?.platforms?.instagram / 1000).toFixed(1) || "42.0"}k</p>
+                <p className="text-xs text-green-600">ROI: +{data?.advertising?.roiPercentage || "324"}%</p>
+              </div>
+            </div>
+            
+            <div className="flex gap-2">
+              <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                View Analytics
+              </Button>
+              <Button variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-50">
+                Create Campaign
+              </Button>
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-blue-600 to-indigo-700 md:w-1/3 p-6 flex flex-col justify-center items-center text-white">
+            <h3 className="text-xl font-medium">Recent Growth</h3>
+            <div className="w-full h-36 mt-4">
+              <div className="h-full w-full relative">
+                {/* Simple animated growth chart */}
+                <div className="absolute bottom-0 left-0 w-full h-1/2 flex items-end">
+                  <div className="w-1/6 h-[30%] bg-white/20 rounded-t-sm mx-[2px] animate-pulse"></div>
+                  <div className="w-1/6 h-[45%] bg-white/30 rounded-t-sm mx-[2px] animate-pulse"></div>
+                  <div className="w-1/6 h-[40%] bg-white/30 rounded-t-sm mx-[2px] animate-pulse"></div>
+                  <div className="w-1/6 h-[60%] bg-white/40 rounded-t-sm mx-[2px] animate-pulse"></div>
+                  <div className="w-1/6 h-[75%] bg-white/60 rounded-t-sm mx-[2px] animate-pulse"></div>
+                  <div className="w-1/6 h-[90%] bg-white/80 rounded-t-sm mx-[2px] animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 text-center">
+              <p className="text-3xl font-bold">+{data?.platforms?.instagram?.growth || "2.3"}%</p>
+              <p className="text-sm opacity-80">Monthly growth rate</p>
+            </div>
+          </div>
+        </div>
+      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
@@ -949,6 +1022,351 @@ export default function SocialsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      
+      {/* Detailed SyncMoney Section */}
+      <div className="mt-10 border-t pt-8">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h2 className="text-2xl font-bold">SyncMoney Detailed Analytics</h2>
+            <p className="text-muted-foreground">In-depth performance metrics for our flagship brand</p>
+          </div>
+          <Button variant="outline" className="flex items-center gap-2">
+            <Download className="h-4 w-4" />
+            Download Report
+          </Button>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Column 1: Audience Insights */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Users className="h-5 w-5 mr-2 text-blue-600" />
+                Audience Insights
+              </CardTitle>
+              <CardDescription>Demographic and audience data</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <h3 className="text-sm font-medium mb-2">Age Distribution</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">18-24</span>
+                    <div className="w-full max-w-[180px] h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-500 rounded-full" style={{ width: "22%" }}></div>
+                    </div>
+                    <span className="text-sm ml-2 w-8 text-right">22%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">25-34</span>
+                    <div className="w-full max-w-[180px] h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-500 rounded-full" style={{ width: "38%" }}></div>
+                    </div>
+                    <span className="text-sm ml-2 w-8 text-right">38%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">35-44</span>
+                    <div className="w-full max-w-[180px] h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-500 rounded-full" style={{ width: "24%" }}></div>
+                    </div>
+                    <span className="text-sm ml-2 w-8 text-right">24%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">45+</span>
+                    <div className="w-full max-w-[180px] h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-500 rounded-full" style={{ width: "16%" }}></div>
+                    </div>
+                    <span className="text-sm ml-2 w-8 text-right">16%</span>
+                  </div>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div>
+                <h3 className="text-sm font-medium mb-2">Gender</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="h-3 w-3 rounded-full bg-blue-500 mr-2"></div>
+                        <span className="text-sm">Male</span>
+                      </div>
+                      <span className="text-sm font-medium">54%</span>
+                    </div>
+                  </div>
+                  <div className="p-3 bg-pink-50 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="h-3 w-3 rounded-full bg-pink-500 mr-2"></div>
+                        <span className="text-sm">Female</span>
+                      </div>
+                      <span className="text-sm font-medium">46%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div>
+                <h3 className="text-sm font-medium mb-2">Top Locations</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">United States</span>
+                    <Badge variant="outline">42%</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">United Kingdom</span>
+                    <Badge variant="outline">18%</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Canada</span>
+                    <Badge variant="outline">12%</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Australia</span>
+                    <Badge variant="outline">8%</Badge>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Column 2: Content Performance */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <BarChart3 className="h-5 w-5 mr-2 text-indigo-600" />
+                Content Performance
+              </CardTitle>
+              <CardDescription>Top performing content types</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-4">
+                <div className="border rounded-lg p-3">
+                  <div className="flex items-center mb-2">
+                    <Video className="h-4 w-4 mr-2 text-indigo-600" />
+                    <h3 className="font-medium">Product Tutorials</h3>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <p className="text-muted-foreground">Avg. Engagement</p>
+                      <p className="font-medium">6.8%</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Reach</p>
+                      <p className="font-medium">42.5k</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="border rounded-lg p-3">
+                  <div className="flex items-center mb-2">
+                    <Image className="h-4 w-4 mr-2 text-indigo-600" />
+                    <h3 className="font-medium">Customer Stories</h3>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <p className="text-muted-foreground">Avg. Engagement</p>
+                      <p className="font-medium">5.3%</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Reach</p>
+                      <p className="font-medium">38.2k</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="border rounded-lg p-3">
+                  <div className="flex items-center mb-2">
+                    <MessageSquare className="h-4 w-4 mr-2 text-indigo-600" />
+                    <h3 className="font-medium">Financial Tips</h3>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <p className="text-muted-foreground">Avg. Engagement</p>
+                      <p className="font-medium">4.9%</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Reach</p>
+                      <p className="font-medium">35.7k</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div>
+                <h3 className="text-sm font-medium mb-3">Optimal Posting Times</h3>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="bg-indigo-50 p-2 rounded-md text-center">
+                    <p className="text-xs text-indigo-700">Tuesday</p>
+                    <p className="font-medium text-sm">11am-1pm</p>
+                  </div>
+                  <div className="bg-indigo-50 p-2 rounded-md text-center">
+                    <p className="text-xs text-indigo-700">Thursday</p>
+                    <p className="font-medium text-sm">4pm-6pm</p>
+                  </div>
+                  <div className="bg-indigo-50 p-2 rounded-md text-center">
+                    <p className="text-xs text-indigo-700">Sunday</p>
+                    <p className="font-medium text-sm">6pm-8pm</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Column 3: Latest Posts */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <FileText className="h-5 w-5 mr-2 text-violet-600" />
+                Latest Posts
+              </CardTitle>
+              <CardDescription>Recent content performance</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {postsData?.slice(0, 3).map((post: any, index: number) => (
+                <div key={index} className="border rounded-lg overflow-hidden">
+                  <div className="p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center">
+                        {getPlatformIcon(post.platform)}
+                        <span className="text-xs bg-gray-100 px-2 py-0.5 rounded ml-2 capitalize">{post.type}</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">{new Date(post.date).toLocaleDateString()}</span>
+                    </div>
+                    <p className="text-sm font-medium line-clamp-2 mb-2">{post.content}</p>
+                    <div className="flex items-center text-xs text-muted-foreground space-x-3">
+                      <div className="flex items-center">
+                        <Heart className="h-3 w-3 mr-1" />
+                        <span>{post.likes.toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <MessageCircle className="h-3 w-3 mr-1" />
+                        <span>{post.comments.toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Share2 className="h-3 w-3 mr-1" />
+                        <span>{post.shares ? post.shares.toLocaleString() : post.retweets?.toLocaleString() || "0"}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 px-3 py-2 text-xs flex justify-between">
+                    <span className="text-green-600 font-medium">{post.engagementRate}% engagement</span>
+                    <span>{post.impressions.toLocaleString()} impressions</span>
+                  </div>
+                </div>
+              ))}
+              
+              <Button variant="outline" className="w-full text-sm" size="sm">
+                View All Posts
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+        
+        <div className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Campaign Effectiveness</CardTitle>
+              <CardDescription>Performance metrics for SyncMoney campaigns</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="border rounded-lg p-4">
+                    <p className="text-sm text-muted-foreground">Cost per Acquisition</p>
+                    <h3 className="text-2xl font-bold mt-1">$24.80</h3>
+                    <div className="flex items-center mt-1 text-green-600 text-xs">
+                      <TrendingDown className="h-3 w-3 mr-1" />
+                      <span>-12% from last month</span>
+                    </div>
+                  </div>
+                  <div className="border rounded-lg p-4">
+                    <p className="text-sm text-muted-foreground">Click-through Rate</p>
+                    <h3 className="text-2xl font-bold mt-1">3.2%</h3>
+                    <div className="flex items-center mt-1 text-green-600 text-xs">
+                      <TrendingUp className="h-3 w-3 mr-1" />
+                      <span>+0.5% from last month</span>
+                    </div>
+                  </div>
+                  <div className="border rounded-lg p-4">
+                    <p className="text-sm text-muted-foreground">Conversion Rate</p>
+                    <h3 className="text-2xl font-bold mt-1">8.7%</h3>
+                    <div className="flex items-center mt-1 text-green-600 text-xs">
+                      <TrendingUp className="h-3 w-3 mr-1" />
+                      <span>+1.2% from last month</span>
+                    </div>
+                  </div>
+                  <div className="border rounded-lg p-4">
+                    <p className="text-sm text-muted-foreground">ROAS</p>
+                    <h3 className="text-2xl font-bold mt-1">4.3x</h3>
+                    <div className="flex items-center mt-1 text-green-600 text-xs">
+                      <TrendingUp className="h-3 w-3 mr-1" />
+                      <span>+0.7x from last month</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="border rounded-lg p-4">
+                  <h3 className="font-medium mb-4">Campaign Performance Comparison</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[700px]">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left pb-2 font-medium text-sm">Campaign</th>
+                          <th className="text-left pb-2 font-medium text-sm">Platform</th>
+                          <th className="text-left pb-2 font-medium text-sm">Budget</th>
+                          <th className="text-left pb-2 font-medium text-sm">Impressions</th>
+                          <th className="text-left pb-2 font-medium text-sm">Clicks</th>
+                          <th className="text-left pb-2 font-medium text-sm">CTR</th>
+                          <th className="text-left pb-2 font-medium text-sm">Conversions</th>
+                          <th className="text-left pb-2 font-medium text-sm">Cost/Conv.</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="border-b">
+                          <td className="py-3 pr-4">Summer Promo</td>
+                          <td className="py-3 pr-4">Instagram</td>
+                          <td className="py-3 pr-4">$12,500</td>
+                          <td className="py-3 pr-4">685,240</td>
+                          <td className="py-3 pr-4">24,325</td>
+                          <td className="py-3 pr-4">3.55%</td>
+                          <td className="py-3 pr-4">1,825</td>
+                          <td className="py-3 pr-4">$6.85</td>
+                        </tr>
+                        <tr className="border-b">
+                          <td className="py-3 pr-4">App Install</td>
+                          <td className="py-3 pr-4">Facebook</td>
+                          <td className="py-3 pr-4">$18,750</td>
+                          <td className="py-3 pr-4">1,254,600</td>
+                          <td className="py-3 pr-4">38,540</td>
+                          <td className="py-3 pr-4">3.07%</td>
+                          <td className="py-3 pr-4">2,642</td>
+                          <td className="py-3 pr-4">$7.10</td>
+                        </tr>
+                        <tr>
+                          <td className="py-3 pr-4">Referral Program</td>
+                          <td className="py-3 pr-4">Twitter</td>
+                          <td className="py-3 pr-4">$8,250</td>
+                          <td className="py-3 pr-4">520,125</td>
+                          <td className="py-3 pr-4">15,285</td>
+                          <td className="py-3 pr-4">2.94%</td>
+                          <td className="py-3 pr-4">1,250</td>
+                          <td className="py-3 pr-4">$6.60</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
