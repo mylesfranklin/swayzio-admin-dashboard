@@ -10,6 +10,7 @@ import Header from "@/components/layout/header";
 import Dashboard from "@/pages/dashboard";
 import CustomersList from "@/pages/customers/index";
 import CustomerDetails from "@/pages/customers/[id]";
+import IntegrationsPage from "@/pages/integrations/index";
 import HubSpotIntegration from "@/pages/integrations/hubspot";
 import StripeIntegration from "@/pages/integrations/stripe";
 import StripeCheckoutPage from "@/pages/integrations/stripe-checkout";
@@ -24,6 +25,7 @@ function Router() {
       <Route path="/" component={Dashboard} />
       <Route path="/customers" component={CustomersList} />
       <Route path="/customers/:id" component={CustomerDetails} />
+      <Route path="/integrations" component={IntegrationsPage} />
       <Route path="/integrations/hubspot" component={HubSpotIntegration} />
       <Route path="/integrations/stripe" component={StripeIntegration} />
       <Route path="/integrations/stripe-checkout" component={StripeCheckoutPage} />

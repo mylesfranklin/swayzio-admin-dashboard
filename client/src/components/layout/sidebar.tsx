@@ -76,6 +76,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
       defaultOpen: true,
       items: [
         {
+          title: "Overview",
+          href: "/integrations",
+          icon: <Zap className="h-4 w-4" />,
+        },
+        {
           title: "HubSpot",
           href: "/integrations/hubspot",
           icon: <Zap className="h-4 w-4" />,

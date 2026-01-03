@@ -1,6 +1,6 @@
 import {
-  Area,
-  AreaChart as RechartAreaChart,
+  Line,
+  LineChart as RechartLineChart,
   CartesianGrid,
   ResponsiveContainer,
   Tooltip,
@@ -9,19 +9,19 @@ import {
   Legend,
 } from "recharts";
 
-export interface AreaChartData {
+export interface LineChartData {
   name: string;
   [key: string]: number | string;
 }
 
-interface AreaChartProps {
-  data: AreaChartData[];
+interface LineChartProps {
+  data: LineChartData[];
   height?: number;
   lines: Array<{
     dataKey: string;
     stroke: string;
-    fill: string;
     name?: string;
+    strokeDasharray?: string;
   }>;
   valueFormatter?: (value: number) => string;
   showXAxis?: boolean;
@@ -29,10 +29,9 @@ interface AreaChartProps {
   showGrid?: boolean;
   showTooltip?: boolean;
   showLegend?: boolean;
-  gradientOpacity?: number;
 }
 
-export function AreaChart({
+export function LineChart({
   data,
   height = 300,
   lines,
@@ -42,20 +41,10 @@ export function AreaChart({
   showGrid = true,
   showTooltip = true,
   showLegend = false,
-  gradientOpacity = 0.15,
-}: AreaChartProps) {
+}: LineChartProps) {
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <RechartAreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-        <defs>
-          {lines.map((line, index) => (
-            <linearGradient key={index} id={`gradient-${line.dataKey}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={line.fill} stopOpacity={gradientOpacity} />
-              <stop offset="100%" stopColor={line.fill} stopOpacity={0} />
-            </linearGradient>
-          ))}
-        </defs>
-        
+      <RechartLineChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
         {showGrid && (
           <CartesianGrid 
             strokeDasharray="3 3" 
@@ -109,18 +98,19 @@ export function AreaChart({
         )}
         
         {lines.map((line, index) => (
-          <Area
+          <Line
             key={index}
             type="monotone"
             dataKey={line.dataKey}
             stroke={line.stroke}
-            fill={`url(#gradient-${line.dataKey})`}
             strokeWidth={2}
-            activeDot={{ r: 4, fill: line.stroke, stroke: '#17181a', strokeWidth: 2 }}
+            dot={false}
+            activeDot={{ r: 4, fill: line.stroke }}
             name={line.name || line.dataKey}
+            strokeDasharray={line.strokeDasharray}
           />
         ))}
-      </RechartAreaChart>
+      </RechartLineChart>
     </ResponsiveContainer>
   );
 }
