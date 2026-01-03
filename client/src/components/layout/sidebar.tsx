@@ -11,7 +11,10 @@ import {
   BarChart3,
   ChevronRight,
   Command,
+  Mail,
+  Globe,
 } from "lucide-react";
+import { SiHubspot, SiStripe, SiGithub, SiVercel } from "react-icons/si";
 import { useState } from "react";
 
 interface SidebarProps {
@@ -35,6 +38,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const [location] = useLocation();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     General: true,
+    Analytics: true,
     Administration: true,
   });
 
@@ -67,6 +71,37 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
           title: "SEO Analytics",
           href: "/seo",
           icon: <BarChart3 className="h-4 w-4" />,
+        },
+      ],
+    },
+    {
+      title: "Analytics",
+      defaultOpen: true,
+      items: [
+        {
+          title: "HubSpot",
+          href: "/analytics/hubspot",
+          icon: <SiHubspot className="h-4 w-4" />,
+        },
+        {
+          title: "Stripe",
+          href: "/analytics/stripe",
+          icon: <SiStripe className="h-4 w-4" />,
+        },
+        {
+          title: "GitHub",
+          href: "/analytics/github",
+          icon: <SiGithub className="h-4 w-4" />,
+        },
+        {
+          title: "Vercel",
+          href: "/analytics/vercel",
+          icon: <SiVercel className="h-4 w-4" />,
+        },
+        {
+          title: "Kit Newsletter",
+          href: "/analytics/kit",
+          icon: <Mail className="h-4 w-4" />,
         },
       ],
     },

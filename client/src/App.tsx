@@ -15,6 +15,11 @@ import StripeCheckoutPage from "@/pages/integrations/stripe-checkout";
 import SyncStatus from "@/pages/sync-status";
 import Settings from "@/pages/settings";
 import SocialsPage from "@/pages/socials";
+import HubSpotAnalytics from "@/pages/analytics/hubspot";
+import StripeAnalytics from "@/pages/analytics/stripe";
+import GitHubAnalytics from "@/pages/analytics/github";
+import VercelAnalytics from "@/pages/analytics/vercel";
+import KitAnalytics from "@/pages/analytics/kit";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -26,6 +31,11 @@ function Router() {
       <Route path="/integrations/stripe-checkout" component={StripeCheckoutPage} />
       <Route path="/sync-status" component={SyncStatus} />
       <Route path="/socials" component={SocialsPage} />
+      <Route path="/analytics/hubspot" component={HubSpotAnalytics} />
+      <Route path="/analytics/stripe" component={StripeAnalytics} />
+      <Route path="/analytics/github" component={GitHubAnalytics} />
+      <Route path="/analytics/vercel" component={VercelAnalytics} />
+      <Route path="/analytics/kit" component={KitAnalytics} />
       <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>

@@ -63,6 +63,7 @@ Preferred communication style: Simple, everyday language.
 
 ### Sidebar Sections
 - **General**: Dashboard, Customers, Social Media, SEO Analytics
+- **Analytics**: HubSpot, Stripe, GitHub, Vercel, Kit Newsletter (data dashboards)
 - **Administration**: Sync Status, Settings
 
 ### Settings Page Tabs
