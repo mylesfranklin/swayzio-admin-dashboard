@@ -127,7 +127,7 @@ export function AreaChart({
             }}
             dot={false}
             name={line.name || line.dataKey}
-            animationDuration={1200}
+            animationDuration={240}
             animationEasing="ease-out"
           />
         ))}

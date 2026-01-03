@@ -58,29 +58,29 @@ export function MobileNav() {
         {navItems.map((item) => {
           const active = isActive(item.href);
           return (
-            <Link key={item.href} href={item.href}>
-              <button
-                className={cn(
-                  "flex flex-col items-center justify-center gap-1 py-2 px-3 min-w-[64px] touch-target rounded-xl transition-all duration-200",
-                  active
-                    ? "text-linear-purple bg-linear-purple/10"
-                    : "text-linear-text-tertiary hover:text-linear-text-secondary active:scale-95"
+            <Link 
+              key={item.href} 
+              href={item.href}
+              className={cn(
+                "flex flex-col items-center justify-center gap-1 py-2 px-3 min-w-[64px] touch-target rounded-xl transition-all duration-200",
+                active
+                  ? "text-linear-purple bg-linear-purple/10"
+                  : "text-linear-text-tertiary hover:text-linear-text-secondary active:scale-95"
+              )}
+              data-testid={`mobile-nav-${item.title.toLowerCase()}`}
+            >
+              <div className={cn(
+                "relative",
+                active && "animate-scale-in"
+              )}>
+                {item.icon}
+                {active && (
+                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-linear-purple" />
                 )}
-                data-testid={`mobile-nav-${item.title.toLowerCase()}`}
-              >
-                <div className={cn(
-                  "relative",
-                  active && "animate-scale-in"
-                )}>
-                  {item.icon}
-                  {active && (
-                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-linear-purple" />
-                  )}
-                </div>
-                <span className="text-[10px] font-medium tracking-wide">
-                  {item.title}
-                </span>
-              </button>
+              </div>
+              <span className="text-[10px] font-medium tracking-wide">
+                {item.title}
+              </span>
             </Link>
           );
         })}

@@ -17,6 +17,8 @@ Preferred communication style: Simple, everyday language.
 - **UI Components**: shadcn/ui component library built on Radix UI primitives
 - **Styling**: Tailwind CSS with custom Linear-inspired design tokens (dark theme)
 - **Design System**: Custom color palette matching Linear's aesthetic (near-black backgrounds, purple accents, semantic status colors)
+- **Animation System**: Motion timing tokens (120ms fast, 200ms default, 300ms slow), fade-in-up, scale-in, and shimmer animations
+- **Mobile Navigation**: Touch-friendly bottom nav with 56px targets for mobile devices
 
 ### Backend Architecture
 - **Framework**: Express.js with TypeScript
@@ -64,9 +66,14 @@ The `/integrations` page provides a unified view of all connected services with 
 ### Chart Components (`client/src/components/ui/`)
 - **LineChart**: Time-series data with gradient fills
 - **BarChart**: Grouped/stacked bar charts with legends
-- **AreaChart**: Multi-line area charts with tooltips
+- **AreaChart**: Multi-line area charts with tooltips, 240ms draw-in animations
 - **DonutChart**: Distribution charts with center values
-- **DataTable**: Sortable, filterable tables with pagination
+- **DataTable**: Sortable, filterable tables with sticky headers, row hover effects
+- **Card**: Multiple variants (default, glass, elevated, interactive, stat, ghost)
+- **StatCard**: Accent colors, trend indicators, gradient overlays
+- **Skeleton**: Shimmer loading states (SkeletonText, SkeletonCard, SkeletonTable, SkeletonChart)
+- **Button**: Press feedback, glow effects, success variant
+- **Toast**: Semantic variants (success, warning, error, info) with icons
 
 ### Integration Components (`client/src/components/integrations/`)
 - **HubSpotDashboard**: CRM contacts, companies, deals pipeline, activity metrics
