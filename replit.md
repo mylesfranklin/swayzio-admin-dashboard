@@ -59,9 +59,22 @@ Preferred communication style: Simple, everyday language.
 - **GitHub**: Repository analytics, commits, PRs, language distribution
 - **Vercel**: Deployment tracking, Core Web Vitals, traffic analytics
 
+## Navigation Structure
+
+### Sidebar Sections
+- **General**: Dashboard, Customers, Social Media, SEO Analytics
+- **Administration**: Sync Status, Settings
+
+### Settings Page Tabs
+- **General**: Application name, date/time format, timezone, currency
+- **Integrations**: All integration dashboards (HubSpot, Stripe, GitHub, Vercel, Social, Kit)
+- **Synchronization**: Auto-sync, frequency, conflict resolution
+- **Notifications**: Email alerts configuration
+- **Users**: User management
+
 ## Integration Dashboards
 
-The `/integrations` page provides a unified view of all connected services with individual dashboard tabs:
+The Settings > Integrations tab provides a unified view of all connected services:
 
 ### Chart Components (`client/src/components/ui/`)
 - **LineChart**: Time-series data with gradient fills

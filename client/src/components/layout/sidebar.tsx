@@ -3,15 +3,12 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   Users,
-  CreditCard,
   Activity,
   Settings,
   Share2,
   Search,
   ChevronDown,
   BarChart3,
-  Mail,
-  Zap,
   ChevronRight,
   Command,
 } from "lucide-react";
@@ -38,7 +35,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const [location] = useLocation();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     General: true,
-    Integrations: true,
     Administration: true,
   });
 
@@ -71,32 +67,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
           title: "SEO Analytics",
           href: "/seo",
           icon: <BarChart3 className="h-4 w-4" />,
-        },
-      ],
-    },
-    {
-      title: "Integrations",
-      defaultOpen: true,
-      items: [
-        {
-          title: "Overview",
-          href: "/integrations",
-          icon: <Zap className="h-4 w-4" />,
-        },
-        {
-          title: "HubSpot",
-          href: "/integrations/hubspot",
-          icon: <Zap className="h-4 w-4" />,
-        },
-        {
-          title: "Stripe",
-          href: "/integrations/stripe",
-          icon: <CreditCard className="h-4 w-4" />,
-        },
-        {
-          title: "Kit Newsletter",
-          href: "/integrations/kit",
-          icon: <Mail className="h-4 w-4" />,
         },
       ],
     },
