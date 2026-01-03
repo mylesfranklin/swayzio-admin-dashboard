@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
+import MobileNav from "@/components/layout/mobile-nav";
 
 import Dashboard from "@/pages/dashboard";
 import CustomersList from "@/pages/customers/index";
@@ -46,17 +47,18 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="flex h-screen overflow-hidden bg-linear-base">
+      <div className="flex min-h-screen overflow-hidden bg-linear-base">
         <Sidebar isOpen={isSidebarOpen} />
         <div 
-          className="flex-1 flex flex-col overflow-hidden transition-all duration-200"
+          className="flex-1 flex flex-col overflow-hidden transition-all duration-200 md:ml-0"
           style={{ marginLeft: isSidebarOpen ? '244px' : '0' }}
         >
           <Header toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
-          <main className="flex-1 overflow-y-auto bg-linear-base p-6">
+          <main className="flex-1 overflow-y-auto bg-linear-base p-4 md:p-6 pb-24 md:pb-6">
             <Router />
           </main>
         </div>
+        <MobileNav />
       </div>
       <Toaster />
     </QueryClientProvider>

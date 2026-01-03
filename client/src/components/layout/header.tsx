@@ -1,6 +1,5 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Bell, Plus, Menu, PanelLeftClose, PanelLeft, Command } from "lucide-react";
+import { Bell, Plus, PanelLeftClose, PanelLeft, Command, Sparkles } from "lucide-react";
 import { useLocation } from "wouter";
 
 interface HeaderProps {
@@ -17,6 +16,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarOpen = true }) 
     if (location.startsWith("/customers/")) return "Customer Details";
     if (location === "/socials") return "Social Media";
     if (location === "/seo") return "SEO Analytics";
+    if (location === "/integrations") return "Integrations";
     if (location === "/integrations/hubspot") return "HubSpot";
     if (location === "/integrations/stripe") return "Stripe";
     if (location === "/integrations/kit") return "Kit Newsletter";
@@ -30,28 +30,37 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarOpen = true }) 
     if (parts.length === 0) return null;
     
     return (
-      <div className="flex items-center gap-1 text-xs text-linear-text-secondary">
-        <span className="hover:text-white cursor-pointer" onClick={() => navigate("/")}>Home</span>
+      <nav className="flex items-center gap-1.5 text-xs" aria-label="Breadcrumb">
+        <button 
+          className="text-linear-text-secondary hover:text-white transition-colors duration-150" 
+          onClick={() => navigate("/")}
+        >
+          Home
+        </button>
         {parts.map((part, index) => (
-          <span key={index} className="flex items-center gap-1">
-            <span className="text-linear-text-tertiary">›</span>
-            <span className={index === parts.length - 1 ? "text-white" : "hover:text-white cursor-pointer"}>
+          <span key={index} className="flex items-center gap-1.5">
+            <span className="text-linear-text-tertiary">/</span>
+            <span className={
+              index === parts.length - 1 
+                ? "text-white font-medium" 
+                : "text-linear-text-secondary hover:text-white transition-colors duration-150 cursor-pointer"
+            }>
               {part.charAt(0).toUpperCase() + part.slice(1).replace(/-/g, ' ')}
             </span>
           </span>
         ))}
-      </div>
+      </nav>
     );
   };
 
   return (
-    <header className="bg-linear-base border-b border-linear-border h-12 flex items-center justify-between px-4">
-      <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-40 bg-linear-base/95 backdrop-blur-md border-b border-linear-border/50 h-14 flex items-center justify-between px-4 md:px-6">
+      <div className="flex items-center gap-4">
         <Button
           onClick={toggleSidebar}
           variant="ghost"
           size="icon-sm"
-          className="text-linear-text-secondary hover:text-white"
+          className="hidden md:flex text-linear-text-secondary hover:text-white hover:bg-linear-hover"
           data-testid="button-toggle-sidebar"
         >
           {isSidebarOpen ? (
@@ -62,41 +71,44 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isSidebarOpen = true }) 
           <span className="sr-only">Toggle sidebar</span>
         </Button>
 
-        <div className="hidden md:flex items-center gap-2">
+        <div className="hidden md:flex items-center">
           {getBreadcrumbs()}
         </div>
 
-        <h1 className="md:hidden text-sm font-semibold text-white">{getPageTitle()}</h1>
+        <h1 className="md:hidden text-base font-semibold text-white">{getPageTitle()}</h1>
       </div>
 
       <div className="flex items-center gap-2">
         <Button
           variant="ghost"
           size="sm"
-          className="hidden md:flex items-center gap-2 text-linear-text-secondary hover:text-white"
+          className="hidden lg:flex items-center gap-2 text-linear-text-secondary hover:text-white hover:bg-linear-hover h-9 px-3"
           data-testid="button-command-palette"
         >
           <Command className="h-3.5 w-3.5" />
-          <span className="text-xs">Command</span>
-          <span className="text-[10px] bg-linear-border px-1 rounded">⌘K</span>
+          <span className="text-xs">Quick actions</span>
+          <kbd className="ml-1 text-[10px] bg-linear-border/80 px-1.5 py-0.5 rounded font-mono">⌘K</kbd>
         </Button>
 
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Notifications"
-          className="text-linear-text-secondary hover:text-white"
-          data-testid="button-notifications"
-        >
-          <Bell className="h-4 w-4" />
-        </Button>
+        <div className="relative">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Notifications"
+            className="text-linear-text-secondary hover:text-white hover:bg-linear-hover relative"
+            data-testid="button-notifications"
+          >
+            <Bell className="h-4 w-4" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-linear-error rounded-full animate-pulse" />
+          </Button>
+        </div>
         
         <Button 
           size="sm" 
-          className="hidden md:inline-flex"
+          className="hidden md:inline-flex gap-1.5"
           data-testid="button-new-customer"
         >
-          <Plus className="h-3.5 w-3.5 mr-1" />
+          <Plus className="h-3.5 w-3.5" />
           New
         </Button>
       </div>

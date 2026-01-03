@@ -5,23 +5,26 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded text-sm font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-linear-purple focus-visible:ring-offset-2 focus-visible:ring-offset-linear-base disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-linear-purple focus-visible:ring-offset-2 focus-visible:ring-offset-linear-base disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 select-none",
   {
     variants: {
       variant: {
-        default: "bg-linear-purple text-white hover:bg-linear-purple-hover active:scale-[0.98]",
-        destructive: "bg-linear-error text-white hover:bg-linear-error/90 active:scale-[0.98]",
-        outline: "border border-linear-border bg-transparent text-white hover:bg-linear-hover",
-        secondary: "bg-linear-border text-white hover:bg-linear-hover",
-        ghost: "text-linear-text-secondary hover:bg-linear-hover hover:text-white",
+        default: "bg-linear-purple text-white shadow-sm hover:bg-linear-purple-hover hover:shadow-glow-purple hover:-translate-y-px active:translate-y-0 active:scale-[0.98] active:shadow-none",
+        destructive: "bg-linear-error text-white shadow-sm hover:bg-linear-error/90 hover:shadow-[0_0_20px_rgba(235,87,87,0.15)] active:scale-[0.98]",
+        outline: "border border-linear-border bg-transparent text-white hover:bg-linear-hover hover:border-linear-text-tertiary active:scale-[0.98]",
+        secondary: "bg-linear-hover text-white hover:bg-linear-border active:scale-[0.98]",
+        ghost: "text-linear-text-secondary hover:bg-linear-hover hover:text-white active:scale-[0.98]",
         link: "text-linear-purple underline-offset-4 hover:underline",
+        success: "bg-linear-success text-white shadow-sm hover:bg-linear-success/90 hover:shadow-glow-success active:scale-[0.98]",
       },
       size: {
-        default: "h-8 px-3 py-1",
-        sm: "h-7 px-2 text-xs",
-        lg: "h-9 px-4",
-        icon: "h-8 w-8",
-        "icon-sm": "h-6 w-6",
+        default: "h-9 px-4 py-2",
+        sm: "h-8 px-3 text-xs",
+        lg: "h-10 px-5",
+        xl: "h-12 px-6 text-base",
+        icon: "h-9 w-9",
+        "icon-sm": "h-7 w-7",
+        "icon-lg": "h-11 w-11",
       },
     },
     defaultVariants: {
