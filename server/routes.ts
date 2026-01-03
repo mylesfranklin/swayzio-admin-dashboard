@@ -1,16 +1,139 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import Stripe from "stripe";
 import { storage } from "./storage";
-
-if (!process.env.STRIPE_SECRET_KEY) {
-  console.warn('Missing required Stripe secret: STRIPE_SECRET_KEY');
-}
-const stripe = process.env.STRIPE_SECRET_KEY 
-  ? new Stripe(process.env.STRIPE_SECRET_KEY)
-  : null;
+import { hubspotService } from "./hubspot-service";
+import { stripeService, getStripePublishableKey } from "./stripe-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // ===== HubSpot Live API Routes =====
+  
+  app.get("/api/hubspot/live/contacts", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 100;
+      const contacts = await hubspotService.getContacts(limit);
+      res.json(contacts);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/hubspot/live/companies", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 100;
+      const companies = await hubspotService.getCompanies(limit);
+      res.json(companies);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/hubspot/live/deals", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 100;
+      const deals = await hubspotService.getDeals(limit);
+      res.json(deals);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/hubspot/live/dashboard", async (req, res) => {
+    try {
+      const stats = await hubspotService.getDashboardStats();
+      res.json(stats);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/hubspot/live/status", async (req, res) => {
+    try {
+      const connected = await hubspotService.isConnected();
+      res.json({ connected });
+    } catch (error: any) {
+      res.json({ connected: false, error: error.message });
+    }
+  });
+
+  // ===== Stripe Live API Routes =====
+  
+  app.get("/api/stripe/live/customers", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 100;
+      const customers = await stripeService.getCustomers(limit);
+      res.json(customers);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/stripe/live/subscriptions", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 100;
+      const subscriptions = await stripeService.getSubscriptions(limit);
+      res.json(subscriptions);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/stripe/live/payments", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 100;
+      const payments = await stripeService.getPaymentIntents(limit);
+      res.json(payments);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/stripe/live/invoices", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 100;
+      const invoices = await stripeService.getInvoices(limit);
+      res.json(invoices);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/stripe/live/charges", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 100;
+      const charges = await stripeService.getCharges(limit);
+      res.json(charges);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/stripe/live/dashboard", async (req, res) => {
+    try {
+      const stats = await stripeService.getDashboardStats();
+      res.json(stats);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/stripe/live/status", async (req, res) => {
+    try {
+      const connected = await stripeService.isConnected();
+      res.json({ connected });
+    } catch (error: any) {
+      res.json({ connected: false, error: error.message });
+    }
+  });
+
+  app.get("/api/stripe/publishable-key", async (req, res) => {
+    try {
+      const publishableKey = await getStripePublishableKey();
+      res.json({ publishableKey });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // SEO Analytics endpoint
   app.get("/api/seo/analytics", async (req, res) => {
     try {

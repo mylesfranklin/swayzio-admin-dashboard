@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,10 +10,12 @@ import {
   XCircle, 
   ExternalLink,
   RefreshCw,
+  AlertCircle,
 } from "lucide-react";
 import { SiHubspot, SiStripe, SiGithub, SiVercel, SiInstagram } from "react-icons/si";
 import { Mail } from "lucide-react";
 import { Link } from "wouter";
+import { queryClient } from "@/lib/queryClient";
 
 import { GitHubDashboard } from "@/components/integrations/github-dashboard";
 import { VercelDashboard } from "@/components/integrations/vercel-dashboard";
@@ -213,6 +216,181 @@ const mockHubSpotData = {
 
 export default function IntegrationsPage() {
   const [activeTab, setActiveTab] = useState("overview");
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  // Fetch live HubSpot data
+  const { data: hubspotStatus } = useQuery<{ connected: boolean }>({
+    queryKey: ["/api/hubspot/live/status"],
+  });
+
+  const { data: hubspotDashboard, isLoading: hubspotLoading, refetch: refetchHubspot } = useQuery<{
+    totalContacts: number;
+    totalCompanies: number;
+    totalDeals: number;
+    openDeals: number;
+    closedWonDeals: number;
+    totalDealValue: number;
+    recentContacts: Array<{
+      id: string;
+      email: string;
+      firstname: string;
+      lastname: string;
+      company?: string;
+      lifecyclestage?: string;
+      lastmodifieddate?: string;
+    }>;
+    recentDeals: Array<{
+      id: string;
+      dealname: string;
+      amount?: number;
+      dealstage: string;
+      closedate?: string;
+    }>;
+    dealsByStage: Record<string, number>;
+  }>({
+    queryKey: ["/api/hubspot/live/dashboard"],
+    enabled: hubspotStatus?.connected === true,
+  });
+
+  // Fetch live Stripe data
+  const { data: stripeStatus } = useQuery<{ connected: boolean }>({
+    queryKey: ["/api/stripe/live/status"],
+  });
+
+  const { data: stripeDashboard, isLoading: stripeLoading, refetch: refetchStripe } = useQuery<{
+    totalCustomers: number;
+    activeSubscriptions: number;
+    mrr: number;
+    totalRevenue: number;
+    recentPayments: Array<{
+      id: string;
+      amount: number;
+      currency: string;
+      status: string;
+      created: number;
+      customerId?: string;
+    }>;
+    recentInvoices: Array<{
+      id: string;
+      customerId: string;
+      amountDue: number;
+      amountPaid: number;
+      currency: string;
+      status: string;
+      created: number;
+    }>;
+    subscriptionsByStatus: Record<string, number>;
+    revenueByMonth: Array<{ month: string; revenue: number }>;
+  }>({
+    queryKey: ["/api/stripe/live/dashboard"],
+    enabled: stripeStatus?.connected === true,
+  });
+
+  // Transform HubSpot data for dashboard component
+  const transformedHubspotStats = hubspotDashboard ? {
+    totalContacts: hubspotDashboard.totalContacts,
+    contactsGrowth: 0,
+    totalCompanies: hubspotDashboard.totalCompanies,
+    companiesGrowth: 0,
+    openDeals: hubspotDashboard.openDeals,
+    dealValue: hubspotDashboard.totalDealValue,
+    emailsSent: 0,
+    emailOpenRate: 0,
+  } : mockHubSpotData.stats;
+
+  const transformedHubspotContacts = hubspotDashboard?.recentContacts?.map(c => ({
+    id: c.id,
+    name: `${c.firstname || ''} ${c.lastname || ''}`.trim() || c.email,
+    email: c.email,
+    company: c.company || '',
+    stage: c.lifecyclestage || 'subscriber',
+    lastActivity: c.lastmodifieddate || new Date().toISOString(),
+  })) || mockHubSpotData.contacts;
+
+  const transformedHubspotDeals = hubspotDashboard?.recentDeals?.map(d => ({
+    id: d.id,
+    name: d.dealname,
+    company: '',
+    amount: d.amount || 0,
+    stage: d.dealstage,
+    probability: 50,
+    closeDate: d.closedate || new Date().toISOString(),
+  })) || mockHubSpotData.deals;
+
+  const transformedHubspotPipeline = hubspotDashboard?.dealsByStage
+    ? Object.entries(hubspotDashboard.dealsByStage).map(([name, count]) => ({
+        name,
+        value: 0,
+        count: count as number,
+      }))
+    : mockHubSpotData.pipelineData;
+
+  // Transform Stripe data for dashboard component
+  const transformedStripeStats = stripeDashboard ? {
+    revenue: stripeDashboard.totalRevenue,
+    revenueGrowth: 0,
+    mrr: stripeDashboard.mrr,
+    mrrGrowth: 0,
+    activeSubscriptions: stripeDashboard.activeSubscriptions,
+    churnRate: 0,
+    avgRevenuePerUser: stripeDashboard.totalCustomers > 0 
+      ? stripeDashboard.totalRevenue / stripeDashboard.totalCustomers 
+      : 0,
+    totalCustomers: stripeDashboard.totalCustomers,
+  } : mockStripeData.stats;
+
+  const transformedStripeTransactions = stripeDashboard?.recentPayments?.map(p => ({
+    id: p.id,
+    customer: p.customerId || 'Unknown',
+    amount: p.amount / 100,
+    status: p.status === 'succeeded' ? 'paid' : p.status,
+    type: 'payment',
+    createdAt: new Date(p.created * 1000).toISOString(),
+  })) || mockStripeData.transactions;
+
+  const transformedStripeSubscriptions = stripeDashboard?.subscriptionsByStatus
+    ? Object.entries(stripeDashboard.subscriptionsByStatus).map(([name, value]) => ({
+        name,
+        value: value as number,
+      }))
+    : mockStripeData.planDistribution;
+
+  const transformedStripeRevenue = stripeDashboard?.revenueByMonth?.map(r => ({
+    name: r.month,
+    revenue: r.revenue,
+    mrr: stripeDashboard.mrr,
+  })) || mockStripeData.revenueHistory;
+
+  const handleSyncAll = async () => {
+    setIsSyncing(true);
+    try {
+      await Promise.all([
+        refetchHubspot(),
+        refetchStripe(),
+      ]);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // Update integrations status based on live API checks
+  const updatedIntegrations = integrations.map(integration => {
+    if (integration.id === 'hubspot') {
+      return {
+        ...integration,
+        connected: hubspotStatus?.connected || false,
+        lastSync: hubspotStatus?.connected ? 'Just now' : undefined,
+      };
+    }
+    if (integration.id === 'stripe') {
+      return {
+        ...integration,
+        connected: stripeStatus?.connected || false,
+        lastSync: stripeStatus?.connected ? 'Just now' : undefined,
+      };
+    }
+    return integration;
+  });
 
   return (
     <div className="space-y-6">
@@ -223,9 +401,15 @@ export default function IntegrationsPage() {
             Connect and manage your business tools
           </p>
         </div>
-        <Button variant="outline" size="sm" className="mt-4 md:mt-0">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Sync All
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="mt-4 md:mt-0"
+          onClick={handleSyncAll}
+          disabled={isSyncing}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+          {isSyncing ? 'Syncing...' : 'Sync All'}
         </Button>
       </div>
 
@@ -242,7 +426,7 @@ export default function IntegrationsPage() {
 
         <TabsContent value="overview" className="space-y-4 mt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {integrations.map((integration) => {
+            {updatedIntegrations.map((integration) => {
               const Icon = integration.icon;
               return (
                 <Card key={integration.id} className="relative overflow-hidden">
@@ -298,22 +482,52 @@ export default function IntegrationsPage() {
         </TabsContent>
 
         <TabsContent value="hubspot" className="mt-4">
+          {!hubspotStatus?.connected && (
+            <Card className="mb-4 border-linear-warning/50 bg-linear-warning/10">
+              <CardContent className="p-4 flex items-center gap-3">
+                <AlertCircle className="h-5 w-5 text-linear-warning" />
+                <div>
+                  <p className="text-sm text-white">HubSpot not connected</p>
+                  <p className="text-xs text-linear-text-secondary">Connect your HubSpot account to see live data</p>
+                </div>
+                <Link href="/integrations/hubspot" className="ml-auto">
+                  <Button size="sm" variant="outline">Connect</Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
           <HubSpotDashboard 
-            stats={mockHubSpotData.stats}
-            contacts={mockHubSpotData.contacts}
-            deals={mockHubSpotData.deals}
-            pipelineData={mockHubSpotData.pipelineData}
+            stats={transformedHubspotStats}
+            contacts={transformedHubspotContacts}
+            deals={transformedHubspotDeals}
+            pipelineData={transformedHubspotPipeline}
             activityHistory={mockHubSpotData.activityHistory}
+            isLoading={hubspotLoading}
           />
         </TabsContent>
 
         <TabsContent value="stripe" className="mt-4">
+          {!stripeStatus?.connected && (
+            <Card className="mb-4 border-linear-warning/50 bg-linear-warning/10">
+              <CardContent className="p-4 flex items-center gap-3">
+                <AlertCircle className="h-5 w-5 text-linear-warning" />
+                <div>
+                  <p className="text-sm text-white">Stripe not connected</p>
+                  <p className="text-xs text-linear-text-secondary">Connect your Stripe account to see live data</p>
+                </div>
+                <Link href="/integrations/stripe" className="ml-auto">
+                  <Button size="sm" variant="outline">Connect</Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
           <StripeDashboard 
-            stats={mockStripeData.stats}
-            transactions={mockStripeData.transactions}
+            stats={transformedStripeStats}
+            transactions={transformedStripeTransactions}
             subscriptions={mockStripeData.subscriptions}
-            revenueHistory={mockStripeData.revenueHistory}
-            planDistribution={mockStripeData.planDistribution}
+            revenueHistory={transformedStripeRevenue}
+            planDistribution={transformedStripeSubscriptions}
+            isLoading={stripeLoading}
           />
         </TabsContent>
 
