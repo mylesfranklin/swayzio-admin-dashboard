@@ -6,11 +6,14 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatCurrency(amount: number, currency = "usd"): string {
+export function formatCurrency(amount: number, currency = "USD"): string {
+  const currencyCode = typeof currency === "string" ? currency.toUpperCase() : "USD";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: currency.toUpperCase(),
-  }).format(amount / 100);
+    currency: currencyCode,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
 }
 
 export function formatDate(date: string | number | Date): string {

@@ -10,9 +10,7 @@ import {
   Mail, 
   MousePointer,
   TrendingUp,
-  Send,
   FileText,
-  Tag,
 } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { formatDistanceToNow } from "date-fns";
