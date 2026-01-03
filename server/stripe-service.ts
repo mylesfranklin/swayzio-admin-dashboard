@@ -125,13 +125,12 @@ export class StripeService {
       const stripe = await getUncachableStripeClient();
       const subscriptions = await stripe.subscriptions.list({ 
         limit,
-        expand: ['data.items.data.price.product']
+        expand: ['data.items.data.price']
       });
       
       return subscriptions.data.map((sub) => {
         const item = sub.items.data[0];
         const price = item?.price;
-        const product = price?.product;
         
         return {
           id: sub.id,
@@ -141,7 +140,7 @@ export class StripeService {
           currentPeriodEnd: sub.current_period_end,
           planAmount: price?.unit_amount || 0,
           planInterval: price?.recurring?.interval || 'month',
-          planName: typeof product === 'object' && product !== null ? (product as any).name : 'Unknown Plan',
+          planName: price?.nickname || `Plan ${price?.id?.slice(-8) || 'Unknown'}`,
           cancelAtPeriodEnd: sub.cancel_at_period_end,
           created: sub.created
         };
