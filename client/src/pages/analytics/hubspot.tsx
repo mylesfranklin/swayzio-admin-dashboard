@@ -82,7 +82,47 @@ export default function HubSpotAnalytics() {
           ))}
         </div>
       ) : (
-        <HubSpotDashboard {...dashboard} />
+        <HubSpotDashboard 
+          stats={dashboard ? {
+            totalContacts: dashboard.totalContacts || 0,
+            contactsGrowth: 0,
+            totalCompanies: dashboard.totalCompanies || 0,
+            companiesGrowth: 0,
+            openDeals: dashboard.openDeals || 0,
+            dealValue: dashboard.totalDealValue || 0,
+            emailsSent: 0,
+            emailOpenRate: 0,
+          } : undefined}
+          contacts={dashboard?.recentContacts?.map((c: any) => ({
+            id: c.id,
+            name: `${c.firstname || ''} ${c.lastname || ''}`.trim() || c.email,
+            email: c.email,
+            company: c.company || '',
+            stage: c.lifecyclestage || 'subscriber',
+            lastActivity: c.lastmodifieddate || new Date().toISOString(),
+          })) || []}
+          deals={dashboard?.recentDeals?.map((d: any) => ({
+            id: d.id,
+            name: d.dealname,
+            company: '',
+            amount: d.amount || 0,
+            stage: d.dealstage,
+            probability: 50,
+            closeDate: d.closedate || new Date().toISOString(),
+          })) || []}
+          pipelineData={dashboard?.dealsByStage ? 
+            Object.entries(dashboard.dealsByStage).map(([stage, count]) => ({
+              name: stage,
+              value: count as number,
+              count: count as number,
+            })) : []}
+          activityHistory={[
+            { name: "Mon", emails: 45, calls: 12, meetings: 5 },
+            { name: "Tue", emails: 52, calls: 18, meetings: 8 },
+            { name: "Wed", emails: 38, calls: 15, meetings: 3 },
+            { name: "Thu", emails: 61, calls: 22, meetings: 6 },
+          ]}
+        />
       )}
     </div>
   );

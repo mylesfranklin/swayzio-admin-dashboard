@@ -82,7 +82,34 @@ export default function StripeAnalytics() {
           ))}
         </div>
       ) : (
-        <StripeDashboard {...dashboard} />
+        <StripeDashboard 
+          stats={dashboard ? {
+            revenue: dashboard.totalRevenue || 0,
+            revenueGrowth: 0,
+            mrr: dashboard.mrr || 0,
+            mrrGrowth: 0,
+            activeSubscriptions: dashboard.activeSubscriptions || 0,
+            churnRate: 0,
+            avgRevenuePerUser: dashboard.totalCustomers > 0 ? (dashboard.totalRevenue || 0) / dashboard.totalCustomers : 0,
+            totalCustomers: dashboard.totalCustomers || 0,
+          } : undefined}
+          transactions={dashboard?.recentPayments?.map((p: any) => ({
+            id: p.id,
+            customer: p.customerId || 'Unknown',
+            amount: p.amount / 100,
+            status: p.status === 'succeeded' ? 'paid' : p.status,
+            type: 'payment',
+            createdAt: new Date(p.created * 1000).toISOString(),
+          })) || []}
+          subscriptions={[]}
+          revenueHistory={dashboard?.revenueByMonth?.map((m: any) => ({
+            name: m.month,
+            revenue: m.revenue,
+            mrr: dashboard.mrr || 0,
+          })) || []}
+          planDistribution={dashboard?.subscriptionsByStatus ? 
+            Object.entries(dashboard.subscriptionsByStatus).map(([name, value]) => ({ name, value: value as number })) : []}
+        />
       )}
     </div>
   );

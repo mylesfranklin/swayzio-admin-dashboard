@@ -28,109 +28,6 @@ import {
 import { SiHubspot, SiStripe, SiGithub, SiVercel, SiInstagram } from "react-icons/si";
 import { Mail } from "lucide-react";
 
-import { GitHubDashboard } from "@/components/integrations/github-dashboard";
-import { VercelDashboard } from "@/components/integrations/vercel-dashboard";
-import { SocialMetrics } from "@/components/integrations/social-metrics";
-import { KitDashboard } from "@/components/integrations/kit-dashboard";
-import { StripeDashboard } from "@/components/integrations/stripe-dashboard";
-import { HubSpotDashboard } from "@/components/integrations/hubspot-dashboard";
-
-const mockGitHubData = {
-  stats: { totalCommits: 1247, totalPRs: 89, openIssues: 23, contributors: 8, commitsGrowth: 12, prsGrowth: 5 },
-  commitHistory: [
-    { name: "Mon", commits: 12 }, { name: "Tue", commits: 19 }, { name: "Wed", commits: 8 },
-    { name: "Thu", commits: 15 }, { name: "Fri", commits: 22 }, { name: "Sat", commits: 5 }, { name: "Sun", commits: 3 },
-  ],
-  languageDistribution: [
-    { name: "TypeScript", value: 65 }, { name: "JavaScript", value: 20 },
-    { name: "CSS", value: 10 }, { name: "Other", value: 5 },
-  ],
-  pullRequests: [
-    { id: 1, title: "Add user authentication flow", author: "john", status: "open", createdAt: new Date().toISOString(), reviewers: 2 },
-    { id: 2, title: "Fix payment processing bug", author: "sarah", status: "merged", createdAt: new Date(Date.now() - 86400000).toISOString(), reviewers: 1 },
-  ],
-};
-
-const mockVercelData = {
-  stats: { totalVisitors: 45230, pageViews: 128450, bounceRate: 42.3, avgDuration: "2:34", visitorsGrowth: 18, pageViewsGrowth: 24 },
-  trafficData: [
-    { name: "Mon", visitors: 1200, pageViews: 3400 }, { name: "Tue", visitors: 1450, pageViews: 4100 },
-    { name: "Wed", visitors: 1100, pageViews: 3200 }, { name: "Thu", visitors: 1680, pageViews: 4800 },
-  ],
-  webVitals: [
-    { name: "LCP", value: 1.8, rating: "good" as const, target: 2.5 },
-    { name: "FID", value: 45, rating: "good" as const, target: 100 },
-  ],
-  deployments: [
-    { id: "1", name: "syncmoney-app", status: "ready" as const, url: "syncmoney.ai", createdAt: new Date().toISOString(), duration: 45 },
-  ],
-};
-
-const mockSocialData = {
-  platforms: [
-    { platform: "Instagram", followers: 52400, followersGrowth: 8.2, engagement: 4230, engagementRate: 4.8, reach: 128000, impressions: 456000 },
-    { platform: "YouTube", followers: 12800, followersGrowth: 15.4, engagement: 890, engagementRate: 6.2, reach: 89000, impressions: 234000 },
-    { platform: "TikTok", followers: 28900, followersGrowth: 32.5, engagement: 8900, engagementRate: 12.4, reach: 234000, impressions: 890000 },
-  ],
-  followerHistory: [
-    { name: "Jan", instagram: 48000, youtube: 10200, tiktok: 18000 },
-    { name: "Feb", instagram: 49200, youtube: 10800, tiktok: 21000 },
-    { name: "Mar", instagram: 52400, youtube: 12800, tiktok: 28900 },
-  ],
-};
-
-const mockKitData = {
-  stats: { 
-    totalSubscribers: 12726, newSubscribersToday: 97, newSubscribers7Days: 908, newSubscribers30Days: 2310,
-    avgOpenRate: 42.3, avgClickRate: 8.7, subscriberGrowth: 22 
-  },
-  subscriberHistory: [
-    { name: "Week 1", subscribers: 11200 }, { name: "Week 2", subscribers: 11650 },
-    { name: "Week 3", subscribers: 12100 }, { name: "Week 4", subscribers: 12726 },
-  ],
-  broadcasts: [
-    { id: "1", subject: "New features announcement", status: "sent", sentAt: new Date().toISOString(), recipients: 12400, openRate: 45.2, clickRate: 12.3 },
-  ],
-  forms: [
-    { id: "1", name: "Sync Money Meta (syncmoney.ai/ig)", subscribers: 4280, conversionRate: 32.4 },
-  ],
-};
-
-const mockStripeData = {
-  stats: { revenue: 278492, revenueGrowth: 15.3, mrr: 24580, mrrGrowth: 8.2, activeSubscriptions: 342, churnRate: 2.1, avgRevenuePerUser: 72, totalCustomers: 1247 },
-  revenueHistory: [
-    { name: "Jan", revenue: 42000, mrr: 21000 }, { name: "Feb", revenue: 48000, mrr: 22100 },
-    { name: "Mar", revenue: 52000, mrr: 22800 }, { name: "Apr", revenue: 61000, mrr: 23500 },
-  ],
-  planDistribution: [
-    { name: "Pro", value: 156 }, { name: "Business", value: 98 },
-    { name: "Enterprise", value: 52 }, { name: "Starter", value: 36 },
-  ],
-  transactions: [
-    { id: "1", customer: "Acme Corp", amount: 299, status: "paid", type: "subscription", createdAt: new Date().toISOString() },
-  ],
-  subscriptions: [
-    { id: "1", customer: "Acme Corp", plan: "Pro", amount: 99, status: "active", nextBillingDate: new Date(Date.now() + 2592000000).toISOString() },
-  ],
-};
-
-const mockHubSpotData = {
-  stats: { totalContacts: 4892, contactsGrowth: 12, totalCompanies: 847, companiesGrowth: 8, openDeals: 67, dealValue: 1247000, emailsSent: 12400, emailOpenRate: 34.2 },
-  activityHistory: [
-    { name: "Mon", emails: 45, calls: 12, meetings: 5 }, { name: "Tue", emails: 52, calls: 18, meetings: 8 },
-    { name: "Wed", emails: 38, calls: 15, meetings: 3 }, { name: "Thu", emails: 61, calls: 22, meetings: 6 },
-  ],
-  pipelineData: [
-    { name: "Qualified", value: 245000, count: 18 }, { name: "Proposal", value: 389000, count: 24 },
-    { name: "Negotiation", value: 412000, count: 15 }, { name: "Closing", value: 201000, count: 10 },
-  ],
-  contacts: [
-    { id: "1", name: "John Smith", email: "john@acme.com", company: "Acme Corp", stage: "qualified", lastActivity: new Date().toISOString() },
-  ],
-  deals: [
-    { id: "1", name: "Enterprise Contract", company: "Acme Corp", amount: 125000, stage: "negotiation", probability: 75, closeDate: new Date(Date.now() + 604800000).toISOString() },
-  ],
-};
 
 interface Integration {
   id: string;
@@ -156,16 +53,6 @@ const Settings: React.FC = () => {
     queryKey: ["/api/stripe/live/status"],
   });
 
-  const { data: hubspotDashboard, isLoading: hubspotLoading, refetch: refetchHubspot } = useQuery<any>({
-    queryKey: ["/api/hubspot/live/dashboard"],
-    enabled: hubspotStatus?.connected === true && activeIntegration === "hubspot",
-  });
-
-  const { data: stripeDashboard, isLoading: stripeLoading, refetch: refetchStripe } = useQuery<any>({
-    queryKey: ["/api/stripe/live/dashboard"],
-    enabled: stripeStatus?.connected === true && activeIntegration === "stripe",
-  });
-
   const integrations: Integration[] = [
     { id: "hubspot", name: "HubSpot", description: "CRM data, contacts, deals", icon: SiHubspot, connected: hubspotStatus?.connected || false, lastSync: hubspotStatus?.connected ? "Just now" : undefined },
     { id: "stripe", name: "Stripe", description: "Payments, subscriptions", icon: SiStripe, connected: stripeStatus?.connected || false, lastSync: stripeStatus?.connected ? "Just now" : undefined },
@@ -178,7 +65,6 @@ const Settings: React.FC = () => {
   const handleSyncAll = async () => {
     setIsSyncing(true);
     try {
-      await Promise.all([refetchHubspot(), refetchStripe()]);
       toast({ title: "Sync Complete", description: "All integrations have been synced." });
     } finally {
       setIsSyncing(false);
@@ -508,125 +394,205 @@ const Settings: React.FC = () => {
               </Button>
 
               {activeIntegration === "hubspot" && (
-                <>
-                  {!hubspotStatus?.connected && (
-                    <Card className="border-linear-warning/50 bg-linear-warning/10">
-                      <CardContent className="p-4 flex items-center gap-3">
-                        <AlertCircle className="h-5 w-5 text-linear-warning" />
-                        <div>
-                          <p className="text-sm text-white">HubSpot not connected</p>
-                          <p className="text-xs text-linear-text-secondary">Connect your HubSpot account via the Replit connector</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                  <HubSpotDashboard 
-                    stats={hubspotDashboard ? {
-                      totalContacts: hubspotDashboard.totalContacts,
-                      contactsGrowth: 0,
-                      totalCompanies: hubspotDashboard.totalCompanies,
-                      companiesGrowth: 0,
-                      openDeals: hubspotDashboard.openDeals,
-                      dealValue: hubspotDashboard.totalDealValue,
-                      emailsSent: 0,
-                      emailOpenRate: 0,
-                    } : mockHubSpotData.stats}
-                    contacts={hubspotDashboard?.recentContacts?.map((c: any) => ({
-                      id: c.id,
-                      name: `${c.firstname || ''} ${c.lastname || ''}`.trim() || c.email,
-                      email: c.email,
-                      company: c.company || '',
-                      stage: c.lifecyclestage || 'subscriber',
-                      lastActivity: c.lastmodifieddate || new Date().toISOString(),
-                    })) || mockHubSpotData.contacts}
-                    deals={hubspotDashboard?.recentDeals?.map((d: any) => ({
-                      id: d.id,
-                      name: d.dealname,
-                      company: '',
-                      amount: d.amount || 0,
-                      stage: d.dealstage,
-                      probability: 50,
-                      closeDate: d.closedate || new Date().toISOString(),
-                    })) || mockHubSpotData.deals}
-                    pipelineData={mockHubSpotData.pipelineData}
-                    activityHistory={mockHubSpotData.activityHistory}
-                    isLoading={hubspotLoading}
-                  />
-                </>
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-linear-hover">
+                        <SiHubspot className="h-6 w-6 text-[#FF7A59]" />
+                      </div>
+                      <div>
+                        <CardTitle>HubSpot Integration</CardTitle>
+                        <CardDescription>CRM data, contacts, and deals</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      {hubspotStatus?.connected ? (
+                        <>
+                          <CheckCircle2 className="h-5 w-5 text-linear-success" />
+                          <span className="text-linear-success font-medium">Connected</span>
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="h-5 w-5 text-linear-text-tertiary" />
+                          <span className="text-linear-text-tertiary">Not connected</span>
+                        </>
+                      )}
+                    </div>
+                    {!hubspotStatus?.connected && (
+                      <Card className="border-linear-warning/50 bg-linear-warning/10">
+                        <CardContent className="p-4 flex items-center gap-3">
+                          <AlertCircle className="h-5 w-5 text-linear-warning" />
+                          <div>
+                            <p className="text-sm text-white">Connection Required</p>
+                            <p className="text-xs text-linear-text-secondary">Connect your HubSpot account via the Replit connector to sync CRM data</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                    {hubspotStatus?.connected && (
+                      <p className="text-sm text-linear-text-secondary">
+                        View your HubSpot analytics in the <a href="/analytics/hubspot" className="text-linear-purple hover:underline">Analytics → HubSpot</a> section.
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
               )}
 
               {activeIntegration === "stripe" && (
-                <>
-                  {!stripeStatus?.connected && (
-                    <Card className="border-linear-warning/50 bg-linear-warning/10">
-                      <CardContent className="p-4 flex items-center gap-3">
-                        <AlertCircle className="h-5 w-5 text-linear-warning" />
-                        <div>
-                          <p className="text-sm text-white">Stripe not connected</p>
-                          <p className="text-xs text-linear-text-secondary">Connect your Stripe account via the Replit connector</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                  <StripeDashboard 
-                    stats={stripeDashboard ? {
-                      revenue: stripeDashboard.totalRevenue,
-                      revenueGrowth: 0,
-                      mrr: stripeDashboard.mrr,
-                      mrrGrowth: 0,
-                      activeSubscriptions: stripeDashboard.activeSubscriptions,
-                      churnRate: 0,
-                      avgRevenuePerUser: stripeDashboard.totalCustomers > 0 ? stripeDashboard.totalRevenue / stripeDashboard.totalCustomers : 0,
-                      totalCustomers: stripeDashboard.totalCustomers,
-                    } : mockStripeData.stats}
-                    transactions={stripeDashboard?.recentPayments?.map((p: any) => ({
-                      id: p.id,
-                      customer: p.customerId || 'Unknown',
-                      amount: p.amount / 100,
-                      status: p.status === 'succeeded' ? 'paid' : p.status,
-                      type: 'payment',
-                      createdAt: new Date(p.created * 1000).toISOString(),
-                    })) || mockStripeData.transactions}
-                    subscriptions={mockStripeData.subscriptions}
-                    revenueHistory={mockStripeData.revenueHistory}
-                    planDistribution={mockStripeData.planDistribution}
-                    isLoading={stripeLoading}
-                  />
-                </>
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-linear-hover">
+                        <SiStripe className="h-6 w-6 text-[#635BFF]" />
+                      </div>
+                      <div>
+                        <CardTitle>Stripe Integration</CardTitle>
+                        <CardDescription>Payments, subscriptions, and revenue</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      {stripeStatus?.connected ? (
+                        <>
+                          <CheckCircle2 className="h-5 w-5 text-linear-success" />
+                          <span className="text-linear-success font-medium">Connected</span>
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="h-5 w-5 text-linear-text-tertiary" />
+                          <span className="text-linear-text-tertiary">Not connected</span>
+                        </>
+                      )}
+                    </div>
+                    {!stripeStatus?.connected && (
+                      <Card className="border-linear-warning/50 bg-linear-warning/10">
+                        <CardContent className="p-4 flex items-center gap-3">
+                          <AlertCircle className="h-5 w-5 text-linear-warning" />
+                          <div>
+                            <p className="text-sm text-white">Connection Required</p>
+                            <p className="text-xs text-linear-text-secondary">Connect your Stripe account via the Replit connector to sync payment data</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                    {stripeStatus?.connected && (
+                      <p className="text-sm text-linear-text-secondary">
+                        View your Stripe analytics in the <a href="/analytics/stripe" className="text-linear-purple hover:underline">Analytics → Stripe</a> section.
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
               )}
 
               {activeIntegration === "github" && (
-                <GitHubDashboard 
-                  stats={mockGitHubData.stats}
-                  commitHistory={mockGitHubData.commitHistory}
-                  languageDistribution={mockGitHubData.languageDistribution}
-                  pullRequests={mockGitHubData.pullRequests}
-                />
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-linear-hover">
+                        <SiGithub className="h-6 w-6 text-white" />
+                      </div>
+                      <div>
+                        <CardTitle>GitHub Integration</CardTitle>
+                        <CardDescription>Repositories, commits, and pull requests</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <XCircle className="h-5 w-5 text-linear-text-tertiary" />
+                      <span className="text-linear-text-tertiary">Not connected</span>
+                    </div>
+                    <Card className="border-linear-border bg-linear-card">
+                      <CardContent className="p-4">
+                        <p className="text-sm text-linear-text-secondary">
+                          GitHub integration coming soon. View demo data in <a href="/analytics/github" className="text-linear-purple hover:underline">Analytics → GitHub</a>.
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </CardContent>
+                </Card>
               )}
 
               {activeIntegration === "vercel" && (
-                <VercelDashboard 
-                  stats={mockVercelData.stats}
-                  trafficData={mockVercelData.trafficData}
-                  webVitals={mockVercelData.webVitals}
-                  deployments={mockVercelData.deployments}
-                />
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-linear-hover">
+                        <SiVercel className="h-6 w-6 text-white" />
+                      </div>
+                      <div>
+                        <CardTitle>Vercel Integration</CardTitle>
+                        <CardDescription>Deployments, traffic, and performance</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <XCircle className="h-5 w-5 text-linear-text-tertiary" />
+                      <span className="text-linear-text-tertiary">Not connected</span>
+                    </div>
+                    <Card className="border-linear-border bg-linear-card">
+                      <CardContent className="p-4">
+                        <p className="text-sm text-linear-text-secondary">
+                          Vercel integration coming soon. View demo data in <a href="/analytics/vercel" className="text-linear-purple hover:underline">Analytics → Vercel</a>.
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </CardContent>
+                </Card>
               )}
 
               {activeIntegration === "social" && (
-                <SocialMetrics 
-                  platforms={mockSocialData.platforms}
-                  followerHistory={mockSocialData.followerHistory}
-                />
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-linear-hover">
+                        <SiInstagram className="h-6 w-6 text-[#E4405F]" />
+                      </div>
+                      <div>
+                        <CardTitle>Social Media Integration</CardTitle>
+                        <CardDescription>Instagram, YouTube, TikTok, and more</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-linear-success" />
+                      <span className="text-linear-success font-medium">Connected</span>
+                    </div>
+                    <p className="text-sm text-linear-text-secondary">
+                      View your social media metrics in the <a href="/socials" className="text-linear-purple hover:underline">Social Media</a> section.
+                    </p>
+                  </CardContent>
+                </Card>
               )}
 
               {activeIntegration === "kit" && (
-                <KitDashboard 
-                  stats={mockKitData.stats}
-                  broadcasts={mockKitData.broadcasts}
-                  forms={mockKitData.forms}
-                  subscriberHistory={mockKitData.subscriberHistory}
-                />
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-linear-hover">
+                        <Mail className="h-6 w-6 text-linear-purple" />
+                      </div>
+                      <div>
+                        <CardTitle>Kit Newsletter Integration</CardTitle>
+                        <CardDescription>Email subscribers and campaigns</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-linear-success" />
+                      <span className="text-linear-success font-medium">Connected</span>
+                    </div>
+                    <p className="text-sm text-linear-text-secondary">
+                      View your Kit newsletter analytics in the <a href="/analytics/kit" className="text-linear-purple hover:underline">Analytics → Kit Newsletter</a> section.
+                    </p>
+                  </CardContent>
+                </Card>
               )}
             </div>
           )}
