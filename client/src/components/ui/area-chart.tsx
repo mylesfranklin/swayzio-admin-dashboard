@@ -116,8 +116,19 @@ export function AreaChart({
             stroke={line.stroke}
             fill={`url(#gradient-${line.dataKey})`}
             strokeWidth={2}
-            activeDot={{ r: 4, fill: line.stroke, stroke: '#17181a', strokeWidth: 2 }}
+            activeDot={{ 
+              r: 5, 
+              fill: line.stroke, 
+              stroke: '#17181a', 
+              strokeWidth: 2,
+              style: { 
+                filter: `drop-shadow(0 0 6px ${line.stroke}40)` 
+              }
+            }}
+            dot={false}
             name={line.name || line.dataKey}
+            animationDuration={1200}
+            animationEasing="ease-out"
           />
         ))}
       </RechartAreaChart>

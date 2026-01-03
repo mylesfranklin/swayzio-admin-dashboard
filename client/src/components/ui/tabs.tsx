@@ -12,7 +12,7 @@ const TabsList = React.forwardRef<
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      "inline-flex h-8 items-center gap-1 rounded bg-linear-card p-1 text-linear-text-secondary",
+      "inline-flex h-10 items-center gap-0.5 rounded-lg bg-linear-card/50 p-1 text-linear-text-secondary border border-linear-border/50",
       className
     )}
     {...props}
@@ -27,7 +27,13 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      "inline-flex items-center justify-center whitespace-nowrap rounded px-3 py-1 text-sm font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-linear-purple focus-visible:ring-offset-2 focus-visible:ring-offset-linear-base disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-linear-border data-[state=active]:text-white data-[state=inactive]:hover:bg-linear-hover data-[state=inactive]:hover:text-white",
+      "inline-flex items-center justify-center whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium",
+      "transition-all duration-200 ease-out",
+      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-linear-purple focus-visible:ring-offset-2 focus-visible:ring-offset-linear-base",
+      "disabled:pointer-events-none disabled:opacity-50",
+      "data-[state=active]:bg-linear-border data-[state=active]:text-white data-[state=active]:shadow-sm",
+      "data-[state=inactive]:hover:bg-linear-hover/50 data-[state=inactive]:hover:text-white",
+      "select-none",
       className
     )}
     {...props}
@@ -42,7 +48,8 @@ const TabsContent = React.forwardRef<
   <TabsPrimitive.Content
     ref={ref}
     className={cn(
-      "mt-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-linear-purple focus-visible:ring-offset-2 focus-visible:ring-offset-linear-base",
+      "mt-4 animate-fade-in-up",
+      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-linear-purple focus-visible:ring-offset-2 focus-visible:ring-offset-linear-base",
       className
     )}
     {...props}
