@@ -1,15 +1,13 @@
-import React from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowUpRight, ExternalLink } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, ExternalLink, TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 interface KitNewsletterProps {
   className?: string;
 }
 
 export function KitNewsletter({ className }: KitNewsletterProps) {
-  // Data from the screenshot
   const newsletterData = {
     subscribers: {
       today: 97,
@@ -28,98 +26,76 @@ export function KitNewsletter({ className }: KitNewsletterProps) {
     ]
   };
 
-  // Calculate total percentage on the pie chart
   const totalSubscribers = newsletterData.topForms.reduce((acc, form) => acc + form.subscribers, 0);
+  const colors = ['#5e6ad2', '#59a200', '#f2c94c', '#f2994a', '#eb5757'];
   
   return (
     <Card className={className}>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-xl font-bold">Kit Newsletter</CardTitle>
-            <CardDescription>Subscriber growth and conversion metrics</CardDescription>
-          </div>
-          <Button variant="outline" size="sm" className="gap-1">
-            <span>Go to subscribers</span>
-            <ArrowUpRight className="h-4 w-4" />
-          </Button>
-        </div>
+      <CardHeader className="p-4 border-b border-linear-border flex flex-row items-center justify-between">
+        <CardTitle className="text-sm font-medium text-white">Kit Newsletter</CardTitle>
+        <Button variant="ghost" size="sm" className="text-xs text-linear-text-secondary hover:text-white" data-testid="button-kit-subscribers">
+          <span>Go to subscribers</span>
+          <ExternalLink className="h-3 w-3 ml-1" />
+        </Button>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Subscribers metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="bg-slate-50 border-slate-200">
-            <CardContent className="p-4">
-              <div className="text-sm font-medium text-slate-500">Today</div>
-              <div className="text-2xl font-bold mt-1">{newsletterData.subscribers.today}</div>
-              <div className="text-xs text-slate-500 mt-1">New subscribers</div>
-            </CardContent>
-          </Card>
+      <CardContent className="p-4 space-y-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="p-3 rounded-md bg-linear-hover border border-linear-border">
+            <p className="text-xs text-linear-text-secondary">Today</p>
+            <p className="text-xl font-semibold text-white mt-1">{newsletterData.subscribers.today}</p>
+            <p className="text-xs text-linear-text-tertiary mt-1">New subscribers</p>
+          </div>
           
-          <Card className="bg-slate-50 border-slate-200">
-            <CardContent className="p-4">
-              <div className="text-sm font-medium text-slate-500">Past 7 days</div>
-              <div className="flex items-end gap-2">
-                <div className="text-2xl font-bold">{newsletterData.subscribers.past7Days}</div>
-                <div className="text-xs font-medium text-green-600 mb-1 flex items-center">
-                  <ArrowUpRight className="h-3 w-3 inline mr-0.5" />
-                  {newsletterData.subscribers.past7DaysGrowth}%
-                </div>
-              </div>
-              <div className="text-xs text-slate-500 mt-1">New subscribers</div>
-            </CardContent>
-          </Card>
+          <div className="p-3 rounded-md bg-linear-hover border border-linear-border">
+            <p className="text-xs text-linear-text-secondary">Past 7 days</p>
+            <div className="flex items-end gap-2 mt-1">
+              <p className="text-xl font-semibold text-white">{newsletterData.subscribers.past7Days}</p>
+              <span className="text-xs font-medium text-linear-success flex items-center mb-0.5">
+                <TrendingUp className="h-3 w-3 mr-0.5" />
+                {newsletterData.subscribers.past7DaysGrowth}%
+              </span>
+            </div>
+            <p className="text-xs text-linear-text-tertiary mt-1">New subscribers</p>
+          </div>
           
-          <Card className="bg-slate-50 border-slate-200">
-            <CardContent className="p-4">
-              <div className="text-sm font-medium text-slate-500">Past 30 days</div>
-              <div className="flex items-end gap-2">
-                <div className="text-2xl font-bold">{newsletterData.subscribers.past30Days}</div>
-                <div className="text-xs font-medium text-green-600 mb-1 flex items-center">
-                  <ArrowUpRight className="h-3 w-3 inline mr-0.5" />
-                  {newsletterData.subscribers.past30DaysGrowth}%
-                </div>
-              </div>
-              <div className="text-xs text-slate-500 mt-1">New subscribers</div>
-            </CardContent>
-          </Card>
+          <div className="p-3 rounded-md bg-linear-hover border border-linear-border">
+            <p className="text-xs text-linear-text-secondary">Past 30 days</p>
+            <div className="flex items-end gap-2 mt-1">
+              <p className="text-xl font-semibold text-white">{newsletterData.subscribers.past30Days.toLocaleString()}</p>
+              <span className="text-xs font-medium text-linear-success flex items-center mb-0.5">
+                <TrendingUp className="h-3 w-3 mr-0.5" />
+                {newsletterData.subscribers.past30DaysGrowth}%
+              </span>
+            </div>
+            <p className="text-xs text-linear-text-tertiary mt-1">New subscribers</p>
+          </div>
           
-          <Card className="bg-slate-50 border-slate-200">
-            <CardContent className="p-4">
-              <div className="text-sm font-medium text-slate-500">Total</div>
-              <div className="text-2xl font-bold mt-1">{newsletterData.subscribers.total.toLocaleString()}</div>
-              <div className="text-xs text-slate-500 mt-1">Subscribers</div>
-            </CardContent>
-          </Card>
+          <div className="p-3 rounded-md bg-linear-hover border border-linear-border">
+            <p className="text-xs text-linear-text-secondary">Total</p>
+            <p className="text-xl font-semibold text-white mt-1">{newsletterData.subscribers.total.toLocaleString()}</p>
+            <p className="text-xs text-linear-text-tertiary mt-1">Subscribers</p>
+          </div>
         </div>
         
-        {/* Top forms and landing pages */}
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium">Top forms and landing pages</h3>
-            <Badge variant="outline" className="text-xs">Last 7 days</Badge>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-white">Top forms and landing pages</h3>
+            <Badge variant="secondary">Last 7 days</Badge>
           </div>
           
-          <div className="flex">
-            {/* Pie chart visualization */}
-            <div className="relative w-32 h-32 mr-4 flex-shrink-0">
+          <div className="flex gap-6">
+            <div className="relative w-28 h-28 flex-shrink-0">
               <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
-                {/* Create segments for each form */}
                 {newsletterData.topForms.map((form, index, array) => {
-                  // Calculate percentages and positions for pie segments
                   const percentage = (form.subscribers / totalSubscribers) * 100;
                   const previousPercentages = array
                     .slice(0, index)
                     .reduce((acc, prev) => acc + (prev.subscribers / totalSubscribers) * 100, 0);
                   
-                  // Arc parameters
                   const radius = 40;
                   const circumference = 2 * Math.PI * radius;
                   const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
                   const strokeDashoffset = `${(-(previousPercentages) / 100) * circumference}`;
-                  
-                  // Color assignment based on index
-                  const colors = ['#60a5fa', '#93c5fd', '#bfdbfe', '#dbeafe', '#f0f9ff'];
                   
                   return (
                     <circle
@@ -129,39 +105,47 @@ export function KitNewsletter({ className }: KitNewsletterProps) {
                       r={radius}
                       fill="none"
                       stroke={colors[index % colors.length]}
-                      strokeWidth="20"
+                      strokeWidth="18"
                       strokeDasharray={strokeDasharray}
                       strokeDashoffset={strokeDashoffset}
                     />
                   );
                 })}
-                <circle cx="50" cy="50" r="30" fill="white" />
+                <circle cx="50" cy="50" r="30" fill="#17181a" />
               </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-lg font-semibold text-white">{totalSubscribers}</span>
+              </div>
             </div>
             
-            {/* Form list */}
-            <div className="flex-grow space-y-2.5">
+            <div className="flex-grow space-y-2">
               {newsletterData.topForms.map((form, index) => (
-                <div key={index} className="flex justify-between items-center text-sm">
-                  <div className="flex items-center">
-                    <div className={`h-3 w-3 rounded-full mr-2 ${
-                      index === 0 ? 'bg-blue-400' :
-                      index === 1 ? 'bg-blue-300' :
-                      index === 2 ? 'bg-blue-200' :
-                      index === 3 ? 'bg-blue-100' : 'bg-blue-50'
-                    }`}></div>
-                    <span className="truncate max-w-[200px]">{form.name}</span>
+                <div key={index} className="flex justify-between items-center text-sm py-1 hover:bg-linear-hover rounded px-2 -mx-2 transition-colors">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div 
+                      className="h-2.5 w-2.5 rounded-full flex-shrink-0" 
+                      style={{ backgroundColor: colors[index % colors.length] }}
+                    />
+                    <span className="truncate text-linear-text-secondary">{form.name}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span>{form.subscribers}</span>
+                  <div className="flex items-center gap-3 flex-shrink-0 ml-2">
+                    <span className="text-white font-medium">{form.subscribers}</span>
                     {form.growth > 0 && (
-                      <span className="text-xs text-green-600">↑ {form.growth}%</span>
+                      <span className="text-xs text-linear-success flex items-center">
+                        <ArrowUpRight className="h-3 w-3" />
+                        {form.growth}%
+                      </span>
                     )}
                     {form.growth < 0 && (
-                      <span className="text-xs text-red-600">↓ {Math.abs(form.growth)}%</span>
+                      <span className="text-xs text-linear-error flex items-center">
+                        <ArrowDownRight className="h-3 w-3" />
+                        {Math.abs(form.growth)}%
+                      </span>
                     )}
                     {form.growth === 0 && (
-                      <span className="text-xs text-gray-400">—</span>
+                      <span className="text-xs text-linear-text-tertiary flex items-center">
+                        <Minus className="h-3 w-3" />
+                      </span>
                     )}
                   </div>
                 </div>

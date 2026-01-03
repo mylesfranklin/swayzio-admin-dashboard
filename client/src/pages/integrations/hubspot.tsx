@@ -92,8 +92,8 @@ const HubSpotIntegration: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">HubSpot Integration</h2>
-        <p className="text-gray-500 mt-1">
+        <h1 className="text-2xl font-bold text-white">HubSpot Integration</h1>
+        <p className="text-linear-text-secondary text-sm mt-1">
           Connect and configure your HubSpot integration to sync customer data
         </p>
       </div>

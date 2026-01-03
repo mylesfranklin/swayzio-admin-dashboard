@@ -35,14 +35,14 @@ const SyncStatusPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Sync Status</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-white">Sync Status</h1>
+          <p className="mt-1 text-sm text-linear-text-secondary">
             Monitor and manage synchronization between HubSpot and Stripe
           </p>
         </div>
-        <div className="mt-4 md:mt-0 flex items-center space-x-4">
+        <div className="mt-4 md:mt-0 flex items-center gap-2">
           <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[150px]">
               <SelectValue placeholder="Filter" />
             </SelectTrigger>
             <SelectContent>

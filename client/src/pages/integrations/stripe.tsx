@@ -92,8 +92,8 @@ const StripeIntegration: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Stripe Integration</h2>
-        <p className="text-gray-500 mt-1">
+        <h1 className="text-2xl font-bold text-white">Stripe Integration</h1>
+        <p className="text-linear-text-secondary text-sm mt-1">
           Connect and configure your Stripe integration to sync payment and subscription data
         </p>
       </div>

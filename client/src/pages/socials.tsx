@@ -60,23 +60,23 @@ const getPlatformIcon = (platform: string) => {
   }
 };
 
-// Helper function to get platform color
+// Helper function to get platform color (using Linear-compatible palette)
 const getPlatformColor = (platform: string) => {
   switch (platform) {
     case "instagram":
-      return "#E1306C";
+      return "#f178b6";
     case "facebook":
-      return "#4267B2";
+      return "#5e6ad2";
     case "twitter":
-      return "#1DA1F2";
+      return "#56ccf2";
     case "linkedin":
-      return "#0077B5";
+      return "#2f80ed";
     case "youtube":
-      return "#FF0000";
+      return "#eb5757";
     case "google":
-      return "#4285F4";
+      return "#f2994a";
     default:
-      return "#6E56CF";
+      return "#5e6ad2";
   }
 };
 
@@ -290,87 +290,80 @@ export default function SocialsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Social Media Dashboard</h1>
-          <p className="text-muted-foreground">Track and analyze your social media performance and ad campaigns</p>
+          <h1 className="text-2xl font-bold text-white">Social Media</h1>
+          <p className="text-linear-text-secondary text-sm mt-1">Track and analyze your social media performance and ad campaigns</p>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-2">
           <Select value={timeframe} onValueChange={setTimeframe}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[150px] h-8 bg-linear-card border-linear-border text-white text-sm">
               <SelectValue placeholder="Select timeframe" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-linear-card border-linear-border">
               <SelectItem value="7days">Last 7 days</SelectItem>
               <SelectItem value="30days">Last 30 days</SelectItem>
               <SelectItem value="90days">Last 90 days</SelectItem>
               <SelectItem value="year">Last year</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline">Export Report</Button>
+          <Button variant="outline" size="sm">Export Report</Button>
         </div>
       </div>
       
       {/* SyncMoney Featured Section */}
-      <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 overflow-hidden">
+      <Card className="bg-gradient-to-r from-linear-purple/10 to-linear-card border-linear-purple/30 overflow-hidden">
         <div className="flex flex-col md:flex-row gap-4">
-          <div className="p-6 md:w-2/3">
+          <div className="p-4 md:w-2/3">
             <div className="flex items-center gap-3">
-              <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-200">
-                Featured Brand
-              </Badge>
-              <h2 className="text-2xl font-bold text-blue-900">@syncmoney</h2>
+              <Badge variant="default">Featured Brand</Badge>
+              <h2 className="text-xl font-bold text-white">@syncmoney</h2>
             </div>
-            <p className="text-blue-700 mt-2 mb-4">Our flagship financial service brand with the largest following across all platforms</p>
+            <p className="text-linear-text-secondary text-sm mt-2 mb-4">Our flagship financial service brand with the largest following across all platforms</p>
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-white p-3 rounded-lg shadow-sm border border-blue-100">
-                <p className="text-sm text-blue-600 font-medium">Followers</p>
-                <p className="text-2xl font-bold text-blue-900">{data?.platforms?.instagram?.followers?.toLocaleString() || "50,000"}</p>
-                <p className="text-xs text-green-600">+{data?.platforms?.instagram?.growth || "2.3"}% growth</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+              <div className="bg-linear-hover p-3 rounded-md border border-linear-border">
+                <p className="text-xs text-linear-text-secondary">Followers</p>
+                <p className="text-xl font-semibold text-white mt-1">{data?.platforms?.instagram?.followers?.toLocaleString() || "50,000"}</p>
+                <p className="text-xs text-linear-success mt-1">+{data?.platforms?.instagram?.growth || "2.3"}% growth</p>
               </div>
-              <div className="bg-white p-3 rounded-lg shadow-sm border border-blue-100">
-                <p className="text-sm text-blue-600 font-medium">Eng. Rate</p>
-                <p className="text-2xl font-bold text-blue-900">{data?.platforms?.instagram?.engagementRate || "3.1"}%</p>
-                <p className="text-xs text-blue-600">Industry avg: 2.2%</p>
+              <div className="bg-linear-hover p-3 rounded-md border border-linear-border">
+                <p className="text-xs text-linear-text-secondary">Eng. Rate</p>
+                <p className="text-xl font-semibold text-white mt-1">{data?.platforms?.instagram?.engagementRate || "3.1"}%</p>
+                <p className="text-xs text-linear-text-tertiary mt-1">Industry avg: 2.2%</p>
               </div>
-              <div className="bg-white p-3 rounded-lg shadow-sm border border-blue-100">
-                <p className="text-sm text-blue-600 font-medium">Avg. Likes</p>
-                <p className="text-2xl font-bold text-blue-900">{data?.platforms?.instagram?.avgLikes?.toLocaleString() || "1,200"}</p>
-                <p className="text-xs text-blue-600">{data?.platforms?.instagram?.posts || "245"} posts</p>
+              <div className="bg-linear-hover p-3 rounded-md border border-linear-border">
+                <p className="text-xs text-linear-text-secondary">Avg. Likes</p>
+                <p className="text-xl font-semibold text-white mt-1">{data?.platforms?.instagram?.avgLikes?.toLocaleString() || "1,200"}</p>
+                <p className="text-xs text-linear-text-tertiary mt-1">{data?.platforms?.instagram?.posts || "245"} posts</p>
               </div>
-              <div className="bg-white p-3 rounded-lg shadow-sm border border-blue-100">
-                <p className="text-sm text-blue-600 font-medium">Ad Spend</p>
-                <p className="text-2xl font-bold text-blue-900">${(data?.advertising?.platforms?.instagram / 1000).toFixed(1) || "42.0"}k</p>
-                <p className="text-xs text-green-600">ROI: +{data?.advertising?.roiPercentage || "324"}%</p>
+              <div className="bg-linear-hover p-3 rounded-md border border-linear-border">
+                <p className="text-xs text-linear-text-secondary">Ad Spend</p>
+                <p className="text-xl font-semibold text-white mt-1">${(data?.advertising?.platforms?.instagram / 1000).toFixed(1) || "42.0"}k</p>
+                <p className="text-xs text-linear-success mt-1">ROI: +{data?.advertising?.roiPercentage || "324"}%</p>
               </div>
             </div>
             
             <div className="flex gap-2">
-              <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
-                View Analytics
-              </Button>
-              <Button variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-50">
-                Create Campaign
-              </Button>
+              <Button size="sm">View Analytics</Button>
+              <Button variant="outline" size="sm">Create Campaign</Button>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-blue-600 to-indigo-700 md:w-1/3 p-6 flex flex-col justify-center items-center text-white">
-            <h3 className="text-xl font-medium">Recent Growth</h3>
-            <div className="w-full h-36 mt-4">
+          <div className="bg-linear-purple md:w-1/3 p-4 flex flex-col justify-center items-center text-white">
+            <h3 className="text-base font-medium">Recent Growth</h3>
+            <div className="w-full h-28 mt-3">
               <div className="h-full w-full relative">
-                {/* Simple animated growth chart */}
                 <div className="absolute bottom-0 left-0 w-full h-1/2 flex items-end">
-                  <div className="w-1/6 h-[30%] bg-white/20 rounded-t-sm mx-[2px] animate-pulse"></div>
-                  <div className="w-1/6 h-[45%] bg-white/30 rounded-t-sm mx-[2px] animate-pulse"></div>
-                  <div className="w-1/6 h-[40%] bg-white/30 rounded-t-sm mx-[2px] animate-pulse"></div>
-                  <div className="w-1/6 h-[60%] bg-white/40 rounded-t-sm mx-[2px] animate-pulse"></div>
-                  <div className="w-1/6 h-[75%] bg-white/60 rounded-t-sm mx-[2px] animate-pulse"></div>
-                  <div className="w-1/6 h-[90%] bg-white/80 rounded-t-sm mx-[2px] animate-pulse"></div>
+                  <div className="w-1/6 h-[30%] bg-white/20 rounded-t-sm mx-[2px]"></div>
+                  <div className="w-1/6 h-[45%] bg-white/30 rounded-t-sm mx-[2px]"></div>
+                  <div className="w-1/6 h-[40%] bg-white/30 rounded-t-sm mx-[2px]"></div>
+                  <div className="w-1/6 h-[60%] bg-white/40 rounded-t-sm mx-[2px]"></div>
+                  <div className="w-1/6 h-[75%] bg-white/60 rounded-t-sm mx-[2px]"></div>
+                  <div className="w-1/6 h-[90%] bg-white/80 rounded-t-sm mx-[2px]"></div>
                 </div>
               </div>
             </div>
-            <div className="mt-4 text-center">
-              <p className="text-3xl font-bold">+{data?.platforms?.instagram?.growth || "2.3"}%</p>
-              <p className="text-sm opacity-80">Monthly growth rate</p>
+            <div className="mt-3 text-center">
+              <p className="text-2xl font-bold">+{data?.platforms?.instagram?.growth || "2.3"}%</p>
+              <p className="text-xs opacity-80">Monthly growth rate</p>
             </div>
           </div>
         </div>
@@ -382,8 +375,6 @@ export default function SocialsPage() {
           value={data?.overview.totalFollowers.toLocaleString() || "0"}
           change={data?.overview.followerGrowth || 0}
           icon={Users}
-          iconBackground="bg-blue-100"
-          iconColor="text-blue-600"
           isLoading={isLoading}
         />
         <KpiCard
@@ -391,8 +382,6 @@ export default function SocialsPage() {
           value={data?.overview.totalEngagement.toLocaleString() || "0"}
           change={data?.overview.engagementRate || 0}
           icon={Heart}
-          iconBackground="bg-pink-100"
-          iconColor="text-pink-600"
           isLoading={isLoading}
         />
         <KpiCard
@@ -400,8 +389,6 @@ export default function SocialsPage() {
           value={data?.overview.totalReach.toLocaleString() || "0"}
           change={data?.overview.reachGrowth || 0}
           icon={Eye}
-          iconBackground="bg-purple-100"
-          iconColor="text-purple-600"
           isLoading={isLoading}
         />
         <KpiCard
@@ -409,8 +396,6 @@ export default function SocialsPage() {
           value={formatCurrency(data?.advertising.totalSpend || 0)}
           change={data?.advertising.roiPercentage || 0}
           icon={DollarSign}
-          iconBackground="bg-green-100"
-          iconColor="text-green-600"
           isLoading={isLoading}
         />
       </div>
@@ -471,8 +456,8 @@ export default function SocialsPage() {
                 data={adSpendChart}
                 height={350}
                 lines={[
-                  { dataKey: "spend", stroke: "#6E56CF", fill: "rgba(110, 86, 207, 0.1)", name: "Ad Spend" },
-                  { dataKey: "roi", stroke: "#10B981", fill: "rgba(16, 185, 129, 0.1)", name: "ROI" }
+                  { dataKey: "spend", stroke: "#5e6ad2", fill: "rgba(94, 106, 210, 0.1)", name: "Ad Spend" },
+                  { dataKey: "roi", stroke: "#59a200", fill: "rgba(89, 162, 0, 0.1)", name: "ROI" }
                 ]}
                 valueFormatter={(value) => formatCurrency(value)}
                 showXAxis={true}

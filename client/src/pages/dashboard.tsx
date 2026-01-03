@@ -1,63 +1,56 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, Plus, RefreshCw } from "lucide-react";
+import { Download, RefreshCw, ChevronDown, User, ThumbsUp, CreditCard, Wallet } from "lucide-react";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { RecentActivity, Activity } from "@/components/dashboard/recent-activity";
 import { ChartSection } from "@/components/dashboard/charts";
-import { User, ThumbsUp, CreditCard, Wallet } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { AreaChartData } from "@/components/ui/area-chart";
 import { PieChartData } from "@/components/ui/pie-chart";
-import { apiRequest } from "@/lib/queryClient";
 import { KitNewsletter } from "@/components/newsletter/kit-newsletter";
 
 const Dashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [timePeriod, setTimePeriod] = useState("30");
 
-  const { data: dashboardData, isLoading } = useQuery({
+  const { data: dashboardData, isLoading } = useQuery<{
+    totalCustomers: number;
+    connectedCustomers: number;
+    totalRevenue: number;
+    activeSubscriptions: number;
+  }>({
     queryKey: ["/api/dashboard", timePeriod],
   });
 
-  // KPI data
   const kpiData = [
     {
       title: "Total Customers",
       value: isLoading ? "-" : formatNumber(dashboardData?.totalCustomers || 5823),
       change: 12.5,
       icon: User,
-      iconBackground: "bg-primary-100",
-      iconColor: "text-primary-600",
     },
     {
       title: "Connected Customers",
       value: isLoading ? "-" : formatNumber(dashboardData?.connectedCustomers || 3427),
       change: 8.2,
       icon: ThumbsUp,
-      iconBackground: "bg-accent-100",
-      iconColor: "text-accent-600",
     },
     {
       title: "Total Revenue",
       value: isLoading ? "-" : formatCurrency(dashboardData?.totalRevenue || 278492),
       change: 15.3,
       icon: Wallet,
-      iconBackground: "bg-secondary-100",
-      iconColor: "text-secondary-600",
     },
     {
       title: "Active Subscriptions",
       value: isLoading ? "-" : formatNumber(dashboardData?.activeSubscriptions || 2589),
       change: 5.7,
       icon: CreditCard,
-      iconBackground: "bg-amber-100",
-      iconColor: "text-amber-800",
     },
   ];
 
-  // Chart data
   const revenueData: AreaChartData[] = [
     { name: "Jan", total: 24000, recurring: 18000 },
     { name: "Feb", total: 28000, recurring: 21000 },
@@ -76,7 +69,6 @@ const Dashboard: React.FC = () => {
     { name: "Free Tier", value: 5 },
   ];
 
-  // Recent activities data
   const recentActivities: Activity[] = [
     {
       id: "1",
@@ -125,65 +117,42 @@ const Dashboard: React.FC = () => {
     },
   ];
 
-  const handleTimePeriodChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setTimePeriod(e.target.value);
-  };
-
-  const handleSyncData = () => {
-    // Trigger data synchronization
-  };
-
   return (
     <div className="space-y-6">
-      {/* Dashboard Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Monitor your key metrics and customer data at a glance
+          <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+          <p className="mt-1 text-sm text-linear-text-secondary">
+            Monitor your key metrics and customer data
           </p>
         </div>
-        <div className="mt-4 md:mt-0 flex items-center space-x-3">
+        <div className="mt-4 md:mt-0 flex items-center gap-2">
           <div className="relative">
             <select
-              className="appearance-none block w-full bg-white border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded leading-tight focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm"
+              className="appearance-none h-8 pl-3 pr-8 text-sm bg-linear-card border border-linear-border text-white rounded focus:outline-none focus:ring-1 focus:ring-linear-purple cursor-pointer"
               value={timePeriod}
-              onChange={handleTimePeriodChange}
+              onChange={(e) => setTimePeriod(e.target.value)}
+              data-testid="select-time-period"
             >
               <option value="7">Last 7 days</option>
               <option value="30">Last 30 days</option>
               <option value="90">Last 90 days</option>
               <option value="365">Year to date</option>
-              <option value="custom">Custom range</option>
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-4 w-4"
-              >
-                <path d="m6 9 6 6 6-6"></path>
-              </svg>
-            </div>
+            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-linear-text-secondary" />
           </div>
-          <Button variant="outline" size="sm">
-            <Download className="mr-2 h-4 w-4" />
+          <Button variant="outline" size="sm" data-testid="button-export">
+            <Download className="h-4 w-4 mr-1" />
             Export
           </Button>
-          <Button size="sm" onClick={handleSyncData}>
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Sync Data
+          <Button size="sm" data-testid="button-sync">
+            <RefreshCw className="h-4 w-4 mr-1" />
+            Sync
           </Button>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpiData.map((item, index) => (
           <KpiCard
             key={index}
@@ -191,67 +160,54 @@ const Dashboard: React.FC = () => {
             value={item.value}
             change={item.change}
             icon={item.icon}
-            iconBackground={item.iconBackground}
-            iconColor={item.iconColor}
             isLoading={isLoading}
           />
         ))}
       </div>
 
-      {/* Dashboard Tabs */}
-      <div className="mb-6">
-        <div className="border-b border-gray-200">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="bg-transparent border-b-0">
-              <TabsTrigger
-                value="overview"
-                className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent px-1 py-4"
-              >
-                Overview
-              </TabsTrigger>
-              <TabsTrigger
-                value="subscriptions"
-                className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent px-1 py-4"
-              >
-                Subscriptions
-              </TabsTrigger>
-              <TabsTrigger
-                value="revenue"
-                className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent px-1 py-4"
-              >
-                Revenue
-              </TabsTrigger>
-              <TabsTrigger
-                value="integrations"
-                className="data-[state=active]:border-primary-500 data-[state=active]:text-primary-600 border-b-2 border-transparent px-1 py-4"
-              >
-                Integrations
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
-      </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="overview" data-testid="tab-overview">Overview</TabsTrigger>
+          <TabsTrigger value="subscriptions" data-testid="tab-subscriptions">Subscriptions</TabsTrigger>
+          <TabsTrigger value="revenue" data-testid="tab-revenue">Revenue</TabsTrigger>
+          <TabsTrigger value="integrations" data-testid="tab-integrations">Integrations</TabsTrigger>
+        </TabsList>
+        <TabsContent value="overview">
+          <div className="space-y-6 mt-4">
+            <ChartSection
+              revenueData={revenueData}
+              subscriptionData={subscriptionData}
+              isLoading={isLoading}
+            />
+            
+            <div>
+              <h2 className="text-lg font-semibold text-white mb-4">Newsletter Analytics</h2>
+              <KitNewsletter />
+            </div>
 
-      {/* Charts */}
-      <ChartSection
-        revenueData={revenueData}
-        subscriptionData={subscriptionData}
-        isLoading={isLoading}
-      />
-
-      {/* Kit Newsletter Section */}
-      <div className="mb-6">
-        <h2 className="text-xl font-bold mb-4">Newsletter Analytics</h2>
-        <KitNewsletter />
-      </div>
-
-      {/* Recent Customer Activity */}
-      <RecentActivity activities={recentActivities} isLoading={isLoading} />
+            <RecentActivity activities={recentActivities} isLoading={isLoading} />
+          </div>
+        </TabsContent>
+        <TabsContent value="subscriptions">
+          <div className="mt-4 p-8 text-center text-linear-text-secondary">
+            <p>Subscription analytics coming soon...</p>
+          </div>
+        </TabsContent>
+        <TabsContent value="revenue">
+          <div className="mt-4 p-8 text-center text-linear-text-secondary">
+            <p>Revenue analytics coming soon...</p>
+          </div>
+        </TabsContent>
+        <TabsContent value="integrations">
+          <div className="mt-4 p-8 text-center text-linear-text-secondary">
+            <p>Integration analytics coming soon...</p>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
 
-// Helper function to format numbers with commas
 function formatNumber(num: number | string): string {
   if (typeof num === "string") return num;
   return new Intl.NumberFormat("en-US").format(num);

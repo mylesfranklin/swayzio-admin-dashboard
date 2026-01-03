@@ -37,28 +37,28 @@ const CustomersList: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Customers</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-white">Customers</h1>
+          <p className="mt-1 text-sm text-linear-text-secondary">
             Manage your customers and view their data across both HubSpot and Stripe
           </p>
         </div>
-        <div className="mt-4 md:mt-0 flex items-center space-x-3">
+        <div className="mt-4 md:mt-0 flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={handleRefresh}>
-            <RefreshCw className="mr-2 h-4 w-4" />
+            <RefreshCw className="h-4 w-4 mr-1" />
             Refresh
           </Button>
           <Button variant="outline" size="sm" onClick={handleExport}>
-            <Download className="mr-2 h-4 w-4" />
+            <Download className="h-4 w-4 mr-1" />
             Export
           </Button>
           <Button size="sm" onClick={handleAddCustomer}>
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus className="h-4 w-4 mr-1" />
             Add Customer
           </Button>
         </div>
       </div>
 
-      <div className="bg-white shadow-sm rounded-md p-6">
+      <div className="bg-linear-card border border-linear-border rounded-md p-4">
         <CustomerTable customers={customers || []} isLoading={isLoading} />
       </div>
     </div>

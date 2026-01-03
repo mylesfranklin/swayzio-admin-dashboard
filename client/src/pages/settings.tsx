@@ -115,14 +115,14 @@ const Settings: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
-        <p className="text-gray-500 mt-1">
+        <h1 className="text-2xl font-bold text-white">Settings</h1>
+        <p className="text-linear-text-secondary text-sm mt-1">
           Configure application settings and preferences
         </p>
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-4 w-full max-w-2xl">
+        <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="sync">Synchronization</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>

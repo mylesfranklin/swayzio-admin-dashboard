@@ -1,11 +1,11 @@
-import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { StatusBadge } from "@/components/ui/badge-custom";
+import { Badge } from "@/components/ui/badge";
 import { cn, formatRelativeTime, getInitials } from "@/lib/utils";
 import { useLocation } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowRight } from "lucide-react";
 
 export interface Activity {
   id: string;
@@ -23,6 +23,23 @@ interface RecentActivityProps {
   className?: string;
 }
 
+function getActivityBadgeVariant(type: string): "default" | "success" | "warning" | "destructive" | "info" | "secondary" {
+  switch (type.toLowerCase()) {
+    case "payment successful":
+      return "success";
+    case "payment failed":
+      return "destructive";
+    case "subscription updated":
+      return "info";
+    case "new customer":
+      return "default";
+    case "contact updated":
+      return "secondary";
+    default:
+      return "secondary";
+  }
+}
+
 export function RecentActivity({
   activities,
   isLoading = false,
@@ -32,74 +49,80 @@ export function RecentActivity({
 
   return (
     <Card className={className}>
-      <CardHeader className="px-6 py-5 border-b border-gray-200 flex justify-between items-center">
-        <CardTitle className="text-lg font-medium text-gray-900">Recent Customer Activity</CardTitle>
+      <CardHeader className="p-4 border-b border-linear-border flex flex-row justify-between items-center">
+        <CardTitle className="text-sm font-medium text-white">Recent Customer Activity</CardTitle>
         <Button
           onClick={() => navigate("/customers")}
-          variant="outline"
+          variant="ghost"
           size="sm"
-          className="text-xs"
+          className="text-xs text-linear-text-secondary hover:text-white"
+          data-testid="button-view-all-activity"
         >
           View All
+          <ArrowRight className="h-3 w-3 ml-1" />
         </Button>
       </CardHeader>
-      <div className="divide-y divide-gray-200 max-h-[500px] overflow-y-auto">
+      <div className="divide-y divide-linear-border max-h-[400px] overflow-y-auto">
         {isLoading ? (
-          // Loading skeletons
           Array(5)
             .fill(0)
             .map((_, index) => (
-              <div key={index} className="px-6 py-4">
+              <div key={index} className="p-4">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Skeleton className="h-10 w-10 rounded-full" />
-                    <div className="ml-4">
-                      <Skeleton className="h-4 w-32 mb-2" />
-                      <Skeleton className="h-3 w-24" />
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-8 w-8 rounded-full bg-linear-hover" />
+                    <div>
+                      <Skeleton className="h-4 w-28 mb-1.5 bg-linear-hover" />
+                      <Skeleton className="h-3 w-20 bg-linear-hover" />
                     </div>
                   </div>
-                  <div className="flex flex-col items-end">
-                    <Skeleton className="h-5 w-24 mb-2" />
-                    <Skeleton className="h-3 w-16" />
+                  <div className="flex flex-col items-end gap-1">
+                    <Skeleton className="h-5 w-20 bg-linear-hover rounded" />
+                    <Skeleton className="h-3 w-14 bg-linear-hover" />
                   </div>
                 </div>
-                <Skeleton className="h-4 w-full mt-2" />
+                <Skeleton className="h-3 w-full mt-2 bg-linear-hover" />
               </div>
             ))
         ) : activities.length > 0 ? (
           activities.map((activity) => (
             <div
               key={activity.id}
-              className="px-6 py-4 hover:bg-gray-50 cursor-pointer"
+              className="p-4 hover:bg-linear-hover cursor-pointer transition-colors duration-150"
               onClick={() => navigate(`/customers/${activity.customerId}`)}
+              data-testid={`activity-row-${activity.id}`}
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Avatar className="h-10 w-10 bg-gray-200">
-                    <AvatarFallback>{getInitials(activity.customerName.split(' ')[0], activity.customerName.split(' ')[1])}</AvatarFallback>
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-8 w-8 bg-linear-border">
+                    <AvatarFallback className="bg-linear-purple/20 text-linear-purple text-xs">
+                      {getInitials(activity.customerName.split(' ')[0], activity.customerName.split(' ')[1])}
+                    </AvatarFallback>
                   </Avatar>
-                  <div className="ml-4">
-                    <div className="text-sm font-medium text-gray-900">
+                  <div>
+                    <p className="text-sm font-medium text-white">
                       {activity.customerName}
-                    </div>
-                    <div className="text-sm text-gray-500">
+                    </p>
+                    <p className="text-xs text-linear-text-secondary">
                       {activity.customerEmail}
-                    </div>
+                    </p>
                   </div>
                 </div>
-                <div className="flex flex-col items-end">
-                  <StatusBadge status={activity.type} />
-                  <div className="mt-1 text-sm text-gray-500">
+                <div className="flex flex-col items-end gap-1">
+                  <Badge variant={getActivityBadgeVariant(activity.type)}>
+                    {activity.type}
+                  </Badge>
+                  <p className="text-xs text-linear-text-tertiary">
                     {formatRelativeTime(activity.timestamp)}
-                  </div>
+                  </p>
                 </div>
               </div>
-              <div className="mt-2 text-sm text-gray-500">{activity.details}</div>
+              <p className="mt-2 text-xs text-linear-text-secondary">{activity.details}</p>
             </div>
           ))
         ) : (
-          <div className="px-6 py-8 text-center">
-            <p className="text-gray-500 text-sm">No recent activities found.</p>
+          <div className="p-8 text-center">
+            <p className="text-linear-text-secondary text-sm">No recent activities found.</p>
           </div>
         )}
       </div>
