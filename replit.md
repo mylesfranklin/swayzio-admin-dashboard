@@ -52,8 +52,29 @@ Preferred communication style: Simple, everyday language.
 - **HubSpot API**: Customer data, contacts, companies, deals, and activities (service abstraction in place)
 
 ### Third-Party Services
-- **Kit Newsletter**: Newsletter subscriber management (referenced in components)
-- **Social Media Platforms**: Instagram, Facebook, Twitter, YouTube, LinkedIn analytics (referenced in socials page)
+- **Kit Newsletter**: Newsletter subscriber management with 12,726 subscribers tracking
+- **Social Media Platforms**: Instagram (52.4K), YouTube (12.8K), TikTok (28.9K), Facebook, Twitter/X, LinkedIn
+- **GitHub**: Repository analytics, commits, PRs, language distribution
+- **Vercel**: Deployment tracking, Core Web Vitals, traffic analytics
+
+## Integration Dashboards
+
+The `/integrations` page provides a unified view of all connected services with individual dashboard tabs:
+
+### Chart Components (`client/src/components/ui/`)
+- **LineChart**: Time-series data with gradient fills
+- **BarChart**: Grouped/stacked bar charts with legends
+- **AreaChart**: Multi-line area charts with tooltips
+- **DonutChart**: Distribution charts with center values
+- **DataTable**: Sortable, filterable tables with pagination
+
+### Integration Components (`client/src/components/integrations/`)
+- **HubSpotDashboard**: CRM contacts, companies, deals pipeline, activity metrics
+- **StripeDashboard**: Revenue, MRR, subscriptions, transactions tables
+- **GitHubDashboard**: Commits chart, PR table, language distribution
+- **VercelDashboard**: Deployments, Core Web Vitals, traffic analytics
+- **SocialMetrics**: Platform cards for 6 social networks with growth tracking
+- **KitDashboard**: Subscriber growth, email broadcasts, form performance
 
 ### Development Tools
 - **Vite**: Build tool with React plugin and custom Replit plugins
