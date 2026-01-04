@@ -50,8 +50,10 @@ Preferred communication style: Simple, everyday language.
 - **Environment Variables**: `STRIPE_SECRET_KEY` (server), `VITE_STRIPE_PUBLIC_KEY` (client)
 - **@stripe/stripe-js** and **@stripe/react-stripe-js**: Client-side Stripe Elements integration
 
-### CRM Integration
-- **HubSpot API**: Customer data, contacts, companies, deals, and activities (service abstraction in place)
+### CRM Integration (Music Catalog Focus)
+- **HubSpot API**: Music catalog user data optimized for B2C music platform
+- **Custom Properties**: tagged_tracks, untagged_tracks, pro (PRO type), subscribed, signed_to_deal, artist_name
+- **API Endpoint**: `/api/hubspot/live/music-catalog` for aggregated dashboard data
 
 ### Third-Party Services
 - **Kit Newsletter**: Newsletter subscriber management with 12,726 subscribers tracking
@@ -90,7 +92,7 @@ The Settings > Integrations tab provides a unified view of all connected service
 - **Toast**: Semantic variants (success, warning, error, info) with icons
 
 ### Integration Components (`client/src/components/integrations/`)
-- **HubSpotDashboard**: CRM contacts, companies, deals pipeline, activity metrics
+- **MusicCatalogDashboard**: Music platform analytics with subscribed/unsubscribed user tables, PRO distribution, catalog health (tagged vs untagged tracks), conversion funnel
 - **StripeDashboard**: Revenue, MRR, subscriptions, transactions tables
 - **GitHubDashboard**: Commits chart, PR table, language distribution
 - **VercelDashboard**: Deployments, Core Web Vitals, traffic analytics
