@@ -8,7 +8,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Music,
   Tag,
-  FileCheck,
   UserCheck,
   UserX,
 } from "lucide-react";
@@ -128,6 +127,8 @@ export function MusicCatalogDashboard({
 }: MusicCatalogDashboardProps) {
   const [showSubscribed, setShowSubscribed] = useState(true);
   
+  const unsubscribeRate = totalUsers > 0 ? Math.round((unsubscribedContacts.length / totalUsers) * 100) : 0;
+  
   const statCards = [
     {
       title: "Subscribed Users",
@@ -137,24 +138,25 @@ export function MusicCatalogDashboard({
       color: "text-linear-success",
     },
     {
-      title: "Total Tracks",
-      value: totalTracks,
+      title: "Tagged Tracks",
+      value: taggedTracks,
+      icon: Tag,
+      format: (v: number) => v.toLocaleString(),
+      color: "text-linear-success",
+    },
+    {
+      title: "Untagged Tracks",
+      value: untaggedTracks,
       icon: Music,
       format: (v: number) => v.toLocaleString(),
-      subLabel: `${taggedTracks.toLocaleString()} tagged`,
+      color: "text-linear-warning",
     },
     {
-      title: "Catalog Health",
-      value: catalogHealth,
-      icon: Tag,
+      title: "Unsubscribe Rate",
+      value: unsubscribeRate,
+      icon: UserX,
       format: (v: number) => `${v}%`,
-      color: catalogHealth >= 70 ? "text-linear-success" : catalogHealth >= 40 ? "text-linear-warning" : "text-linear-error",
-    },
-    {
-      title: "Signed to Deal",
-      value: signedToDeals,
-      icon: FileCheck,
-      format: (v: number) => v.toLocaleString(),
+      color: unsubscribeRate <= 30 ? "text-linear-success" : unsubscribeRate <= 60 ? "text-linear-warning" : "text-linear-error",
     },
   ];
 
@@ -199,15 +201,58 @@ export function MusicCatalogDashboard({
                       {stat.format(stat.value)}
                     </span>
                   </div>
-                  {stat.subLabel && (
-                    <p className="text-xs text-linear-text-tertiary mt-1">{stat.subLabel}</p>
-                  )}
                 </>
               )}
             </CardContent>
           </Card>
         ))}
       </div>
+
+      <Card>
+        <CardHeader className="p-4 border-b border-linear-border">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-sm font-medium text-white">
+                {showSubscribed ? "Subscribed Users" : "Unsubscribed Users"}
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Sorted by total tracks (highest first)
+              </CardDescription>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant={showSubscribed ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowSubscribed(true)}
+                className="gap-1"
+                data-testid="button-show-subscribed"
+              >
+                <UserCheck className="h-3 w-3" />
+                Subscribed ({subscribedContacts.length})
+              </Button>
+              <Button
+                variant={!showSubscribed ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowSubscribed(false)}
+                className="gap-1"
+                data-testid="button-show-unsubscribed"
+              >
+                <UserX className="h-3 w-3" />
+                Unsubscribed ({unsubscribedContacts.length})
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-4">
+          <DataTable
+            columns={contactColumns}
+            data={currentContacts}
+            isLoading={isLoading}
+            pageSize={10}
+            emptyMessage={showSubscribed ? "No subscribed users found" : "No unsubscribed users found"}
+          />
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card>
@@ -298,52 +343,6 @@ export function MusicCatalogDashboard({
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader className="p-4 border-b border-linear-border">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-sm font-medium text-white">
-                {showSubscribed ? "Subscribed Users" : "Unsubscribed Users"}
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Sorted by total tracks (highest first)
-              </CardDescription>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant={showSubscribed ? "default" : "outline"}
-                size="sm"
-                onClick={() => setShowSubscribed(true)}
-                className="gap-1"
-                data-testid="button-show-subscribed"
-              >
-                <UserCheck className="h-3 w-3" />
-                Subscribed ({subscribedContacts.length})
-              </Button>
-              <Button
-                variant={!showSubscribed ? "default" : "outline"}
-                size="sm"
-                onClick={() => setShowSubscribed(false)}
-                className="gap-1"
-                data-testid="button-show-unsubscribed"
-              >
-                <UserX className="h-3 w-3" />
-                Unsubscribed ({unsubscribedContacts.length})
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="p-4">
-          <DataTable
-            columns={contactColumns}
-            data={currentContacts}
-            isLoading={isLoading}
-            pageSize={10}
-            emptyMessage={showSubscribed ? "No subscribed users found" : "No unsubscribed users found"}
-          />
-        </CardContent>
-      </Card>
     </div>
   );
 }
