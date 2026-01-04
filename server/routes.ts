@@ -64,6 +64,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/hubspot/live/properties", async (req, res) => {
+    try {
+      const properties = await hubspotService.getContactProperties();
+      res.json(properties);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // ===== Stripe Live API Routes =====
   
   app.get("/api/stripe/live/customers", async (req, res) => {

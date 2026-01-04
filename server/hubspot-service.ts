@@ -229,6 +229,21 @@ export class HubSpotService {
     }
   }
 
+  async getContactProperties(): Promise<Array<{ name: string; label: string; type: string }>> {
+    try {
+      const client = await getUncachableHubSpotClient();
+      const response = await client.crm.properties.coreApi.getAll('contacts');
+      return response.results.map((prop: any) => ({
+        name: prop.name,
+        label: prop.label,
+        type: prop.type,
+      }));
+    } catch (error: any) {
+      console.error('Error fetching HubSpot contact properties:', error.message);
+      throw error;
+    }
+  }
+
   async getMusicCatalogContacts(limit: number = 100): Promise<MusicCatalogContact[]> {
     try {
       const client = await getUncachableHubSpotClient();
@@ -239,8 +254,8 @@ export class HubSpotService {
           'email', 
           'firstname', 
           'lastname', 
-          'tagged_tracks__', 
-          'untagged_tracks___', 
+          'tagged_tracks', 
+          'untagged_tracks', 
           'pro', 
           'lastmodifieddate',
           'subscribed',
@@ -256,8 +271,8 @@ export class HubSpotService {
           name: `${props.firstname || ''} ${props.lastname || ''}`.trim() || props.email || 'Unknown',
           artistName: props.artist_name || '',
           email: props.email || '',
-          taggedTracks: parseInt(props.tagged_tracks__ || '0') || 0,
-          untaggedTracks: parseInt(props.untagged_tracks___ || '0') || 0,
+          taggedTracks: parseInt(props.tagged_tracks || '0') || 0,
+          untaggedTracks: parseInt(props.untagged_tracks || '0') || 0,
           pro: props.pro || '',
           lastActivity: props.lastmodifieddate || new Date().toISOString(),
           subscribed: props.subscribed === 'true' || props.subscribed === 'Yes' || props.subscribed === 'yes',
