@@ -53,6 +53,19 @@ export interface HubSpotContact {
   lastmodifieddate?: string;
 }
 
+export interface MusicCatalogContact {
+  id: string;
+  name: string;
+  artistName: string;
+  email: string;
+  taggedTracks: number;
+  untaggedTracks: number;
+  pro: string;
+  lastActivity: string;
+  subscribed: boolean;
+  signedToDeal: boolean;
+}
+
 export interface HubSpotCompany {
   id: string;
   name: string;
@@ -213,6 +226,104 @@ export class HubSpotService {
       return true;
     } catch {
       return false;
+    }
+  }
+
+  async getMusicCatalogContacts(limit: number = 100): Promise<MusicCatalogContact[]> {
+    try {
+      const client = await getUncachableHubSpotClient();
+      const response = await client.crm.contacts.basicApi.getPage(
+        limit,
+        undefined,
+        [
+          'email', 
+          'firstname', 
+          'lastname', 
+          'tagged_tracks__', 
+          'untagged_tracks___', 
+          'pro', 
+          'lastmodifieddate',
+          'subscribed',
+          'signed_to_deal',
+          'artist_name'
+        ]
+      );
+      
+      return response.results.map((contact: any) => {
+        const props = contact.properties;
+        return {
+          id: contact.id,
+          name: `${props.firstname || ''} ${props.lastname || ''}`.trim() || props.email || 'Unknown',
+          artistName: props.artist_name || '',
+          email: props.email || '',
+          taggedTracks: parseInt(props.tagged_tracks__ || '0') || 0,
+          untaggedTracks: parseInt(props.untagged_tracks___ || '0') || 0,
+          pro: props.pro || '',
+          lastActivity: props.lastmodifieddate || new Date().toISOString(),
+          subscribed: props.subscribed === 'true' || props.subscribed === 'Yes' || props.subscribed === 'yes',
+          signedToDeal: props.signed_to_deal === 'true' || props.signed_to_deal === 'Yes' || props.signed_to_deal === 'yes',
+        };
+      });
+    } catch (error: any) {
+      console.error('Error fetching music catalog contacts:', error.message);
+      throw error;
+    }
+  }
+
+  async getMusicCatalogDashboard(): Promise<{
+    totalUsers: number;
+    subscribedUsers: number;
+    signedToDeals: number;
+    totalTracks: number;
+    taggedTracks: number;
+    untaggedTracks: number;
+    catalogHealth: number;
+    proDistribution: Record<string, number>;
+    subscribedContacts: MusicCatalogContact[];
+    unsubscribedContacts: MusicCatalogContact[];
+  }> {
+    try {
+      const contacts = await this.getMusicCatalogContacts(100);
+      
+      const subscribedContacts = contacts.filter(c => c.subscribed);
+      const unsubscribedContacts = contacts.filter(c => !c.subscribed);
+      const signedToDeals = contacts.filter(c => c.signedToDeal).length;
+      
+      let totalTagged = 0;
+      let totalUntagged = 0;
+      const proDistribution: Record<string, number> = {};
+      
+      contacts.forEach(contact => {
+        totalTagged += contact.taggedTracks;
+        totalUntagged += contact.untaggedTracks;
+        
+        if (contact.pro) {
+          proDistribution[contact.pro] = (proDistribution[contact.pro] || 0) + 1;
+        }
+      });
+      
+      const totalTracks = totalTagged + totalUntagged;
+      const catalogHealth = totalTracks > 0 ? Math.round((totalTagged / totalTracks) * 100) : 0;
+      
+      // Sort by total tracks (tagged + untagged) descending
+      subscribedContacts.sort((a, b) => (b.taggedTracks + b.untaggedTracks) - (a.taggedTracks + a.untaggedTracks));
+      unsubscribedContacts.sort((a, b) => (b.taggedTracks + b.untaggedTracks) - (a.taggedTracks + a.untaggedTracks));
+      
+      return {
+        totalUsers: contacts.length,
+        subscribedUsers: subscribedContacts.length,
+        signedToDeals,
+        totalTracks,
+        taggedTracks: totalTagged,
+        untaggedTracks: totalUntagged,
+        catalogHealth,
+        proDistribution,
+        subscribedContacts,
+        unsubscribedContacts,
+      };
+    } catch (error: any) {
+      console.error('Error fetching music catalog dashboard:', error.message);
+      throw error;
     }
   }
 }

@@ -46,6 +46,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/hubspot/live/music-catalog", async (req, res) => {
+    try {
+      const dashboard = await hubspotService.getMusicCatalogDashboard();
+      res.json(dashboard);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   app.get("/api/hubspot/live/status", async (req, res) => {
     try {
       const connected = await hubspotService.isConnected();
