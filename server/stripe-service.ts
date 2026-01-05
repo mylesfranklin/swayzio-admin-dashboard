@@ -271,6 +271,47 @@ export class StripeService {
     }
   }
 
+  async getAllCharges(): Promise<any[]> {
+    try {
+      const stripe = getUncachableStripeClient();
+      const allCharges: any[] = [];
+      let startingAfter: string | undefined;
+      
+      do {
+        const params: Stripe.ChargeListParams = { limit: 100 };
+        if (startingAfter) params.starting_after = startingAfter;
+        
+        const charges = await stripe.charges.list(params);
+        
+        const mapped = charges.data.map((charge) => ({
+          id: charge.id,
+          amount: charge.amount,
+          currency: charge.currency,
+          status: charge.status,
+          created: charge.created,
+          customerId: typeof charge.customer === 'string' ? charge.customer : charge.customer?.id,
+          description: charge.description,
+          paid: charge.paid,
+          refunded: charge.refunded,
+          amountRefunded: charge.amount_refunded
+        }));
+        
+        allCharges.push(...mapped);
+        startingAfter = charges.has_more ? charges.data[charges.data.length - 1]?.id : undefined;
+        
+        if (allCharges.length % 1000 === 0) {
+          console.log(`Fetched ${allCharges.length} Stripe charges...`);
+        }
+      } while (startingAfter);
+      
+      console.log(`Total Stripe charges: ${allCharges.length}`);
+      return allCharges;
+    } catch (error: any) {
+      console.error('Error fetching all Stripe charges:', error.message);
+      throw error;
+    }
+  }
+
   async getBalanceTransactions(limit: number = 100): Promise<any[]> {
     try {
       const stripe = getUncachableStripeClient();
@@ -345,9 +386,10 @@ export class StripeService {
     revenueByMonth: Array<{ month: string; revenue: number }>;
   }> {
     try {
-      const [customers, subscriptions, payments, invoices] = await Promise.all([
+      const [customers, subscriptions, charges, payments, invoices] = await Promise.all([
         this.getAllCustomers(),
         this.getAllSubscriptions(),
+        this.getAllCharges(),
         this.getPaymentIntents(100),
         this.getInvoices(100)
       ]);
@@ -372,20 +414,22 @@ export class StripeService {
         }
       });
 
-      const successfulPayments = payments.filter(p => p.status === 'succeeded');
-      const totalRevenue = successfulPayments.reduce((sum, p) => sum + p.amount, 0);
+      const successfulCharges = charges.filter((c: any) => c.paid === true && c.status === 'succeeded');
+      const totalRevenue = successfulCharges.reduce((sum: number, c: any) => {
+        return sum + (c.amount - (c.amountRefunded || 0));
+      }, 0);
 
       const revenueByMonth: Array<{ month: string; revenue: number }> = [];
       const now = new Date();
-      for (let i = 5; i >= 0; i--) {
+      for (let i = 11; i >= 0; i--) {
         const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const monthStart = Math.floor(monthDate.getTime() / 1000);
         const nextMonth = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
         const monthEnd = Math.floor(nextMonth.getTime() / 1000);
         
-        const monthRevenue = successfulPayments
-          .filter(p => p.created >= monthStart && p.created < monthEnd)
-          .reduce((sum, p) => sum + p.amount, 0);
+        const monthRevenue = successfulCharges
+          .filter((c: any) => c.created >= monthStart && c.created < monthEnd)
+          .reduce((sum: number, c: any) => sum + (c.amount - (c.amountRefunded || 0)), 0);
         
         revenueByMonth.push({
           month: monthDate.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
