@@ -2,11 +2,10 @@ import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
-  Users,
-  Zap,
   Settings,
-  Share2,
+  Landmark,
 } from "lucide-react";
+import { SiStripe, SiInstagram } from "react-icons/si";
 
 interface NavItem {
   title: string;
@@ -21,19 +20,19 @@ const navItems: NavItem[] = [
     icon: <LayoutDashboard className="h-5 w-5" />,
   },
   {
-    title: "Customers",
-    href: "/customers",
-    icon: <Users className="h-5 w-5" />,
+    title: "Stripe",
+    href: "/analytics/stripe",
+    icon: <SiStripe className="h-5 w-5" />,
   },
   {
-    title: "Integrations",
-    href: "/integrations",
-    icon: <Zap className="h-5 w-5" />,
+    title: "Mercury",
+    href: "/mercury",
+    icon: <Landmark className="h-5 w-5" />,
   },
   {
-    title: "Social",
-    href: "/socials",
-    icon: <Share2 className="h-5 w-5" />,
+    title: "Socials",
+    href: "/socials/instagram",
+    icon: <SiInstagram className="h-5 w-5" />,
   },
   {
     title: "Settings",

@@ -2,19 +2,17 @@ import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
-  Users,
   Activity,
   Settings,
-  Share2,
   Search,
   ChevronDown,
   BarChart3,
   ChevronRight,
   Command,
   Mail,
-  Globe,
+  Landmark,
 } from "lucide-react";
-import { SiHubspot, SiStripe, SiGithub, SiVercel } from "react-icons/si";
+import { SiHubspot, SiStripe, SiGithub, SiInstagram, SiFacebook, SiTiktok, SiYoutube } from "react-icons/si";
 import { useState } from "react";
 
 interface SidebarProps {
@@ -38,7 +36,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const [location] = useLocation();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     General: true,
-    Analytics: true,
+    Socials: true,
     Administration: true,
   });
 
@@ -57,46 +55,55 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
           icon: <LayoutDashboard className="h-4 w-4" />,
         },
         {
-          title: "Customers",
-          href: "/customers",
-          icon: <Users className="h-4 w-4" />,
-          badge: "5.8K",
+          title: "Stripe",
+          href: "/analytics/stripe",
+          icon: <SiStripe className="h-4 w-4" />,
         },
-        {
-          title: "Social Media",
-          href: "/socials",
-          icon: <Share2 className="h-4 w-4" />,
-        },
-        {
-          title: "SEO Analytics",
-          href: "/seo",
-          icon: <BarChart3 className="h-4 w-4" />,
-        },
-      ],
-    },
-    {
-      title: "Analytics",
-      defaultOpen: true,
-      items: [
         {
           title: "HubSpot",
           href: "/analytics/hubspot",
           icon: <SiHubspot className="h-4 w-4" />,
         },
         {
-          title: "Stripe",
-          href: "/analytics/stripe",
-          icon: <SiStripe className="h-4 w-4" />,
+          title: "Mercury",
+          href: "/mercury",
+          icon: <Landmark className="h-4 w-4" />,
+        },
+        {
+          title: "SEO",
+          href: "/seo",
+          icon: <BarChart3 className="h-4 w-4" />,
         },
         {
           title: "GitHub",
           href: "/analytics/github",
           icon: <SiGithub className="h-4 w-4" />,
         },
+      ],
+    },
+    {
+      title: "Socials",
+      defaultOpen: true,
+      items: [
         {
-          title: "Vercel",
-          href: "/analytics/vercel",
-          icon: <SiVercel className="h-4 w-4" />,
+          title: "Instagram",
+          href: "/socials/instagram",
+          icon: <SiInstagram className="h-4 w-4" />,
+        },
+        {
+          title: "Facebook",
+          href: "/socials/facebook",
+          icon: <SiFacebook className="h-4 w-4" />,
+        },
+        {
+          title: "TikTok",
+          href: "/socials/tiktok",
+          icon: <SiTiktok className="h-4 w-4" />,
+        },
+        {
+          title: "YouTube",
+          href: "/socials/youtube",
+          icon: <SiYoutube className="h-4 w-4" />,
         },
         {
           title: "Kit Newsletter",

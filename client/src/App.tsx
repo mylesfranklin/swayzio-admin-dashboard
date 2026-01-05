@@ -14,12 +14,16 @@ import CustomerDetails from "@/pages/customers/[id]";
 import StripeCheckoutPage from "@/pages/integrations/stripe-checkout";
 import SyncStatus from "@/pages/sync-status";
 import Settings from "@/pages/settings";
-import SocialsPage from "@/pages/socials";
+import MercuryPage from "@/pages/mercury";
+import SEOPage from "@/pages/seo";
 import HubSpotAnalytics from "@/pages/analytics/hubspot";
 import StripeAnalytics from "@/pages/analytics/stripe";
 import GitHubAnalytics from "@/pages/analytics/github";
-import VercelAnalytics from "@/pages/analytics/vercel";
 import KitAnalytics from "@/pages/analytics/kit";
+import InstagramPage from "@/pages/socials/instagram";
+import FacebookPage from "@/pages/socials/facebook";
+import TikTokPage from "@/pages/socials/tiktok";
+import YouTubePage from "@/pages/socials/youtube";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -30,12 +34,16 @@ function Router() {
       <Route path="/customers/:id" component={CustomerDetails} />
       <Route path="/integrations/stripe-checkout" component={StripeCheckoutPage} />
       <Route path="/sync-status" component={SyncStatus} />
-      <Route path="/socials" component={SocialsPage} />
+      <Route path="/mercury" component={MercuryPage} />
+      <Route path="/seo" component={SEOPage} />
       <Route path="/analytics/hubspot" component={HubSpotAnalytics} />
       <Route path="/analytics/stripe" component={StripeAnalytics} />
       <Route path="/analytics/github" component={GitHubAnalytics} />
-      <Route path="/analytics/vercel" component={VercelAnalytics} />
       <Route path="/analytics/kit" component={KitAnalytics} />
+      <Route path="/socials/instagram" component={InstagramPage} />
+      <Route path="/socials/facebook" component={FacebookPage} />
+      <Route path="/socials/tiktok" component={TikTokPage} />
+      <Route path="/socials/youtube" component={YouTubePage} />
       <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>

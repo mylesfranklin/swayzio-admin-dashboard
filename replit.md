@@ -68,8 +68,8 @@ Preferred communication style: Simple, everyday language.
 ## Navigation Structure
 
 ### Sidebar Sections
-- **General**: Dashboard, Customers, Social Media, SEO Analytics
-- **Analytics**: HubSpot, Stripe, GitHub, Vercel, Kit Newsletter (data dashboards)
+- **General**: Dashboard, Stripe, HubSpot, Mercury, SEO, GitHub
+- **Socials**: Instagram, Facebook, TikTok, YouTube, Kit Newsletter
 - **Administration**: Sync Status, Settings
 
 ### Settings Page Tabs
