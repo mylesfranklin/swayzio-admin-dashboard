@@ -271,14 +271,57 @@ export class StripeService {
     }
   }
 
-  async getAllCharges(): Promise<any[]> {
+  async getGrossVolume(): Promise<number> {
+    try {
+      const stripe = getUncachableStripeClient();
+      let totalGross = 0;
+      let startingAfter: string | undefined;
+      let count = 0;
+      
+      do {
+        const params: Stripe.BalanceTransactionListParams = { 
+          limit: 100,
+          type: 'charge'
+        };
+        if (startingAfter) params.starting_after = startingAfter;
+        
+        const transactions = await stripe.balanceTransactions.list(params);
+        
+        for (const txn of transactions.data) {
+          totalGross += txn.amount;
+        }
+        
+        count += transactions.data.length;
+        startingAfter = transactions.has_more ? transactions.data[transactions.data.length - 1]?.id : undefined;
+        
+        if (count % 5000 === 0) {
+          console.log(`Processed ${count} balance transactions for gross volume...`);
+        }
+      } while (startingAfter);
+      
+      console.log(`Total balance transactions processed: ${count}, Gross volume: $${(totalGross / 100).toFixed(2)}`);
+      return totalGross;
+    } catch (error: any) {
+      console.error('Error fetching gross volume:', error.message);
+      throw error;
+    }
+  }
+
+  async getRecentCharges(monthsBack: number = 12): Promise<any[]> {
     try {
       const stripe = getUncachableStripeClient();
       const allCharges: any[] = [];
       let startingAfter: string | undefined;
       
+      const startDate = new Date();
+      startDate.setMonth(startDate.getMonth() - monthsBack);
+      const createdGte = Math.floor(startDate.getTime() / 1000);
+      
       do {
-        const params: Stripe.ChargeListParams = { limit: 100 };
+        const params: Stripe.ChargeListParams = { 
+          limit: 100,
+          created: { gte: createdGte }
+        };
         if (startingAfter) params.starting_after = startingAfter;
         
         const charges = await stripe.charges.list(params);
@@ -300,14 +343,14 @@ export class StripeService {
         startingAfter = charges.has_more ? charges.data[charges.data.length - 1]?.id : undefined;
         
         if (allCharges.length % 1000 === 0) {
-          console.log(`Fetched ${allCharges.length} Stripe charges...`);
+          console.log(`Fetched ${allCharges.length} recent charges (last ${monthsBack} months)...`);
         }
       } while (startingAfter);
       
-      console.log(`Total Stripe charges: ${allCharges.length}`);
+      console.log(`Total recent charges (${monthsBack} months): ${allCharges.length}`);
       return allCharges;
     } catch (error: any) {
-      console.error('Error fetching all Stripe charges:', error.message);
+      console.error('Error fetching recent charges:', error.message);
       throw error;
     }
   }
@@ -386,10 +429,11 @@ export class StripeService {
     revenueByMonth: Array<{ month: string; revenue: number }>;
   }> {
     try {
-      const [customers, subscriptions, charges, payments, invoices] = await Promise.all([
+      const [customers, subscriptions, grossVolume, recentCharges, payments, invoices] = await Promise.all([
         this.getAllCustomers(),
         this.getAllSubscriptions(),
-        this.getAllCharges(),
+        this.getGrossVolume(),
+        this.getRecentCharges(12),
         this.getPaymentIntents(100),
         this.getInvoices(100)
       ]);
@@ -414,10 +458,7 @@ export class StripeService {
         }
       });
 
-      const successfulCharges = charges.filter((c: any) => c.paid === true && c.status === 'succeeded');
-      const totalRevenue = successfulCharges.reduce((sum: number, c: any) => {
-        return sum + (c.amount - (c.amountRefunded || 0));
-      }, 0);
+      const successfulCharges = recentCharges.filter((c: any) => c.paid === true && c.status === 'succeeded');
 
       const revenueByMonth: Array<{ month: string; revenue: number }> = [];
       const now = new Date();
@@ -441,7 +482,7 @@ export class StripeService {
         totalCustomers: customers.length,
         activeSubscriptions: activeSubscriptions.length,
         mrr: mrr / 100,
-        totalRevenue: totalRevenue / 100,
+        totalRevenue: grossVolume / 100,
         recentPayments: payments.slice(0, 10),
         recentInvoices: invoices.slice(0, 10),
         subscriptionsByStatus,
