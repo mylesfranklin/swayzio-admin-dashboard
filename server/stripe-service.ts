@@ -1,55 +1,27 @@
 import Stripe from 'stripe';
 
-let connectionSettings: any;
+// Use environment variables directly for Stripe credentials
+function getCredentials() {
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  const publishableKey = process.env.VITE_STRIPE_PUBLIC_KEY;
 
-async function getCredentials() {
-  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
-  const xReplitToken = process.env.REPL_IDENTITY
-    ? 'repl ' + process.env.REPL_IDENTITY
-    : process.env.WEB_REPL_RENEWAL
-      ? 'depl ' + process.env.WEB_REPL_RENEWAL
-      : null;
-
-  if (!xReplitToken) {
-    throw new Error('X_REPLIT_TOKEN not found for repl/depl');
-  }
-
-  const isProduction = process.env.REPLIT_DEPLOYMENT === '1';
-  const targetEnvironment = isProduction ? 'production' : 'development';
-
-  const url = new URL(`https://${hostname}/api/v2/connection`);
-  url.searchParams.set('include_secrets', 'true');
-  url.searchParams.set('connector_names', 'stripe');
-  url.searchParams.set('environment', targetEnvironment);
-
-  const response = await fetch(url.toString(), {
-    headers: {
-      'Accept': 'application/json',
-      'X_REPLIT_TOKEN': xReplitToken
-    }
-  });
-
-  const data = await response.json();
-  
-  connectionSettings = data.items?.[0];
-
-  if (!connectionSettings || (!connectionSettings.settings.publishable || !connectionSettings.settings.secret)) {
-    throw new Error(`Stripe ${targetEnvironment} connection not found`);
+  if (!secretKey) {
+    throw new Error('STRIPE_SECRET_KEY environment variable is not set');
   }
 
   return {
-    publishableKey: connectionSettings.settings.publishable,
-    secretKey: connectionSettings.settings.secret,
+    publishableKey: publishableKey || '',
+    secretKey,
   };
 }
 
-export async function getUncachableStripeClient() {
-  const { secretKey } = await getCredentials();
+export function getUncachableStripeClient() {
+  const { secretKey } = getCredentials();
   return new Stripe(secretKey);
 }
 
-export async function getStripePublishableKey() {
-  const { publishableKey } = await getCredentials();
+export function getStripePublishableKey() {
+  const { publishableKey } = getCredentials();
   return publishableKey;
 }
 
@@ -100,9 +72,45 @@ export interface StripeInvoiceData {
 }
 
 export class StripeService {
+  async getAllCustomers(): Promise<StripeCustomerData[]> {
+    try {
+      const stripe = getUncachableStripeClient();
+      const allCustomers: StripeCustomerData[] = [];
+      let startingAfter: string | undefined;
+      
+      do {
+        const params: any = { limit: 100 };
+        if (startingAfter) params.starting_after = startingAfter;
+        
+        const customers = await stripe.customers.list(params);
+        
+        const mapped = customers.data.map((customer) => ({
+          id: customer.id,
+          email: customer.email || '',
+          name: customer.name || '',
+          created: customer.created,
+          currency: customer.currency || undefined,
+          balance: customer.balance || 0,
+          delinquent: customer.delinquent || false
+        }));
+        
+        allCustomers.push(...mapped);
+        startingAfter = customers.has_more ? customers.data[customers.data.length - 1]?.id : undefined;
+        
+        console.log(`Fetched ${allCustomers.length} Stripe customers...`);
+      } while (startingAfter);
+      
+      console.log(`Total Stripe customers: ${allCustomers.length}`);
+      return allCustomers;
+    } catch (error: any) {
+      console.error('Error fetching Stripe customers:', error.message);
+      throw error;
+    }
+  }
+
   async getCustomers(limit: number = 100): Promise<StripeCustomerData[]> {
     try {
-      const stripe = await getUncachableStripeClient();
+      const stripe = getUncachableStripeClient();
       const customers = await stripe.customers.list({ limit });
       
       return customers.data.map((customer) => ({
@@ -120,9 +128,56 @@ export class StripeService {
     }
   }
 
+  async getAllSubscriptions(): Promise<StripeSubscriptionData[]> {
+    try {
+      const stripe = getUncachableStripeClient();
+      const allSubscriptions: StripeSubscriptionData[] = [];
+      let startingAfter: string | undefined;
+      
+      do {
+        const params: any = { 
+          limit: 100,
+          expand: ['data.items.data.price']
+        };
+        if (startingAfter) params.starting_after = startingAfter;
+        
+        const subscriptions = await stripe.subscriptions.list(params);
+        
+        const mapped = subscriptions.data.map((sub) => {
+          const item = sub.items.data[0];
+          const price = item?.price;
+          
+          return {
+            id: sub.id,
+            customerId: typeof sub.customer === 'string' ? sub.customer : sub.customer.id,
+            status: sub.status,
+            currentPeriodStart: sub.current_period_start,
+            currentPeriodEnd: sub.current_period_end,
+            planAmount: price?.unit_amount || 0,
+            planInterval: price?.recurring?.interval || 'month',
+            planName: price?.nickname || `Plan ${price?.id?.slice(-8) || 'Unknown'}`,
+            cancelAtPeriodEnd: sub.cancel_at_period_end,
+            created: sub.created
+          };
+        });
+        
+        allSubscriptions.push(...mapped);
+        startingAfter = subscriptions.has_more ? subscriptions.data[subscriptions.data.length - 1]?.id : undefined;
+        
+        console.log(`Fetched ${allSubscriptions.length} Stripe subscriptions...`);
+      } while (startingAfter);
+      
+      console.log(`Total Stripe subscriptions: ${allSubscriptions.length}`);
+      return allSubscriptions;
+    } catch (error: any) {
+      console.error('Error fetching Stripe subscriptions:', error.message);
+      throw error;
+    }
+  }
+
   async getSubscriptions(limit: number = 100): Promise<StripeSubscriptionData[]> {
     try {
-      const stripe = await getUncachableStripeClient();
+      const stripe = getUncachableStripeClient();
       const subscriptions = await stripe.subscriptions.list({ 
         limit,
         expand: ['data.items.data.price']
@@ -153,7 +208,7 @@ export class StripeService {
 
   async getPaymentIntents(limit: number = 100): Promise<StripePaymentData[]> {
     try {
-      const stripe = await getUncachableStripeClient();
+      const stripe = getUncachableStripeClient();
       const payments = await stripe.paymentIntents.list({ limit });
       
       return payments.data.map((payment) => ({
@@ -173,7 +228,7 @@ export class StripeService {
 
   async getInvoices(limit: number = 100): Promise<StripeInvoiceData[]> {
     try {
-      const stripe = await getUncachableStripeClient();
+      const stripe = getUncachableStripeClient();
       const invoices = await stripe.invoices.list({ limit });
       
       return invoices.data.map((invoice) => ({
@@ -196,7 +251,7 @@ export class StripeService {
 
   async getCharges(limit: number = 100): Promise<any[]> {
     try {
-      const stripe = await getUncachableStripeClient();
+      const stripe = getUncachableStripeClient();
       const charges = await stripe.charges.list({ limit });
       
       return charges.data.map((charge) => ({
@@ -218,7 +273,7 @@ export class StripeService {
 
   async getBalanceTransactions(limit: number = 100): Promise<any[]> {
     try {
-      const stripe = await getUncachableStripeClient();
+      const stripe = getUncachableStripeClient();
       const transactions = await stripe.balanceTransactions.list({ limit });
       
       return transactions.data.map((txn) => ({
@@ -241,7 +296,7 @@ export class StripeService {
 
   async getProducts(): Promise<any[]> {
     try {
-      const stripe = await getUncachableStripeClient();
+      const stripe = getUncachableStripeClient();
       const products = await stripe.products.list({ limit: 100, active: true });
       
       return products.data.map((product) => ({
@@ -259,7 +314,7 @@ export class StripeService {
 
   async getPrices(): Promise<any[]> {
     try {
-      const stripe = await getUncachableStripeClient();
+      const stripe = getUncachableStripeClient();
       const prices = await stripe.prices.list({ limit: 100, active: true });
       
       return prices.data.map((price) => ({
@@ -286,14 +341,15 @@ export class StripeService {
     recentPayments: StripePaymentData[];
     recentInvoices: StripeInvoiceData[];
     subscriptionsByStatus: Record<string, number>;
+    subscriptionsByPlan: Record<string, number>;
     revenueByMonth: Array<{ month: string; revenue: number }>;
   }> {
     try {
       const [customers, subscriptions, payments, invoices] = await Promise.all([
-        this.getCustomers(100),
-        this.getSubscriptions(100),
-        this.getPaymentIntents(50),
-        this.getInvoices(50)
+        this.getAllCustomers(),
+        this.getAllSubscriptions(),
+        this.getPaymentIntents(100),
+        this.getInvoices(100)
       ]);
 
       const activeSubscriptions = subscriptions.filter(s => s.status === 'active');
@@ -308,8 +364,12 @@ export class StripeService {
       }, 0);
 
       const subscriptionsByStatus: Record<string, number> = {};
+      const subscriptionsByPlan: Record<string, number> = {};
       subscriptions.forEach(sub => {
         subscriptionsByStatus[sub.status] = (subscriptionsByStatus[sub.status] || 0) + 1;
+        if (sub.status === 'active') {
+          subscriptionsByPlan[sub.planName] = (subscriptionsByPlan[sub.planName] || 0) + 1;
+        }
       });
 
       const successfulPayments = payments.filter(p => p.status === 'succeeded');
@@ -341,6 +401,7 @@ export class StripeService {
         recentPayments: payments.slice(0, 10),
         recentInvoices: invoices.slice(0, 10),
         subscriptionsByStatus,
+        subscriptionsByPlan,
         revenueByMonth
       };
     } catch (error: any) {
@@ -349,9 +410,9 @@ export class StripeService {
     }
   }
 
-  async isConnected(): Promise<boolean> {
+  isConnected(): boolean {
     try {
-      await getCredentials();
+      getCredentials();
       return true;
     } catch {
       return false;

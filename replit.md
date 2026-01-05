@@ -48,11 +48,15 @@ Preferred communication style: Simple, everyday language.
 ### Payment Processing
 - **Stripe**: Payment processing and subscription management
 - **Environment Variables**: `STRIPE_SECRET_KEY` (server), `VITE_STRIPE_PUBLIC_KEY` (client)
+- **Authentication**: Uses direct environment variable credentials (not Replit connector)
+- **Data Volume**: ~12,500+ customers, ~5,200+ subscriptions (full pagination enabled)
 - **@stripe/stripe-js** and **@stripe/react-stripe-js**: Client-side Stripe Elements integration
 
 ### CRM Integration (Music Catalog Focus)
 - **HubSpot API**: Music catalog user data optimized for B2C music platform
+- **Authentication**: Uses Replit HubSpot connector for OAuth token management
 - **Custom Properties**: tagged_tracks, untagged_tracks, pro (PRO type), subscribed, signed_to_deal, artist_name
+- **Data Volume**: ~24,000+ contacts, 107,000+ tagged tracks (full pagination enabled)
 - **API Endpoint**: `/api/hubspot/live/music-catalog` for aggregated dashboard data
 
 ### Third-Party Services

@@ -107,8 +107,8 @@ export default function StripeAnalytics() {
             revenue: m.revenue,
             mrr: dashboard.mrr || 0,
           })) || []}
-          planDistribution={dashboard?.subscriptionsByStatus ? 
-            Object.entries(dashboard.subscriptionsByStatus).map(([name, value]) => ({ name, value: value as number })) : []}
+          planDistribution={dashboard?.subscriptionsByPlan ? 
+            Object.entries(dashboard.subscriptionsByPlan).map(([name, value]) => ({ name, value: value as number })) : []}
         />
       )}
     </div>
