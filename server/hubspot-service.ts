@@ -244,41 +244,58 @@ export class HubSpotService {
     }
   }
 
-  async getMusicCatalogContacts(limit: number = 100): Promise<MusicCatalogContact[]> {
+  async getMusicCatalogContacts(): Promise<MusicCatalogContact[]> {
     try {
       const client = await getUncachableHubSpotClient();
-      const response = await client.crm.contacts.basicApi.getPage(
-        limit,
-        undefined,
-        [
-          'email', 
-          'firstname', 
-          'lastname', 
-          'tagged_tracks', 
-          'untagged_tracks', 
-          'pro', 
-          'lastmodifieddate',
-          'subscribed',
-          'signed_to_deal',
-          'artist_name'
-        ]
-      );
+      const allContacts: MusicCatalogContact[] = [];
+      let after: string | undefined = undefined;
+      const pageSize = 100;
       
-      return response.results.map((contact: any) => {
-        const props = contact.properties;
-        return {
-          id: contact.id,
-          name: `${props.firstname || ''} ${props.lastname || ''}`.trim() || props.email || 'Unknown',
-          artistName: props.artist_name || '',
-          email: props.email || '',
-          taggedTracks: parseInt(props.tagged_tracks || '0') || 0,
-          untaggedTracks: parseInt(props.untagged_tracks || '0') || 0,
-          pro: props.pro || '',
-          lastActivity: props.lastmodifieddate || new Date().toISOString(),
-          subscribed: props.subscribed === 'true' || props.subscribed === 'Yes' || props.subscribed === 'yes',
-          signedToDeal: props.signed_to_deal === 'true' || props.signed_to_deal === 'Yes' || props.signed_to_deal === 'yes',
-        };
-      });
+      const properties = [
+        'email', 
+        'firstname', 
+        'lastname', 
+        'tagged_tracks', 
+        'untagged_tracks', 
+        'pro', 
+        'lastmodifieddate',
+        'subscribed',
+        'signed_to_deal',
+        'artist_name'
+      ];
+      
+      // Paginate through all contacts
+      do {
+        const response = await client.crm.contacts.basicApi.getPage(
+          pageSize,
+          after,
+          properties
+        );
+        
+        const contacts = response.results.map((contact: any) => {
+          const props = contact.properties;
+          return {
+            id: contact.id,
+            name: `${props.firstname || ''} ${props.lastname || ''}`.trim() || props.email || 'Unknown',
+            artistName: props.artist_name || '',
+            email: props.email || '',
+            taggedTracks: parseInt(props.tagged_tracks || '0') || 0,
+            untaggedTracks: parseInt(props.untagged_tracks || '0') || 0,
+            pro: props.pro || '',
+            lastActivity: props.lastmodifieddate || new Date().toISOString(),
+            subscribed: props.subscribed === 'true' || props.subscribed === 'Yes' || props.subscribed === 'yes',
+            signedToDeal: props.signed_to_deal === 'true' || props.signed_to_deal === 'Yes' || props.signed_to_deal === 'yes',
+          };
+        });
+        
+        allContacts.push(...contacts);
+        after = response.paging?.next?.after;
+        
+        console.log(`Fetched ${allContacts.length} contacts so far...`);
+      } while (after);
+      
+      console.log(`Total contacts fetched: ${allContacts.length}`);
+      return allContacts;
     } catch (error: any) {
       console.error('Error fetching music catalog contacts:', error.message);
       throw error;
@@ -298,7 +315,7 @@ export class HubSpotService {
     unsubscribedContacts: MusicCatalogContact[];
   }> {
     try {
-      const contacts = await this.getMusicCatalogContacts(100);
+      const contacts = await this.getMusicCatalogContacts();
       
       const subscribedContacts = contacts.filter(c => c.subscribed);
       const unsubscribedContacts = contacts.filter(c => !c.subscribed);
