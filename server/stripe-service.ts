@@ -216,6 +216,68 @@ export class StripeService {
     }
   }
 
+  async getBalanceTransactions(limit: number = 100): Promise<any[]> {
+    try {
+      const stripe = await getUncachableStripeClient();
+      const transactions = await stripe.balanceTransactions.list({ limit });
+      
+      return transactions.data.map((txn) => ({
+        id: txn.id,
+        amount: txn.amount,
+        net: txn.net,
+        fee: txn.fee,
+        currency: txn.currency,
+        type: txn.type,
+        status: txn.status,
+        created: txn.created,
+        description: txn.description,
+        source: txn.source
+      }));
+    } catch (error: any) {
+      console.error('Error fetching Stripe balance transactions:', error.message);
+      throw error;
+    }
+  }
+
+  async getProducts(): Promise<any[]> {
+    try {
+      const stripe = await getUncachableStripeClient();
+      const products = await stripe.products.list({ limit: 100, active: true });
+      
+      return products.data.map((product) => ({
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        active: product.active,
+        created: product.created
+      }));
+    } catch (error: any) {
+      console.error('Error fetching Stripe products:', error.message);
+      throw error;
+    }
+  }
+
+  async getPrices(): Promise<any[]> {
+    try {
+      const stripe = await getUncachableStripeClient();
+      const prices = await stripe.prices.list({ limit: 100, active: true });
+      
+      return prices.data.map((price) => ({
+        id: price.id,
+        productId: typeof price.product === 'string' ? price.product : price.product?.id,
+        unitAmount: price.unit_amount,
+        currency: price.currency,
+        interval: price.recurring?.interval,
+        intervalCount: price.recurring?.interval_count,
+        nickname: price.nickname,
+        active: price.active
+      }));
+    } catch (error: any) {
+      console.error('Error fetching Stripe prices:', error.message);
+      throw error;
+    }
+  }
+
   async getDashboardStats(): Promise<{
     totalCustomers: number;
     activeSubscriptions: number;

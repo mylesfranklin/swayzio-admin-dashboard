@@ -125,6 +125,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/stripe/live/balance-transactions", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 100;
+      const transactions = await stripeService.getBalanceTransactions(limit);
+      res.json(transactions);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/stripe/live/products", async (req, res) => {
+    try {
+      const products = await stripeService.getProducts();
+      res.json(products);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/stripe/live/prices", async (req, res) => {
+    try {
+      const prices = await stripeService.getPrices();
+      res.json(prices);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   app.get("/api/stripe/live/dashboard", async (req, res) => {
     try {
       const stats = await stripeService.getDashboardStats();
