@@ -16,6 +16,7 @@ async function kitFetch(endpoint: string, options: RequestInit = {}): Promise<an
     ...options,
     headers: {
       'Accept': 'application/json',
+      'Content-Type': 'application/json',
       'X-Kit-Api-Key': apiKey,
       ...options.headers,
     },
