@@ -1,19 +1,48 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { StripeDashboard } from "@/components/integrations/stripe-dashboard";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { AlertTriangle, RefreshCw, Clock, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+
+function formatLastUpdated(date: string | Date | null): string {
+  if (!date) return 'Never';
+  const d = new Date(date);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins} min ago`;
+  if (diffMins < 1440) return `${Math.floor(diffMins / 60)} hours ago`;
+  return d.toLocaleDateString();
+}
 
 export default function StripeAnalytics() {
   const { data: status, isLoading: statusLoading } = useQuery<{ connected: boolean; mode?: string }>({
     queryKey: ["/api/stripe/live/status"],
   });
 
-  const { data: dashboard, isLoading: dashboardLoading, refetch } = useQuery<any>({
+  const { data: dashboard, isLoading: dashboardLoading, isFetching, refetch } = useQuery<any>({
     queryKey: ["/api/stripe/live/dashboard"],
     enabled: status?.connected === true,
+    staleTime: 5 * 60 * 1000,
   });
+
+  const refreshMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest('POST', '/api/cache/refresh/stripe');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/stripe/live/dashboard"] });
+    }
+  });
+
+  const cacheInfo = dashboard?._cache;
+  const isStale = cacheInfo?.isStale;
+  const lastUpdated = cacheInfo?.lastUpdated;
+  const fromCache = cacheInfo?.fromCache;
 
   if (statusLoading) {
     return (
@@ -61,21 +90,39 @@ export default function StripeAnalytics() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Stripe Analytics</h1>
-          <p className="text-linear-text-secondary mt-1">Revenue, subscriptions, and payments</p>
+          <div className="flex items-center gap-3 mt-1">
+            <p className="text-linear-text-secondary">Revenue, subscriptions, and payments</p>
+            {lastUpdated && (
+              <span className="flex items-center gap-1 text-xs text-linear-text-tertiary">
+                <Clock className="h-3 w-3" />
+                Updated {formatLastUpdated(lastUpdated)}
+                {isStale && (
+                  <span className="flex items-center gap-1 text-linear-warning ml-2">
+                    <AlertCircle className="h-3 w-3" />
+                    Refreshing...
+                  </span>
+                )}
+                {fromCache && !isStale && (
+                  <span className="text-linear-success ml-1">(cached)</span>
+                )}
+              </span>
+            )}
+          </div>
         </div>
         <Button 
           variant="outline" 
           size="sm" 
-          onClick={() => refetch()}
+          onClick={() => refreshMutation.isPending ? null : refetch()}
+          disabled={isFetching || refreshMutation.isPending}
           className="gap-2"
           data-testid="button-refresh-stripe"
         >
-          <RefreshCw className="h-4 w-4" />
-          Refresh
+          <RefreshCw className={`h-4 w-4 ${(isFetching || refreshMutation.isPending) ? 'animate-spin' : ''}`} />
+          {isFetching ? 'Loading...' : 'Refresh'}
         </Button>
       </div>
       
-      {dashboardLoading ? (
+      {dashboardLoading && !dashboard ? (
         <div className="grid gap-4 md:grid-cols-4">
           {[...Array(4)].map((_, i) => (
             <Skeleton key={i} className="h-32" />
