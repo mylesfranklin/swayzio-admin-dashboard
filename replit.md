@@ -103,6 +103,16 @@ The Settings > Integrations tab provides a unified view of all connected service
 - **SocialMetrics**: Platform cards for 6 social networks with growth tracking
 - **KitDashboard**: Subscriber growth, email broadcasts, form performance
 
+### Caching Architecture
+- **Pattern**: Two-tier (in-memory + PostgreSQL) with stale-while-revalidate strategy
+- **Tables**: `integration_cache` (cached data), `integration_sync_state` (sync cursors)
+- **TTLs**: 15 minutes (HubSpot, Stripe, Mercury), 30 minutes (Kit)
+- **Stale Threshold**: Data marked stale 5 minutes before expiry; stale data served immediately while background refresh runs
+- **Cache Keys**: `hubspot`, `stripe`, `mercury`, `kit`
+- **Manual Refresh**: POST `/api/cache/refresh/:integration` clears cache and triggers fresh fetch
+- **Cache Status**: GET `/api/cache/status` returns health info for all integrations
+- **Frontend Display**: Analytics pages show "Updated X ago" with stale/cached indicators
+
 ### Development Tools
 - **Vite**: Build tool with React plugin and custom Replit plugins
 - **esbuild**: Server-side bundling for production

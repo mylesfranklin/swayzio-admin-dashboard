@@ -112,13 +112,17 @@ export default function HubSpotAnalytics() {
         <Button 
           variant="outline" 
           size="sm" 
-          onClick={() => refreshMutation.isPending ? null : refetch()}
+          onClick={() => {
+            if (!refreshMutation.isPending && !isFetching) {
+              refreshMutation.mutate();
+            }
+          }}
           disabled={isFetching || refreshMutation.isPending}
           className="gap-2"
           data-testid="button-refresh-hubspot"
         >
           <RefreshCw className={`h-4 w-4 ${(isFetching || refreshMutation.isPending) ? 'animate-spin' : ''}`} />
-          {isFetching ? 'Loading...' : 'Refresh'}
+          {refreshMutation.isPending ? 'Refreshing...' : isFetching ? 'Loading...' : 'Refresh'}
         </Button>
       </div>
       
