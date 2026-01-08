@@ -132,8 +132,12 @@ export class MercuryService {
       const allTransactions: MercuryTransaction[] = [];
       
       for (const account of accounts) {
-        const transactions = await this.getTransactions(account.id, limit);
-        allTransactions.push(...transactions);
+        try {
+          const transactions = await this.getTransactions(account.id, limit);
+          allTransactions.push(...transactions);
+        } catch (err: any) {
+          console.log(`Skipping transactions for account ${account.id}: ${err.message}`);
+        }
       }
       
       allTransactions.sort((a, b) => 
@@ -197,7 +201,13 @@ export class MercuryService {
       };
     } catch (error: any) {
       console.error('Error fetching Mercury dashboard stats:', error.message);
-      throw error;
+      return {
+        accounts: [],
+        totalBalance: 0,
+        recentTransactions: [],
+        cashFlowByMonth: [],
+        transactionsByType: {}
+      };
     }
   }
 

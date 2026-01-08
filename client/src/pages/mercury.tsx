@@ -84,12 +84,6 @@ function MercuryDashboard({ data }: { data: MercuryDashboardStats }) {
   const currentMonth = data.cashFlowByMonth[data.cashFlowByMonth.length - 1] || { inflow: 0, outflow: 0 };
   const pendingTransactions = data.recentTransactions.filter(t => t.status === 'pending');
   
-  const chartData = data.cashFlowByMonth.map(m => ({
-    month: m.month,
-    inflow: m.inflow / 100,
-    outflow: m.outflow / 100
-  }));
-  
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -100,7 +94,7 @@ function MercuryDashboard({ data }: { data: MercuryDashboardStats }) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white" data-testid="text-total-balance">
-              {formatCurrency(data.totalBalance / 100)}
+              {formatCurrency(data.totalBalance)}
             </div>
             <p className="text-xs text-linear-text-tertiary mt-1">
               Across {data.accounts.length} account{data.accounts.length !== 1 ? 's' : ''}
@@ -115,7 +109,7 @@ function MercuryDashboard({ data }: { data: MercuryDashboardStats }) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-linear-success" data-testid="text-monthly-inflow">
-              {formatCurrency(currentMonth.inflow / 100)}
+              {formatCurrency(currentMonth.inflow)}
             </div>
             <p className="text-xs text-linear-text-tertiary mt-1">This month</p>
           </CardContent>
@@ -128,7 +122,7 @@ function MercuryDashboard({ data }: { data: MercuryDashboardStats }) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-linear-error" data-testid="text-monthly-outflow">
-              {formatCurrency(currentMonth.outflow / 100)}
+              {formatCurrency(currentMonth.outflow)}
             </div>
             <p className="text-xs text-linear-text-tertiary mt-1">This month</p>
           </CardContent>
@@ -161,7 +155,7 @@ function MercuryDashboard({ data }: { data: MercuryDashboardStats }) {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-xl font-bold text-white">{formatCurrency(account.currentBalance / 100)}</div>
+                <div className="text-xl font-bold text-white">{formatCurrency(account.currentBalance)}</div>
                 <p className="text-xs text-linear-text-tertiary mt-2">
                   ****{account.accountNumber?.slice(-4) || '****'}
                 </p>
@@ -171,7 +165,7 @@ function MercuryDashboard({ data }: { data: MercuryDashboardStats }) {
         </div>
       )}
 
-      {chartData.length > 0 && (
+      {data.cashFlowByMonth.length > 0 && (
         <Card className="bg-linear-card border-linear-border" data-testid="card-cash-flow-chart">
           <CardHeader>
             <CardTitle className="text-white">Cash Flow</CardTitle>
@@ -179,7 +173,7 @@ function MercuryDashboard({ data }: { data: MercuryDashboardStats }) {
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
+                <BarChart data={data.cashFlowByMonth}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                   <XAxis 
                     dataKey="month" 
@@ -248,7 +242,7 @@ function MercuryDashboard({ data }: { data: MercuryDashboardStats }) {
                       </Badge>
                     </TableCell>
                     <TableCell className={`text-right font-medium ${txn.amount >= 0 ? 'text-linear-success' : 'text-linear-error'}`}>
-                      {txn.amount >= 0 ? '+' : ''}{formatCurrency(txn.amount / 100)}
+                      {txn.amount >= 0 ? '+' : ''}{formatCurrency(txn.amount)}
                     </TableCell>
                   </TableRow>
                 ))}
