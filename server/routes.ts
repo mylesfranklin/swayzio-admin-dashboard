@@ -5,6 +5,10 @@ import { hubspotService } from "./hubspot-service";
 import { stripeService, getStripePublishableKey } from "./stripe-service";
 import { mercuryService } from "./mercury-service";
 import { kitService } from "./kit-service";
+import { cacheManager } from "./cache-manager";
+
+const CACHE_TTL_MINUTES = 15;
+const KIT_CACHE_TTL_MINUTES = 30;
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // ===== HubSpot Live API Routes =====
@@ -41,8 +45,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/hubspot/live/dashboard", async (req, res) => {
     try {
-      const stats = await hubspotService.getDashboardStats();
-      res.json(stats);
+      const forceRefresh = req.query.refresh === 'true';
+      
+      if (forceRefresh) {
+        await cacheManager.invalidate('hubspot', 'dashboard');
+      }
+      
+      const result = await cacheManager.getOrFetch(
+        'hubspot',
+        'dashboard',
+        () => hubspotService.getDashboardStats(),
+        CACHE_TTL_MINUTES
+      );
+      
+      res.json({
+        ...result.data,
+        _cache: {
+          lastUpdated: result.lastUpdated,
+          isStale: result.isStale,
+          fromCache: result.fromCache
+        }
+      });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -50,8 +73,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/hubspot/live/music-catalog", async (req, res) => {
     try {
-      const dashboard = await hubspotService.getMusicCatalogDashboard();
-      res.json(dashboard);
+      const forceRefresh = req.query.refresh === 'true';
+      
+      if (forceRefresh) {
+        await cacheManager.invalidate('hubspot', 'music-catalog');
+      }
+      
+      const result = await cacheManager.getOrFetch(
+        'hubspot',
+        'music-catalog',
+        () => hubspotService.getMusicCatalogDashboard(),
+        CACHE_TTL_MINUTES
+      );
+      
+      res.json({
+        ...result.data,
+        _cache: {
+          lastUpdated: result.lastUpdated,
+          isStale: result.isStale,
+          fromCache: result.fromCache
+        }
+      });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -157,8 +199,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/stripe/live/dashboard", async (req, res) => {
     try {
-      const stats = await stripeService.getDashboardStats();
-      res.json(stats);
+      const forceRefresh = req.query.refresh === 'true';
+      
+      if (forceRefresh) {
+        await cacheManager.invalidate('stripe', 'dashboard');
+      }
+      
+      const result = await cacheManager.getOrFetch(
+        'stripe',
+        'dashboard',
+        () => stripeService.getDashboardStats(),
+        CACHE_TTL_MINUTES
+      );
+      
+      res.json({
+        ...result.data,
+        _cache: {
+          lastUpdated: result.lastUpdated,
+          isStale: result.isStale,
+          fromCache: result.fromCache
+        }
+      });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -205,8 +266,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/mercury/live/dashboard", async (req, res) => {
     try {
-      const stats = await mercuryService.getDashboardStats();
-      res.json(stats);
+      const forceRefresh = req.query.refresh === 'true';
+      
+      if (forceRefresh) {
+        await cacheManager.invalidate('mercury', 'dashboard');
+      }
+      
+      const result = await cacheManager.getOrFetch(
+        'mercury',
+        'dashboard',
+        () => mercuryService.getDashboardStats(),
+        CACHE_TTL_MINUTES
+      );
+      
+      res.json({
+        ...result.data,
+        _cache: {
+          lastUpdated: result.lastUpdated,
+          isStale: result.isStale,
+          fromCache: result.fromCache
+        }
+      });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -225,8 +305,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/kit/live/dashboard", async (req, res) => {
     try {
-      const stats = await kitService.getDashboardStats();
-      res.json(stats);
+      const forceRefresh = req.query.refresh === 'true';
+      
+      if (forceRefresh) {
+        await cacheManager.invalidate('kit', 'dashboard');
+      }
+      
+      const result = await cacheManager.getOrFetch(
+        'kit',
+        'dashboard',
+        () => kitService.getDashboardStats(),
+        KIT_CACHE_TTL_MINUTES
+      );
+      
+      res.json({
+        ...result.data,
+        _cache: {
+          lastUpdated: result.lastUpdated,
+          isStale: result.isStale,
+          fromCache: result.fromCache
+        }
+      });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -283,8 +382,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/kit/live/growth-history", async (req, res) => {
     try {
       const months = parseInt(req.query.months as string) || 12;
-      const history = await kitService.getSubscriberGrowthHistory(months);
-      res.json(history);
+      const forceRefresh = req.query.refresh === 'true';
+      
+      if (forceRefresh) {
+        await cacheManager.invalidate('kit', 'growth-history');
+      }
+      
+      const result = await cacheManager.getOrFetch(
+        'kit',
+        'growth-history',
+        () => kitService.getSubscriberGrowthHistory(months),
+        KIT_CACHE_TTL_MINUTES
+      );
+      
+      res.json(result.data);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -810,6 +921,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ subscription });
     } catch (error: any) {
       console.error("Error cancelling subscription:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // ===== Cache Management Endpoints =====
+  
+  app.post("/api/cache/refresh/:integration", async (req, res) => {
+    try {
+      const { integration } = req.params;
+      const validIntegrations = ['hubspot', 'stripe', 'mercury', 'kit'];
+      
+      if (!validIntegrations.includes(integration)) {
+        return res.status(400).json({ message: `Invalid integration: ${integration}` });
+      }
+      
+      await cacheManager.invalidate(integration);
+      
+      let result;
+      switch (integration) {
+        case 'hubspot':
+          result = await hubspotService.getMusicCatalogDashboard();
+          await cacheManager.set('hubspot', 'music-catalog', result, CACHE_TTL_MINUTES);
+          break;
+        case 'stripe':
+          result = await stripeService.getDashboardStats();
+          await cacheManager.set('stripe', 'dashboard', result, CACHE_TTL_MINUTES);
+          break;
+        case 'mercury':
+          result = await mercuryService.getDashboardStats();
+          await cacheManager.set('mercury', 'dashboard', result, CACHE_TTL_MINUTES);
+          break;
+        case 'kit':
+          result = await kitService.getDashboardStats();
+          await cacheManager.set('kit', 'dashboard', result, KIT_CACHE_TTL_MINUTES);
+          break;
+      }
+      
+      res.json({ 
+        success: true, 
+        integration,
+        message: `Cache refreshed for ${integration}`,
+        lastUpdated: new Date()
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/cache/status", async (req, res) => {
+    try {
+      const integrations = ['hubspot', 'stripe', 'mercury', 'kit'];
+      const status: Record<string, any> = {};
+      
+      for (const integration of integrations) {
+        const syncState = await cacheManager.getSyncState(integration);
+        let cacheKey = 'dashboard';
+        if (integration === 'hubspot') cacheKey = 'music-catalog';
+        
+        const cached = await cacheManager.get(integration, cacheKey);
+        
+        status[integration] = {
+          hasCachedData: !!cached,
+          lastUpdated: cached?.lastUpdated || null,
+          isStale: cached?.isStale || false,
+          expiresAt: cached?.expiresAt || null,
+          syncStatus: syncState?.syncStatus || 'idle'
+        };
+      }
+      
+      res.json(status);
+    } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
