@@ -225,3 +225,51 @@ export const insertSyncEventSchema = createInsertSchema(syncEvents).pick({
 
 export type InsertSyncEvent = z.infer<typeof insertSyncEventSchema>;
 export type SyncEvent = typeof syncEvents.$inferSelect;
+
+// Integration cache model - stores cached API responses
+export const integrationCache = pgTable("integration_cache", {
+  id: serial("id").primaryKey(),
+  integration: text("integration").notNull(), // 'hubspot', 'stripe', 'kit', 'mercury'
+  cacheKey: text("cache_key").notNull(), // e.g. 'dashboard', 'customers', 'subscriptions'
+  data: jsonb("data").notNull(),
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  expiresAt: timestamp("expires_at").notNull(),
+  isStale: boolean("is_stale").notNull().default(false),
+});
+
+export const insertIntegrationCacheSchema = createInsertSchema(integrationCache).pick({
+  integration: true,
+  cacheKey: true,
+  data: true,
+  lastUpdated: true,
+  expiresAt: true,
+  isStale: true,
+});
+
+export type InsertIntegrationCache = z.infer<typeof insertIntegrationCacheSchema>;
+export type IntegrationCache = typeof integrationCache.$inferSelect;
+
+// Integration sync state - tracks sync progress and cursors
+export const integrationSyncState = pgTable("integration_sync_state", {
+  id: serial("id").primaryKey(),
+  integration: text("integration").notNull().unique(), // 'hubspot', 'stripe', 'kit', 'mercury'
+  lastSyncStarted: timestamp("last_sync_started"),
+  lastSyncCompleted: timestamp("last_sync_completed"),
+  syncCursor: text("sync_cursor"), // pagination cursor for incremental sync
+  syncStatus: text("sync_status").notNull().default("idle"), // 'idle', 'syncing', 'error'
+  totalRecords: integer("total_records"),
+  errorMessage: text("error_message"),
+});
+
+export const insertIntegrationSyncStateSchema = createInsertSchema(integrationSyncState).pick({
+  integration: true,
+  lastSyncStarted: true,
+  lastSyncCompleted: true,
+  syncCursor: true,
+  syncStatus: true,
+  totalRecords: true,
+  errorMessage: true,
+});
+
+export type InsertIntegrationSyncState = z.infer<typeof insertIntegrationSyncStateSchema>;
+export type IntegrationSyncState = typeof integrationSyncState.$inferSelect;
