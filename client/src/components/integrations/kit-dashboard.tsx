@@ -105,7 +105,7 @@ function formatDate(dateString: string): string {
   });
 }
 
-function KitDashboardContent({ data }: { data: KitDashboardStats }) {
+function KitDashboardContent({ data, growthHistory, growthHistoryLoading }: { data: KitDashboardStats; growthHistory?: GrowthHistoryItem[]; growthHistoryLoading: boolean }) {
   const openRate = data.emailStats.sent > 0 
     ? ((data.emailStats.opened / data.emailStats.sent) * 100).toFixed(1)
     : '0';
@@ -225,6 +225,8 @@ function KitDashboardContent({ data }: { data: KitDashboardStats }) {
           </CardContent>
         </Card>
       </div>
+
+      <SubscriberGrowthChart data={growthHistory} isLoading={growthHistoryLoading} />
 
       {sentBroadcasts.length > 0 && (
         <Card className="bg-linear-card border-linear-border" data-testid="card-broadcasts">
@@ -546,8 +548,11 @@ export function KitDashboard() {
           Refresh
         </Button>
       </div>
-      <KitDashboardContent data={dashboardQuery.data} />
-      <SubscriberGrowthChart data={growthHistoryQuery.data} isLoading={growthHistoryQuery.isLoading} />
+      <KitDashboardContent 
+        data={dashboardQuery.data} 
+        growthHistory={growthHistoryQuery.data} 
+        growthHistoryLoading={growthHistoryQuery.isLoading} 
+      />
     </div>
   );
 }
