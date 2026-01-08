@@ -280,6 +280,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/kit/live/growth-history", async (req, res) => {
+    try {
+      const months = parseInt(req.query.months as string) || 12;
+      const history = await kitService.getSubscriberGrowthHistory(months);
+      res.json(history);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // SEO Analytics endpoint
   app.get("/api/seo/analytics", async (req, res) => {
     try {

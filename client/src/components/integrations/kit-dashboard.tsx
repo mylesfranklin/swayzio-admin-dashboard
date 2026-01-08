@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { AreaChart } from "@/components/ui/area-chart";
 import { 
   Users, 
   Mail, 
@@ -25,6 +26,12 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
+
+interface GrowthHistoryItem {
+  month: string;
+  newSubscribers: number;
+  totalSubscribers: number;
+}
 
 interface KitGrowthStats {
   cancellations: number;
@@ -401,6 +408,78 @@ function LoadingState() {
   );
 }
 
+function SubscriberGrowthChart({ data, isLoading }: { data?: GrowthHistoryItem[]; isLoading: boolean }) {
+  if (isLoading) {
+    return (
+      <Card className="bg-linear-card border-linear-border" data-testid="card-growth-chart">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" />
+            Subscriber Growth
+          </CardTitle>
+          <CardDescription className="text-linear-text-secondary">
+            Monthly subscriber growth over the past 12 months
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-[250px] w-full bg-linear-border" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return null;
+  }
+
+  const chartData = data.map(item => ({
+    name: item.month,
+    total: item.totalSubscribers,
+    new: item.newSubscribers
+  }));
+
+  return (
+    <Card className="bg-linear-card border-linear-border" data-testid="card-growth-chart">
+      <CardHeader>
+        <CardTitle className="text-white flex items-center gap-2">
+          <TrendingUp className="h-5 w-5" />
+          Subscriber Growth
+        </CardTitle>
+        <CardDescription className="text-linear-text-secondary">
+          Monthly subscriber growth over the past 12 months
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <AreaChart
+          data={chartData}
+          height={250}
+          lines={[
+            { dataKey: "total", stroke: "#5e6ad2", fill: "#5e6ad2", name: "Total Subscribers" },
+          ]}
+          valueFormatter={(v) => v.toLocaleString()}
+          showLegend={false}
+        />
+        <div className="mt-4 grid grid-cols-3 gap-4 text-center">
+          <div className="p-3 rounded-lg bg-linear-base border border-linear-border">
+            <p className="text-xs text-linear-text-tertiary">12 Month Ago</p>
+            <p className="text-lg font-semibold text-white">{formatNumber(data[0]?.totalSubscribers || 0)}</p>
+          </div>
+          <div className="p-3 rounded-lg bg-linear-base border border-linear-border">
+            <p className="text-xs text-linear-text-tertiary">Current</p>
+            <p className="text-lg font-semibold text-white">{formatNumber(data[data.length - 1]?.totalSubscribers || 0)}</p>
+          </div>
+          <div className="p-3 rounded-lg bg-linear-base border border-linear-border">
+            <p className="text-xs text-linear-text-tertiary">12 Month Growth</p>
+            <p className="text-lg font-semibold text-linear-success">
+              +{formatNumber((data[data.length - 1]?.totalSubscribers || 0) - (data[0]?.totalSubscribers || 0))}
+            </p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function KitDashboard() {
   const statusQuery = useQuery<{ connected: boolean }>({
     queryKey: ['/api/kit/live/status'],
@@ -413,11 +492,18 @@ export function KitDashboard() {
     staleTime: 60000
   });
 
+  const growthHistoryQuery = useQuery<GrowthHistoryItem[]>({
+    queryKey: ['/api/kit/live/growth-history'],
+    enabled: statusQuery.data?.connected === true,
+    staleTime: 300000 // 5 minutes - this is an expensive query
+  });
+
   const isConnected = statusQuery.data?.connected === true;
   const isLoading = statusQuery.isLoading || (isConnected && dashboardQuery.isLoading);
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['/api/kit/live/dashboard'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/kit/live/growth-history'] });
   };
 
   if (isLoading) {
@@ -452,15 +538,16 @@ export function KitDashboard() {
           variant="outline"
           size="sm"
           onClick={handleRefresh}
-          disabled={dashboardQuery.isFetching}
+          disabled={dashboardQuery.isFetching || growthHistoryQuery.isFetching}
           className="border-linear-border text-linear-text-secondary hover:text-white"
           data-testid="button-refresh-kit"
         >
-          <RefreshCw className={`h-4 w-4 mr-2 ${dashboardQuery.isFetching ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`h-4 w-4 mr-2 ${(dashboardQuery.isFetching || growthHistoryQuery.isFetching) ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
       </div>
       <KitDashboardContent data={dashboardQuery.data} />
+      <SubscriberGrowthChart data={growthHistoryQuery.data} isLoading={growthHistoryQuery.isLoading} />
     </div>
   );
 }

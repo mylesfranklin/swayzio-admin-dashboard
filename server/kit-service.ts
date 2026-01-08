@@ -182,6 +182,78 @@ class KitService {
     }
   }
 
+  async getSubscriberGrowthHistory(months: number = 12): Promise<Array<{ month: string; newSubscribers: number; totalSubscribers: number }>> {
+    try {
+      const history: Array<{ month: string; newSubscribers: number; totalSubscribers: number }> = [];
+      const now = new Date();
+      
+      // Get total current subscribers
+      const subscribersData = await this.getSubscribers({ status: 'active', per_page: 1, include_total_count: true });
+      const currentTotal = subscribersData.total_count || 0;
+      
+      // Fetch subscribers created in the past 12 months with pagination
+      const monthCounts: Record<string, number> = {};
+      let cursor: string | undefined;
+      let hasMore = true;
+      const twelveMonthsAgo = new Date();
+      twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - months);
+      
+      // Paginate through all subscribers to count by month
+      // Limit to 10 pages to avoid timeout (1000 subscribers per page max)
+      let pageCount = 0;
+      const maxPages = 20;
+      
+      while (hasMore && pageCount < maxPages) {
+        const params = new URLSearchParams({
+          per_page: '500'
+        });
+        if (cursor) {
+          params.append('after', cursor);
+        }
+        
+        const data = await kitFetch(`/subscribers?${params.toString()}`);
+        const subscribers = data.subscribers || [];
+        
+        for (const sub of subscribers) {
+          const createdAt = new Date(sub.created_at);
+          if (createdAt < twelveMonthsAgo) {
+            hasMore = false;
+            break;
+          }
+          const monthKey = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}`;
+          monthCounts[monthKey] = (monthCounts[monthKey] || 0) + 1;
+        }
+        
+        hasMore = hasMore && data.pagination?.has_next_page;
+        cursor = data.pagination?.end_cursor;
+        pageCount++;
+      }
+      
+      // Build monthly history array
+      let runningTotal = currentTotal;
+      for (let i = 0; i < months; i++) {
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        const monthLabel = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        const newSubs = monthCounts[monthKey] || 0;
+        
+        history.unshift({
+          month: monthLabel,
+          newSubscribers: newSubs,
+          totalSubscribers: runningTotal
+        });
+        
+        // Subtract for previous month's total
+        runningTotal -= newSubs;
+      }
+      
+      return history;
+    } catch (error: any) {
+      console.error('Error fetching Kit subscriber growth history:', error.message);
+      throw error;
+    }
+  }
+
   async getDashboardStats(): Promise<KitDashboardStats> {
     try {
       const [growthStats, emailStats, subscribersData, broadcasts, forms, tags] = await Promise.all([
