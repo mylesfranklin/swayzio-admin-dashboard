@@ -21,10 +21,15 @@ export type SyncState = {
 
 const DEFAULT_TTL_MINUTES = 15;
 const STALE_THRESHOLD_MINUTES = 5;
+const BACKGROUND_REFRESH_INTERVAL_HOURS = 6;
+
+type RefreshFunction = () => Promise<any>;
 
 class CacheManager {
   private inMemoryCache: Map<string, CacheEntry> = new Map();
   private refreshPromises: Map<string, Promise<any>> = new Map();
+  private scheduledRefreshers: Map<string, { fn: RefreshFunction; ttl: number }> = new Map();
+  private refreshInterval: NodeJS.Timeout | null = null;
 
   private getCacheKey(integration: string, key: string): string {
     return `${integration}:${key}`;
@@ -299,6 +304,59 @@ class CacheManager {
     } catch (error) {
       console.error('Cache cleanup error:', error);
       return 0;
+    }
+  }
+
+  registerRefresher(integration: string, key: string, fn: RefreshFunction, ttlMinutes: number = DEFAULT_TTL_MINUTES): void {
+    const refreshKey = this.getCacheKey(integration, key);
+    this.scheduledRefreshers.set(refreshKey, { fn, ttl: ttlMinutes });
+    console.log(`Registered scheduled refresher: ${refreshKey}`);
+  }
+
+  async refreshAll(): Promise<void> {
+    console.log(`[${new Date().toISOString()}] Starting scheduled cache refresh for ${this.scheduledRefreshers.size} integrations...`);
+    
+    for (const [refreshKey, { fn, ttl }] of this.scheduledRefreshers) {
+      const [integration, key] = refreshKey.split(':');
+      try {
+        console.log(`  Refreshing ${refreshKey}...`);
+        const freshData = await fn();
+        await this.set(integration, key, freshData, ttl);
+        console.log(`  ✓ ${refreshKey} refreshed successfully`);
+      } catch (error) {
+        console.error(`  ✗ Failed to refresh ${refreshKey}:`, error);
+      }
+    }
+    
+    console.log(`[${new Date().toISOString()}] Scheduled cache refresh complete`);
+  }
+
+  startBackgroundRefresh(intervalHours: number = BACKGROUND_REFRESH_INTERVAL_HOURS): void {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+    }
+
+    const intervalMs = intervalHours * 60 * 60 * 1000;
+    console.log(`Starting background cache refresh every ${intervalHours} hours`);
+    
+    this.refreshInterval = setInterval(() => {
+      this.refreshAll().catch(err => {
+        console.error('Background refresh failed:', err);
+      });
+    }, intervalMs);
+
+    setTimeout(() => {
+      this.refreshAll().catch(err => {
+        console.error('Initial background refresh failed:', err);
+      });
+    }, 30000);
+  }
+
+  stopBackgroundRefresh(): void {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+      this.refreshInterval = null;
+      console.log('Background cache refresh stopped');
     }
   }
 }

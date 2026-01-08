@@ -996,6 +996,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Register scheduled refreshers for background cache warming
+  cacheManager.registerRefresher('hubspot', 'music-catalog', () => hubspotService.getMusicCatalogDashboard(), CACHE_TTL_MINUTES);
+  cacheManager.registerRefresher('stripe', 'dashboard', () => stripeService.getDashboardStats(), CACHE_TTL_MINUTES);
+  cacheManager.registerRefresher('mercury', 'dashboard', () => mercuryService.getDashboardStats(), CACHE_TTL_MINUTES);
+  cacheManager.registerRefresher('kit', 'dashboard', () => kitService.getDashboardStats(), KIT_CACHE_TTL_MINUTES);
+  
+  // Start background refresh every 6 hours
+  cacheManager.startBackgroundRefresh(6);
+
   const httpServer = createServer(app);
 
   return httpServer;
