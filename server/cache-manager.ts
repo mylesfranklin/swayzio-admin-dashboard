@@ -19,7 +19,7 @@ export type SyncState = {
   errorMessage: string | null;
 };
 
-const DEFAULT_TTL_MINUTES = 15;
+const DEFAULT_TTL_MINUTES = 7 * 60;
 const STALE_THRESHOLD_MINUTES = 5;
 const BACKGROUND_REFRESH_INTERVAL_HOURS = 6;
 
@@ -28,7 +28,7 @@ type RefreshFunction = () => Promise<any>;
 class CacheManager {
   private inMemoryCache: Map<string, CacheEntry> = new Map();
   private refreshPromises: Map<string, Promise<any>> = new Map();
-  private scheduledRefreshers: Map<string, { fn: RefreshFunction; ttl: number }> = new Map();
+  private scheduledRefreshers: Map<string, RefreshFunction> = new Map();
   private refreshInterval: NodeJS.Timeout | null = null;
 
   private getCacheKey(integration: string, key: string): string {
@@ -307,22 +307,23 @@ class CacheManager {
     }
   }
 
-  registerRefresher(integration: string, key: string, fn: RefreshFunction, ttlMinutes: number = DEFAULT_TTL_MINUTES): void {
+  registerRefresher(integration: string, key: string, fn: RefreshFunction): void {
     const refreshKey = this.getCacheKey(integration, key);
-    this.scheduledRefreshers.set(refreshKey, { fn, ttl: ttlMinutes });
+    this.scheduledRefreshers.set(refreshKey, fn);
     console.log(`Registered scheduled refresher: ${refreshKey}`);
   }
 
   async refreshAll(): Promise<void> {
     console.log(`[${new Date().toISOString()}] Starting scheduled cache refresh for ${this.scheduledRefreshers.size} integrations...`);
     
-    for (const [refreshKey, { fn, ttl }] of this.scheduledRefreshers) {
+    const ttlHours = Math.round(DEFAULT_TTL_MINUTES / 60);
+    for (const [refreshKey, fn] of this.scheduledRefreshers) {
       const [integration, key] = refreshKey.split(':');
       try {
         console.log(`  Refreshing ${refreshKey}...`);
         const freshData = await fn();
-        await this.set(integration, key, freshData, ttl);
-        console.log(`  ✓ ${refreshKey} refreshed successfully`);
+        await this.set(integration, key, freshData, DEFAULT_TTL_MINUTES);
+        console.log(`  ✓ ${refreshKey} refreshed successfully (TTL: ${ttlHours}h)`);
       } catch (error) {
         console.error(`  ✗ Failed to refresh ${refreshKey}:`, error);
       }

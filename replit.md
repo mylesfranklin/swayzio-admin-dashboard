@@ -112,6 +112,7 @@ The Settings > Integrations tab provides a unified view of all connected service
 - **Manual Refresh**: POST `/api/cache/refresh/:integration` clears cache and triggers fresh fetch
 - **Cache Status**: GET `/api/cache/status` returns health info for all integrations
 - **Frontend Display**: Analytics pages show "Updated X ago" with stale/cached indicators
+- **Background Refresh**: Automatic cache warming every 6 hours; initial refresh 30 seconds after server startup; background-refreshed data uses 7-hour TTL to ensure warm cache between refresh cycles
 
 ### Development Tools
 - **Vite**: Build tool with React plugin and custom Replit plugins
