@@ -70,7 +70,7 @@ function MercuryDashboard({ data }: { data: MercuryDashboardStats }) {
       </Card>
 
       {activeAccounts.length > 0 && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 grid-cols-2">
           {activeAccounts.map((account) => (
             <Card key={account.id} className="bg-linear-card border-linear-border" data-testid={`card-account-${account.id}`}>
               <CardHeader className="pb-2">
@@ -139,8 +139,8 @@ function LoadingState() {
           <Skeleton className="h-3 w-20 bg-linear-border mt-2" />
         </CardContent>
       </Card>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {[...Array(3)].map((_, i) => (
+      <div className="grid gap-4 grid-cols-2">
+        {[...Array(4)].map((_, i) => (
           <Card key={i} className="bg-linear-card border-linear-border">
             <CardHeader className="pb-2">
               <Skeleton className="h-4 w-32 bg-linear-border" />
