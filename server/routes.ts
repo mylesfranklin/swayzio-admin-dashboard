@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { hubspotService } from "./hubspot-service";
 import { stripeService, getStripePublishableKey } from "./stripe-service";
 import { mercuryService } from "./mercury-service";
+import { kitService } from "./kit-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // ===== HubSpot Live API Routes =====
@@ -214,6 +215,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/mercury/live/status", async (req, res) => {
     try {
       const connected = mercuryService.isConnected();
+      res.json({ connected });
+    } catch (error: any) {
+      res.json({ connected: false, error: error.message });
+    }
+  });
+
+  // ===== Kit Newsletter Live API Routes =====
+
+  app.get("/api/kit/live/dashboard", async (req, res) => {
+    try {
+      const stats = await kitService.getDashboardStats();
+      res.json(stats);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/kit/live/subscribers", async (req, res) => {
+    try {
+      const status = req.query.status as string || 'active';
+      const per_page = parseInt(req.query.per_page as string) || 100;
+      const data = await kitService.getSubscribers({ status, per_page, include_total_count: true });
+      res.json(data);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/kit/live/broadcasts", async (req, res) => {
+    try {
+      const per_page = parseInt(req.query.per_page as string) || 20;
+      const broadcasts = await kitService.getBroadcasts(per_page);
+      res.json(broadcasts);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/kit/live/forms", async (req, res) => {
+    try {
+      const forms = await kitService.getForms();
+      res.json(forms);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/kit/live/tags", async (req, res) => {
+    try {
+      const tags = await kitService.getTags();
+      res.json(tags);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/kit/live/status", async (req, res) => {
+    try {
+      const connected = kitService.isConnected();
       res.json({ connected });
     } catch (error: any) {
       res.json({ connected: false, error: error.message });
