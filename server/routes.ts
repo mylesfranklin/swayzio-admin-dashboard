@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { hubspotService } from "./hubspot-service";
 import { stripeService, getStripePublishableKey } from "./stripe-service";
+import { mercuryService } from "./mercury-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // ===== HubSpot Live API Routes =====
@@ -177,6 +178,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ publishableKey });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
+    }
+  });
+
+  // ===== Mercury Live API Routes =====
+
+  app.get("/api/mercury/live/accounts", async (req, res) => {
+    try {
+      const accounts = await mercuryService.getAccounts();
+      res.json(accounts);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/mercury/live/transactions", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 100;
+      const transactions = await mercuryService.getAllTransactions(limit);
+      res.json(transactions);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/mercury/live/dashboard", async (req, res) => {
+    try {
+      const stats = await mercuryService.getDashboardStats();
+      res.json(stats);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/mercury/live/status", async (req, res) => {
+    try {
+      const connected = mercuryService.isConnected();
+      res.json({ connected });
+    } catch (error: any) {
+      res.json({ connected: false, error: error.message });
     }
   });
 
