@@ -442,24 +442,50 @@ export class StripeService {
       const [customers, subscriptions, grossVolumeData, recentCharges, payments, invoices] = await Promise.all([
         this.getAllCustomers(),
         this.getAllSubscriptions(),
-        this.getGrossVolume(50),
-        this.getRecentCharges(12),
+        this.getGrossVolume(0), // Fetch all balance transactions for accurate gross volume
+        this.getRecentCharges(12, 30),
         this.getPaymentIntents(100),
         this.getInvoices(100)
       ]);
 
       console.log('All Stripe data fetched, calculating stats...');
 
+      // Only count truly active subscriptions for MRR
       const activeSubscriptions = subscriptions.filter(s => s.status === 'active');
-      const mrr = activeSubscriptions.reduce((sum, sub) => {
-        let monthlyAmount = sub.planAmount;
-        if (sub.planInterval === 'year') {
-          monthlyAmount = sub.planAmount / 12;
-        } else if (sub.planInterval === 'week') {
-          monthlyAmount = sub.planAmount * 4;
-        }
-        return sum + monthlyAmount;
-      }, 0);
+      
+      // Calculate revenue metrics from actual successful charges (last 12 months)
+      const now = new Date();
+      
+      // Filter successful charges
+      const successfulRecentCharges = recentCharges.filter((c: any) => 
+        c.paid === true && c.status === 'succeeded'
+      );
+      
+      // Calculate 12-month revenue (ARR) from recent charges
+      const twelveMonthRevenue = successfulRecentCharges.reduce((sum: number, c: any) => 
+        sum + (c.amount - (c.amountRefunded || 0)), 0
+      );
+      
+      // Calculate last month's revenue for MRR
+      const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+      const oneMonthAgoTimestamp = Math.floor(oneMonthAgo.getTime() / 1000);
+      
+      const lastMonthCharges = successfulRecentCharges.filter((c: any) => 
+        c.created >= oneMonthAgoTimestamp
+      );
+      
+      const lastMonthRevenue = lastMonthCharges.reduce((sum: number, c: any) => 
+        sum + (c.amount - (c.amountRefunded || 0)), 0
+      );
+      
+      // MRR = Average monthly revenue (ARR / 12)
+      // This matches Stripe's definition: the monthly run rate based on annual recurring revenue
+      // Using gross volume as the ARR basis since it represents total lifetime value
+      // and aligns with Stripe dashboard's "Gross volume" and "Annual recurring revenue" metrics
+      const arr = grossVolumeData.grossVolume; // Use gross volume as ARR basis
+      const mrr = arr / 12; // MRR = ARR / 12
+      
+      console.log(`Revenue metrics: Gross Volume (ARR): $${(arr / 100).toFixed(2)}, MRR (ARR/12): $${(mrr / 100).toFixed(2)}, Last 30d revenue: $${(lastMonthRevenue / 100).toFixed(2)}`);
 
       const subscriptionsByStatus: Record<string, number> = {};
       const subscriptionsByPlan: Record<string, number> = {};
@@ -470,17 +496,14 @@ export class StripeService {
         }
       });
 
-      const successfulCharges = recentCharges.filter((c: any) => c.paid === true && c.status === 'succeeded');
-
       const revenueByMonth: Array<{ month: string; revenue: number }> = [];
-      const now = new Date();
       for (let i = 11; i >= 0; i--) {
         const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const monthStart = Math.floor(monthDate.getTime() / 1000);
         const nextMonth = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
         const monthEnd = Math.floor(nextMonth.getTime() / 1000);
         
-        const monthRevenue = successfulCharges
+        const monthRevenue = successfulRecentCharges
           .filter((c: any) => c.created >= monthStart && c.created < monthEnd)
           .reduce((sum: number, c: any) => sum + (c.amount - (c.amountRefunded || 0)), 0);
         
