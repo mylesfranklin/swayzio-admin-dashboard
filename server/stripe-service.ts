@@ -271,12 +271,13 @@ export class StripeService {
     }
   }
 
-  async getGrossVolume(): Promise<number> {
+  async getGrossVolume(maxPages: number = 0): Promise<{ grossVolume: number; transactionCount: number }> {
     try {
       const stripe = getUncachableStripeClient();
       let totalGross = 0;
       let startingAfter: string | undefined;
       let count = 0;
+      let pages = 0;
       
       do {
         const params: Stripe.BalanceTransactionListParams = { 
@@ -292,26 +293,30 @@ export class StripeService {
         }
         
         count += transactions.data.length;
+        pages++;
         startingAfter = transactions.has_more ? transactions.data[transactions.data.length - 1]?.id : undefined;
         
         if (count % 5000 === 0) {
           console.log(`Processed ${count} balance transactions for gross volume...`);
         }
+        
+        if (maxPages > 0 && pages >= maxPages) break;
       } while (startingAfter);
       
       console.log(`Total balance transactions processed: ${count}, Gross volume: $${(totalGross / 100).toFixed(2)}`);
-      return totalGross;
+      return { grossVolume: totalGross, transactionCount: count };
     } catch (error: any) {
       console.error('Error fetching gross volume:', error.message);
       throw error;
     }
   }
 
-  async getRecentCharges(monthsBack: number = 12): Promise<any[]> {
+  async getRecentCharges(monthsBack: number = 12, maxPages: number = 30): Promise<any[]> {
     try {
       const stripe = getUncachableStripeClient();
       const allCharges: any[] = [];
       let startingAfter: string | undefined;
+      let pages = 0;
       
       const startDate = new Date();
       startDate.setMonth(startDate.getMonth() - monthsBack);
@@ -340,11 +345,14 @@ export class StripeService {
         }));
         
         allCharges.push(...mapped);
+        pages++;
         startingAfter = charges.has_more ? charges.data[charges.data.length - 1]?.id : undefined;
         
         if (allCharges.length % 1000 === 0) {
           console.log(`Fetched ${allCharges.length} recent charges (last ${monthsBack} months)...`);
         }
+        
+        if (maxPages > 0 && pages >= maxPages) break;
       } while (startingAfter);
       
       console.log(`Total recent charges (${monthsBack} months): ${allCharges.length}`);
@@ -429,14 +437,18 @@ export class StripeService {
     revenueByMonth: Array<{ month: string; revenue: number }>;
   }> {
     try {
-      const [customers, subscriptions, grossVolume, recentCharges, payments, invoices] = await Promise.all([
+      console.log('Starting Stripe dashboard stats fetch...');
+      
+      const [customers, subscriptions, grossVolumeData, recentCharges, payments, invoices] = await Promise.all([
         this.getAllCustomers(),
         this.getAllSubscriptions(),
-        this.getGrossVolume(),
+        this.getGrossVolume(50),
         this.getRecentCharges(12),
         this.getPaymentIntents(100),
         this.getInvoices(100)
       ]);
+
+      console.log('All Stripe data fetched, calculating stats...');
 
       const activeSubscriptions = subscriptions.filter(s => s.status === 'active');
       const mrr = activeSubscriptions.reduce((sum, sub) => {
@@ -478,11 +490,13 @@ export class StripeService {
         });
       }
 
+      console.log('Stripe dashboard stats complete');
+
       return {
         totalCustomers: customers.length,
         activeSubscriptions: activeSubscriptions.length,
         mrr: mrr / 100,
-        totalRevenue: grossVolume / 100,
+        totalRevenue: grossVolumeData.grossVolume / 100,
         recentPayments: payments.slice(0, 10),
         recentInvoices: invoices.slice(0, 10),
         subscriptionsByStatus,

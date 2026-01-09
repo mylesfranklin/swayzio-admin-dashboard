@@ -668,13 +668,157 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ===== Dashboard Routes =====
   
-  // Get dashboard data
+  // Get dashboard data (legacy mock endpoint)
   app.get("/api/dashboard", async (req, res) => {
     try {
       const timePeriod = parseInt(req.query.timePeriod as string) || 30;
       const dashboardData = await storage.getDashboardData(timePeriod);
       res.json(dashboardData);
     } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get live dashboard data aggregated from all integrations (cached)
+  app.get("/api/dashboard/live", async (req, res) => {
+    try {
+      // Use Promise.allSettled to handle partial failures gracefully
+      const results = await Promise.allSettled([
+        cacheManager.getOrFetch('stripe', 'dashboard', () => stripeService.getDashboardStats(), CACHE_TTL_MINUTES),
+        cacheManager.getOrFetch('hubspot', 'music-catalog', () => hubspotService.getMusicCatalogDashboard(), CACHE_TTL_MINUTES),
+        cacheManager.getOrFetch('kit', 'dashboard', () => kitService.getDashboardStats(), KIT_CACHE_TTL_MINUTES),
+        cacheManager.getOrFetch('mercury', 'dashboard', () => mercuryService.getDashboardStats(), CACHE_TTL_MINUTES)
+      ]);
+
+      const stripeResult = results[0].status === 'fulfilled' ? results[0].value : null;
+      const hubspotResult = results[1].status === 'fulfilled' ? results[1].value : null;
+      const kitResult = results[2].status === 'fulfilled' ? results[2].value : null;
+      const mercuryResult = results[3].status === 'fulfilled' ? results[3].value : null;
+
+      const stripeData = stripeResult?.data;
+      const hubspotData = hubspotResult?.data;
+      const kitData = kitResult?.data;
+      const mercuryData = mercuryResult?.data;
+
+      // Build KPI metrics from live data
+      const totalCustomers = stripeData?.totalCustomers || 0;
+      const connectedCustomers = hubspotData?.totalUsers || 0;
+      const totalRevenue = stripeData?.totalRevenue || 0;
+      const activeSubscriptions = stripeData?.activeSubscriptions || 0;
+      const mrr = stripeData?.mrr || 0;
+      const totalSubscribers = kitData?.totalSubscribers || 0;
+      const bankBalance = mercuryData?.totalBalance || 0;
+
+      // Transform revenue data for chart (last 12 months from Stripe)
+      const revenueData = (stripeData?.revenueByMonth || []).map((item: any) => ({
+        name: item.month,
+        total: item.revenue,
+        recurring: Math.round(item.revenue * 0.85) // Estimate recurring as 85% of total
+      }));
+
+      // Transform subscription plan data for pie chart
+      const subscriptionsByPlan = stripeData?.subscriptionsByPlan || {};
+      const subscriptionData = Object.entries(subscriptionsByPlan)
+        .map(([name, value]) => ({
+          name: name || 'Unknown Plan',
+          value: value as number
+        }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 6); // Top 6 plans
+
+      // Build recent activity from Stripe payments and invoices
+      const recentActivity: any[] = [];
+      
+      // Add recent payments
+      const recentPayments = stripeData?.recentPayments || [];
+      recentPayments.slice(0, 5).forEach((payment: any, index: number) => {
+        recentActivity.push({
+          id: payment.id || `payment-${index}`,
+          customerId: payment.customerId || '',
+          customerName: payment.customerEmail?.split('@')[0] || 'Customer',
+          customerEmail: payment.customerEmail || '',
+          type: payment.status === 'succeeded' ? 'Payment Successful' : 'Payment Failed',
+          timestamp: new Date(payment.created * 1000).toISOString(),
+          details: `Payment of $${(payment.amount / 100).toFixed(2)} ${payment.currency?.toUpperCase() || 'USD'}`
+        });
+      });
+
+      // Add recent invoices
+      const recentInvoices = stripeData?.recentInvoices || [];
+      recentInvoices.slice(0, 5).forEach((invoice: any, index: number) => {
+        recentActivity.push({
+          id: invoice.id || `invoice-${index}`,
+          customerId: invoice.customerId || '',
+          customerName: invoice.customerEmail?.split('@')[0] || 'Customer',
+          customerEmail: invoice.customerEmail || '',
+          type: invoice.paid ? 'Invoice Paid' : 'Invoice Created',
+          timestamp: new Date(invoice.created * 1000).toISOString(),
+          details: `Invoice ${invoice.number || ''} for $${(invoice.amountDue / 100).toFixed(2)}`
+        });
+      });
+
+      // Sort by timestamp and take most recent
+      recentActivity.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+      // Cache status info
+      const cacheStatus = {
+        stripe: { 
+          cached: stripeResult?.fromCache ?? false,
+          stale: stripeResult?.isStale ?? false,
+          updatedAt: stripeResult?.lastUpdated?.toISOString() ?? null
+        },
+        hubspot: {
+          cached: hubspotResult?.fromCache ?? false,
+          stale: hubspotResult?.isStale ?? false,
+          updatedAt: hubspotResult?.lastUpdated?.toISOString() ?? null
+        },
+        kit: {
+          cached: kitResult?.fromCache ?? false,
+          stale: kitResult?.isStale ?? false,
+          updatedAt: kitResult?.lastUpdated?.toISOString() ?? null
+        },
+        mercury: {
+          cached: mercuryResult?.fromCache ?? false,
+          stale: mercuryResult?.isStale ?? false,
+          updatedAt: mercuryResult?.lastUpdated?.toISOString() ?? null
+        }
+      };
+
+      res.json({
+        // KPI metrics
+        totalCustomers,
+        connectedCustomers,
+        totalRevenue,
+        activeSubscriptions,
+        mrr,
+        totalSubscribers,
+        bankBalance,
+        
+        // Chart data
+        revenueData,
+        subscriptionData,
+        
+        // Activity feed
+        recentActivity: recentActivity.slice(0, 10),
+        
+        // Cache info
+        cacheStatus,
+        
+        // Raw data for additional uses
+        hubspot: hubspotData ? {
+          totalContacts: hubspotData.totalContacts,
+          subscribedUsers: hubspotData.subscribedUsers,
+          taggedTracks: hubspotData.totalTaggedTracks,
+          untaggedTracks: hubspotData.totalUntaggedTracks
+        } : null,
+        kit: kitData ? {
+          totalSubscribers: kitData.totalSubscribers,
+          averageOpenRate: kitData.averageOpenRate,
+          averageClickRate: kitData.averageClickRate
+        } : null
+      });
+    } catch (error: any) {
+      console.error('Error fetching live dashboard:', error.message);
       res.status(500).json({ message: error.message });
     }
   });

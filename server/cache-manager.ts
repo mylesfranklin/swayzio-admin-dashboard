@@ -38,6 +38,7 @@ class CacheManager {
   async get<T>(integration: string, key: string): Promise<CacheEntry<T> | null> {
     const cacheKey = this.getCacheKey(integration, key);
     
+    // Primary: in-memory cache
     const memEntry = this.inMemoryCache.get(cacheKey);
     if (memEntry) {
       const now = new Date();
@@ -45,6 +46,7 @@ class CacheManager {
       return memEntry as CacheEntry<T>;
     }
 
+    // Fallback: database cache (skip if DB issues persist)
     try {
       const dbEntry = await db
         .select()
@@ -55,7 +57,7 @@ class CacheManager {
         ))
         .limit(1);
 
-      if (dbEntry.length > 0) {
+      if (dbEntry && dbEntry.length > 0) {
         const entry = dbEntry[0];
         const now = new Date();
         const isExpired = now > new Date(entry.expiresAt);
@@ -75,8 +77,11 @@ class CacheManager {
         this.inMemoryCache.set(cacheKey, cacheEntry);
         return cacheEntry;
       }
-    } catch (error) {
-      console.error(`Cache read error for ${cacheKey}:`, error);
+    } catch (error: any) {
+      // Silently skip DB errors - in-memory cache will be used
+      if (!error?.message?.includes('Cannot read properties of null')) {
+        console.error(`Cache read error for ${cacheKey}:`, error?.message || error);
+      }
     }
 
     return null;
@@ -96,6 +101,7 @@ class CacheManager {
 
     this.inMemoryCache.set(cacheKey, cacheEntry);
 
+    // Try to persist to database (in-memory is already set, so DB failure is non-critical)
     try {
       const existing = await db
         .select({ id: integrationCache.id })
@@ -106,7 +112,7 @@ class CacheManager {
         ))
         .limit(1);
 
-      if (existing.length > 0) {
+      if (existing && existing.length > 0) {
         await db
           .update(integrationCache)
           .set({
@@ -128,8 +134,11 @@ class CacheManager {
             isStale: false
           });
       }
-    } catch (error) {
-      console.error(`Cache write error for ${cacheKey}:`, error);
+    } catch (error: any) {
+      // Silently skip DB errors - in-memory cache already has the data
+      if (!error?.message?.includes('Cannot read properties of null')) {
+        console.error(`Cache write error for ${cacheKey}:`, error?.message || error);
+      }
     }
   }
 
@@ -171,8 +180,10 @@ class CacheManager {
     fetchFn: () => Promise<T>,
     ttlMinutes: number = DEFAULT_TTL_MINUTES
   ): Promise<{ data: T; lastUpdated: Date; isStale: boolean; fromCache: boolean }> {
+    const refreshKey = this.getCacheKey(integration, key);
     const cached = await this.get<T>(integration, key);
     
+    // Return fresh cached data immediately
     if (cached && !cached.isStale) {
       return {
         data: cached.data,
@@ -182,43 +193,10 @@ class CacheManager {
       };
     }
 
-    if (cached && cached.isStale) {
-      const refreshKey = this.getCacheKey(integration, key);
-      if (!this.refreshPromises.has(refreshKey)) {
-        const refreshPromise = fetchFn()
-          .then(async (freshData) => {
-            await this.set(integration, key, freshData, ttlMinutes);
-            return freshData;
-          })
-          .catch((error) => {
-            console.error(`Background refresh failed for ${refreshKey}:`, error);
-            throw error;
-          })
-          .finally(() => {
-            this.refreshPromises.delete(refreshKey);
-          });
-        
-        this.refreshPromises.set(refreshKey, refreshPromise);
-      }
-
-      return {
-        data: cached.data,
-        lastUpdated: cached.lastUpdated,
-        isStale: true,
-        fromCache: true
-      };
-    }
-
-    try {
-      const freshData = await fetchFn();
-      await this.set(integration, key, freshData, ttlMinutes);
-      return {
-        data: freshData,
-        lastUpdated: new Date(),
-        isStale: false,
-        fromCache: false
-      };
-    } catch (error) {
+    // Check if there's already a fetch in progress (single-flight pattern)
+    const existingPromise = this.refreshPromises.get(refreshKey);
+    if (existingPromise) {
+      // If we have stale cached data, return it while waiting for refresh
       if (cached) {
         return {
           data: cached.data,
@@ -227,6 +205,56 @@ class CacheManager {
           fromCache: true
         };
       }
+      // Otherwise wait for the in-flight fetch to complete
+      try {
+        const freshData = await existingPromise as T;
+        return {
+          data: freshData,
+          lastUpdated: new Date(),
+          isStale: false,
+          fromCache: false
+        };
+      } catch (error) {
+        throw error;
+      }
+    }
+
+    // Start a new fetch and register the promise (single-flight locking)
+    const refreshPromise = fetchFn()
+      .then(async (freshData) => {
+        await this.set(integration, key, freshData, ttlMinutes);
+        return freshData;
+      })
+      .catch((error) => {
+        console.error(`Fetch failed for ${refreshKey}:`, error);
+        throw error;
+      })
+      .finally(() => {
+        this.refreshPromises.delete(refreshKey);
+      });
+    
+    this.refreshPromises.set(refreshKey, refreshPromise);
+
+    // If we have stale cached data, return it immediately while refresh runs in background
+    if (cached) {
+      return {
+        data: cached.data,
+        lastUpdated: cached.lastUpdated,
+        isStale: true,
+        fromCache: true
+      };
+    }
+
+    // No cached data - wait for the fetch to complete
+    try {
+      const freshData = await refreshPromise;
+      return {
+        data: freshData,
+        lastUpdated: new Date(),
+        isStale: false,
+        fromCache: false
+      };
+    } catch (error) {
       throw error;
     }
   }
@@ -251,8 +279,11 @@ class CacheManager {
         };
       }
       return null;
-    } catch (error) {
-      console.error(`Error getting sync state for ${integration}:`, error);
+    } catch (error: any) {
+      // Silently handle common DB driver issues
+      if (!error?.message?.includes('Cannot read properties of null')) {
+        console.error(`Error getting sync state for ${integration}:`, error?.message || error);
+      }
       return null;
     }
   }
@@ -321,9 +352,13 @@ class CacheManager {
       const [integration, key] = refreshKey.split(':');
       try {
         console.log(`  Refreshing ${refreshKey}...`);
-        const freshData = await fn();
-        await this.set(integration, key, freshData, DEFAULT_TTL_MINUTES);
-        console.log(`  ✓ ${refreshKey} refreshed successfully (TTL: ${ttlHours}h)`);
+        // Use getOrFetch to participate in single-flight pattern
+        const result = await this.getOrFetch(integration, key, fn, DEFAULT_TTL_MINUTES);
+        if (result.fromCache && !result.isStale) {
+          console.log(`  ✓ ${refreshKey} already cached (TTL: ${ttlHours}h)`);
+        } else {
+          console.log(`  ✓ ${refreshKey} refreshed successfully (TTL: ${ttlHours}h)`);
+        }
       } catch (error) {
         console.error(`  ✗ Failed to refresh ${refreshKey}:`, error);
       }

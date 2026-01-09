@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, RefreshCw, ChevronDown, User, ThumbsUp, CreditCard, Wallet } from "lucide-react";
+import { Download, RefreshCw, ChevronDown, User, Users, CreditCard, Wallet } from "lucide-react";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { RecentActivity, Activity } from "@/components/dashboard/recent-activity";
 import { ChartSection } from "@/components/dashboard/charts";
@@ -10,112 +10,96 @@ import { formatCurrency } from "@/lib/utils";
 import { AreaChartData } from "@/components/ui/area-chart";
 import { PieChartData } from "@/components/ui/pie-chart";
 import { KitNewsletter } from "@/components/newsletter/kit-newsletter";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+
+interface LiveDashboardData {
+  totalCustomers: number;
+  connectedCustomers: number;
+  totalRevenue: number;
+  activeSubscriptions: number;
+  mrr: number;
+  totalSubscribers: number;
+  bankBalance: number;
+  revenueData: Array<{ name: string; total: number; recurring: number }>;
+  subscriptionData: Array<{ name: string; value: number }>;
+  recentActivity: Activity[];
+  cacheStatus: {
+    stripe: { cached: boolean; stale: boolean; updatedAt: string | null };
+    hubspot: { cached: boolean; stale: boolean; updatedAt: string | null };
+    kit: { cached: boolean; stale: boolean; updatedAt: string | null };
+    mercury: { cached: boolean; stale: boolean; updatedAt: string | null };
+  };
+}
 
 const Dashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [timePeriod, setTimePeriod] = useState("30");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
-  const { data: dashboardData, isLoading } = useQuery<{
-    totalCustomers: number;
-    connectedCustomers: number;
-    totalRevenue: number;
-    activeSubscriptions: number;
-  }>({
-    queryKey: ["/api/dashboard", timePeriod],
+  const { data: dashboardData, isLoading } = useQuery<LiveDashboardData>({
+    queryKey: ["/api/dashboard/live"],
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
   });
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      // Refresh all integration caches
+      await Promise.all([
+        apiRequest('POST', '/api/cache/refresh/stripe'),
+        apiRequest('POST', '/api/cache/refresh/hubspot'),
+      ]);
+      // Invalidate dashboard query to refetch
+      await queryClient.invalidateQueries({ queryKey: ["/api/dashboard/live"] });
+      toast({
+        title: "Dashboard refreshed",
+        description: "All data has been updated with the latest information.",
+      });
+    } catch (error) {
+      toast({
+        title: "Refresh failed",
+        description: "Some data could not be refreshed. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const kpiData = [
     {
-      title: "Total Customers",
-      value: isLoading ? "-" : formatNumber(dashboardData?.totalCustomers || 5823),
+      title: "Stripe Customers",
+      value: isLoading ? "-" : formatNumber(dashboardData?.totalCustomers || 0),
       change: 12.5,
       icon: User,
     },
     {
-      title: "Connected Customers",
-      value: isLoading ? "-" : formatNumber(dashboardData?.connectedCustomers || 3427),
+      title: "HubSpot Contacts",
+      value: isLoading ? "-" : formatNumber(dashboardData?.connectedCustomers || 0),
       change: 8.2,
-      icon: ThumbsUp,
+      icon: Users,
     },
     {
-      title: "Total Revenue",
-      value: isLoading ? "-" : formatCurrency(dashboardData?.totalRevenue || 278492),
+      title: "Monthly Revenue (MRR)",
+      value: isLoading ? "-" : formatCurrency(dashboardData?.mrr || 0),
       change: 15.3,
       icon: Wallet,
     },
     {
       title: "Active Subscriptions",
-      value: isLoading ? "-" : formatNumber(dashboardData?.activeSubscriptions || 2589),
+      value: isLoading ? "-" : formatNumber(dashboardData?.activeSubscriptions || 0),
       change: 5.7,
       icon: CreditCard,
     },
   ];
 
-  const revenueData: AreaChartData[] = [
-    { name: "Jan", total: 24000, recurring: 18000 },
-    { name: "Feb", total: 28000, recurring: 21000 },
-    { name: "Mar", total: 30000, recurring: 24000 },
-    { name: "Apr", total: 34000, recurring: 26000 },
-    { name: "May", total: 38000, recurring: 29000 },
-    { name: "Jun", total: 41000, recurring: 31000 },
-    { name: "Jul", total: 44000, recurring: 34000 },
-  ];
-
-  const subscriptionData: PieChartData[] = [
-    { name: "Enterprise Plan", value: 35 },
-    { name: "Premium Plan", value: 25 },
-    { name: "Standard Plan", value: 20 },
-    { name: "Basic Plan", value: 15 },
-    { name: "Free Tier", value: 5 },
-  ];
-
-  const recentActivities: Activity[] = [
-    {
-      id: "1",
-      customerId: "1",
-      customerName: "John Doe",
-      customerEmail: "john.doe@example.com",
-      type: "Payment Successful",
-      timestamp: "2023-10-15T14:45:00Z",
-      details: "Monthly subscription renewed for Enterprise Plan - $399.00",
-    },
-    {
-      id: "2",
-      customerId: "2",
-      customerName: "Jane Smith",
-      customerEmail: "jane.smith@example.com",
-      type: "Subscription Updated",
-      timestamp: "2023-10-15T11:30:00Z",
-      details: "Upgraded from Premium Plan to Enterprise Plan",
-    },
-    {
-      id: "3",
-      customerId: "3",
-      customerName: "Robert Johnson",
-      customerEmail: "robert.johnson@example.com",
-      type: "Contact Updated",
-      timestamp: "2023-10-14T16:15:00Z",
-      details: "Contact information updated in HubSpot",
-    },
-    {
-      id: "4",
-      customerId: "4",
-      customerName: "Sarah Williams",
-      customerEmail: "sarah.williams@example.com",
-      type: "Payment Failed",
-      timestamp: "2023-10-14T10:30:00Z",
-      details: "Monthly subscription payment failed - $199.00",
-    },
-    {
-      id: "5",
-      customerId: "5",
-      customerName: "Michael Brown",
-      customerEmail: "michael.brown@example.com",
-      type: "New Customer",
-      timestamp: "2023-10-13T09:15:00Z",
-      details: "New customer added to both HubSpot and Stripe",
-    },
-  ];
+  // Use live data from API or fallback to empty arrays
+  const revenueData: AreaChartData[] = dashboardData?.revenueData || [];
+  const subscriptionData: PieChartData[] = dashboardData?.subscriptionData || [];
+  const recentActivities: Activity[] = dashboardData?.recentActivity || [];
 
   return (
     <div className="space-y-6">
@@ -145,9 +129,14 @@ const Dashboard: React.FC = () => {
             <Download className="h-4 w-4 mr-1" />
             Export
           </Button>
-          <Button size="sm" data-testid="button-sync">
-            <RefreshCw className="h-4 w-4 mr-1" />
-            Sync
+          <Button 
+            size="sm" 
+            data-testid="button-sync"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={`h-4 w-4 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? 'Syncing...' : 'Sync'}
           </Button>
         </div>
       </div>
