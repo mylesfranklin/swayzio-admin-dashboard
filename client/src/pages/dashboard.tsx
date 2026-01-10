@@ -7,8 +7,6 @@ import { KpiCard } from "@/components/dashboard/kpi-card";
 import { RecentActivity, Activity } from "@/components/dashboard/recent-activity";
 import { ChartSection } from "@/components/dashboard/charts";
 import { formatCurrency } from "@/lib/utils";
-import { AreaChartData } from "@/components/ui/area-chart";
-import { PieChartData } from "@/components/ui/pie-chart";
 import { KitNewsletter } from "@/components/newsletter/kit-newsletter";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -21,8 +19,8 @@ interface LiveDashboardData {
   mrr: number;
   totalSubscribers: number;
   bankBalance: number;
-  revenueData: Array<{ name: string; total: number; recurring: number }>;
-  subscriptionData: Array<{ name: string; value: number }>;
+  subscribedUsers: number;
+  revenueSubscriberData: Array<{ name: string; mrr: number; subscribers: number }>;
   recentActivity: Activity[];
   cacheStatus: {
     stripe: { cached: boolean; stale: boolean; updatedAt: string | null };
@@ -97,8 +95,7 @@ const Dashboard: React.FC = () => {
   ];
 
   // Use live data from API or fallback to empty arrays
-  const revenueData: AreaChartData[] = dashboardData?.revenueData || [];
-  const subscriptionData: PieChartData[] = dashboardData?.subscriptionData || [];
+  const revenueSubscriberData = dashboardData?.revenueSubscriberData || [];
   const recentActivities: Activity[] = dashboardData?.recentActivity || [];
 
   return (
@@ -166,8 +163,10 @@ const Dashboard: React.FC = () => {
         <TabsContent value="overview">
           <div className="space-y-6 mt-4">
             <ChartSection
-              revenueData={revenueData}
-              subscriptionData={subscriptionData}
+              revenueData={revenueSubscriberData}
+              totalRevenue={dashboardData?.totalRevenue || 0}
+              mrr={dashboardData?.mrr || 0}
+              subscribedUsers={dashboardData?.subscribedUsers || 0}
               isLoading={isLoading}
             />
             

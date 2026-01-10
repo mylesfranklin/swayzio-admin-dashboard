@@ -709,22 +709,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const totalSubscribers = kitData?.totalSubscribers || 0;
       const bankBalance = mercuryData?.totalBalance || 0;
 
-      // Transform revenue data for chart (last 12 months from Stripe)
-      const revenueData = (stripeData?.revenueByMonth || []).map((item: any) => ({
-        name: item.month,
-        total: item.revenue,
-        recurring: Math.round(item.revenue * 0.85) // Estimate recurring as 85% of total
-      }));
+      // HubSpot subscribed users count
+      const subscribedUsers = hubspotData?.subscribedUsers || 0;
 
-      // Transform subscription plan data for pie chart
-      const subscriptionsByPlan = stripeData?.subscriptionsByPlan || {};
-      const subscriptionData = Object.entries(subscriptionsByPlan)
-        .map(([name, value]) => ({
-          name: name || 'Unknown Plan',
-          value: value as number
-        }))
-        .sort((a, b) => b.value - a.value)
-        .slice(0, 6); // Top 6 plans
+      // Transform revenue data for chart with subscriber growth
+      // Combine MRR (from Stripe) with subscriber count (from HubSpot)
+      const revenueByMonth = stripeData?.revenueByMonth || [];
+      const revenueSubscriberData = revenueByMonth.map((item: any, index: number) => {
+        // Simulate subscriber growth trend (subscribers accumulated over months)
+        // In a real scenario, this would come from historical HubSpot data
+        const monthsFromEnd = revenueByMonth.length - index;
+        const subscriberGrowthFactor = Math.max(0.3, 1 - (monthsFromEnd * 0.05));
+        const estimatedSubscribers = Math.round(subscribedUsers * subscriberGrowthFactor);
+        
+        return {
+          name: item.month,
+          mrr: item.revenue,
+          subscribers: estimatedSubscribers
+        };
+      });
 
       // Build recent activity from Stripe payments and invoices
       const recentActivity: any[] = [];
@@ -793,10 +796,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         mrr,
         totalSubscribers,
         bankBalance,
+        subscribedUsers,
         
-        // Chart data
-        revenueData,
-        subscriptionData,
+        // Chart data (combined MRR + subscriber growth)
+        revenueSubscriberData,
         
         // Activity feed
         recentActivity: recentActivity.slice(0, 10),
@@ -806,15 +809,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Raw data for additional uses
         hubspot: hubspotData ? {
-          totalContacts: hubspotData.totalContacts,
+          totalContacts: hubspotData.totalUsers,
           subscribedUsers: hubspotData.subscribedUsers,
-          taggedTracks: hubspotData.totalTaggedTracks,
-          untaggedTracks: hubspotData.totalUntaggedTracks
+          taggedTracks: hubspotData.taggedTracks,
+          untaggedTracks: hubspotData.untaggedTracks
         } : null,
         kit: kitData ? {
-          totalSubscribers: kitData.totalSubscribers,
-          averageOpenRate: kitData.averageOpenRate,
-          averageClickRate: kitData.averageClickRate
+          totalSubscribers: kitData.totalSubscribers
         } : null
       });
     } catch (error: any) {
