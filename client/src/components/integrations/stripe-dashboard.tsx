@@ -20,9 +20,9 @@ import { formatDistanceToNow } from "date-fns";
 
 interface StripeStats {
   revenue: number;
-  revenueGrowth: number;
+  revenueGrowth?: number;
   mrr: number;
-  mrrGrowth: number;
+  mrrGrowth?: number;
   activeSubscriptions: number;
   churnRate: number;
   avgRevenuePerUser: number;
@@ -155,7 +155,6 @@ export function StripeDashboard({
   const statCards: Array<{
     title: string;
     value: number;
-    change?: number;
     icon: any;
     format: (v: number) => string;
     color?: string;
@@ -164,7 +163,6 @@ export function StripeDashboard({
     {
       title: "Total Revenue",
       value: stats?.revenue ?? 0,
-      change: stats?.revenueGrowth ?? 0,
       icon: DollarSign,
       format: formatCurrency,
       color: 'text-linear-success',
@@ -172,7 +170,6 @@ export function StripeDashboard({
     {
       title: "MRR",
       value: stats?.mrr ?? 0,
-      change: stats?.mrrGrowth ?? 0,
       icon: RefreshCw,
       format: formatCurrency,
     },
@@ -212,19 +209,6 @@ export function StripeDashboard({
                     <span className={`text-xl font-semibold ${stat.color || 'text-white'}`}>
                       {stat.format(stat.value)}
                     </span>
-                    {stat.change !== undefined && (
-                      <span className={`text-xs flex items-center ${
-                        stat.negative 
-                          ? (stat.change <= 0 ? 'text-linear-success' : 'text-linear-error')
-                          : (stat.change >= 0 ? 'text-linear-success' : 'text-linear-error')
-                      }`}>
-                        {stat.change >= 0 
-                          ? <TrendingUp className="h-3 w-3 mr-0.5" /> 
-                          : <TrendingDown className="h-3 w-3 mr-0.5" />
-                        }
-                        {stat.change >= 0 ? '+' : ''}{stat.change}%
-                      </span>
-                    )}
                   </div>
                 </>
               )}

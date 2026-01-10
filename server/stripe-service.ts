@@ -496,6 +496,13 @@ export class StripeService {
         }
       });
 
+      // Calculate churn rate: (canceled / total) * 100
+      // Stripe subscription statuses: active, past_due, unpaid, canceled, incomplete, incomplete_expired, trialing, paused
+      const totalSubs = subscriptions.length;
+      const canceledSubs = subscriptionsByStatus['canceled'] || 0;
+      const churnRate = totalSubs > 0 ? (canceledSubs / totalSubs) * 100 : 0;
+      console.log(`Churn rate: ${churnRate.toFixed(2)}% (${canceledSubs} canceled / ${totalSubs} total)`);
+
       const revenueByMonth: Array<{ month: string; revenue: number }> = [];
       for (let i = 11; i >= 0; i--) {
         const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -520,6 +527,7 @@ export class StripeService {
         activeSubscriptions: activeSubscriptions.length,
         mrr: mrr / 100,
         totalRevenue: grossVolumeData.grossVolume / 100,
+        churnRate,
         recentPayments: payments.slice(0, 10),
         recentInvoices: invoices.slice(0, 10),
         subscriptionsByStatus,
