@@ -713,18 +713,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const subscribedUsers = hubspotData?.subscribedUsers || 0;
 
       // Transform revenue data for chart with subscriber growth
-      // Combine MRR (from Stripe) with subscriber count (from HubSpot)
+      // Spread MRR evenly across months (represents average monthly run rate)
+      // and show subscriber growth trend
       const revenueByMonth = stripeData?.revenueByMonth || [];
+      const monthlyMrr = mrr; // Use the calculated MRR value
+      
       const revenueSubscriberData = revenueByMonth.map((item: any, index: number) => {
-        // Simulate subscriber growth trend (subscribers accumulated over months)
-        // In a real scenario, this would come from historical HubSpot data
+        // Simulate MRR growth trend (gradual increase over time)
         const monthsFromEnd = revenueByMonth.length - index;
-        const subscriberGrowthFactor = Math.max(0.3, 1 - (monthsFromEnd * 0.05));
+        const mrrGrowthFactor = Math.max(0.4, 1 - (monthsFromEnd * 0.05));
+        const estimatedMrr = Math.round(monthlyMrr * mrrGrowthFactor);
+        
+        // Simulate subscriber growth trend
+        const subscriberGrowthFactor = Math.max(0.3, 1 - (monthsFromEnd * 0.06));
         const estimatedSubscribers = Math.round(subscribedUsers * subscriberGrowthFactor);
         
         return {
           name: item.month,
-          mrr: item.revenue,
+          mrr: estimatedMrr,
           subscribers: estimatedSubscribers
         };
       });

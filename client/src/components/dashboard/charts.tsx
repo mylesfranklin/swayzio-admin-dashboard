@@ -59,11 +59,11 @@ export function ChartSection({
         {isLoading ? (
           <>
             <Skeleton className="h-72 w-full mb-4 bg-linear-hover" />
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-3">
               {[1, 2, 3].map(i => (
-                <div key={i} className="border-t border-linear-border pt-3">
-                  <Skeleton className="h-4 w-24 mb-2 bg-linear-hover" />
-                  <Skeleton className="h-6 w-32 bg-linear-hover" />
+                <div key={i} className="bg-linear-hover/50 rounded-lg border border-linear-border p-3">
+                  <Skeleton className="h-3 w-20 mb-2 bg-linear-hover" />
+                  <Skeleton className="h-5 w-24 bg-linear-hover" />
                 </div>
               ))}
             </div>
@@ -153,47 +153,35 @@ export function ChartSection({
               </ResponsiveContainer>
             </div>
             
-            <div className="mt-4 grid grid-cols-3 gap-4">
-              <div className="border-t border-linear-border pt-3">
-                <div className="flex items-center gap-2">
-                  <DollarSign className="h-3.5 w-3.5 text-linear-purple" />
-                  <p className="text-xs text-linear-text-secondary">Total Revenue</p>
+            <div className="mt-4 grid grid-cols-3 gap-3">
+              <div className="bg-linear-hover/50 rounded-lg border border-linear-border p-3">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <DollarSign className="h-3 w-3 text-linear-text-tertiary" />
+                  <span className="text-[10px] uppercase tracking-wide text-linear-text-tertiary font-medium">Total Revenue</span>
                 </div>
-                <p className="mt-1 text-xl font-semibold text-white">
+                <p className="text-base font-semibold text-white">
                   {formatCurrency(totalRevenue)}
                 </p>
-                <div className="mt-1 flex items-center gap-1 text-xs text-linear-success">
-                  <TrendingUp className="h-3 w-3" />
-                  <span>Lifetime</span>
-                </div>
               </div>
               
-              <div className="border-t border-linear-border pt-3">
-                <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-linear-purple"></div>
-                  <p className="text-xs text-linear-text-secondary">Monthly Recurring</p>
+              <div className="bg-linear-hover/50 rounded-lg border border-linear-border p-3">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <div className="h-1.5 w-1.5 rounded-full bg-linear-purple"></div>
+                  <span className="text-[10px] uppercase tracking-wide text-linear-text-tertiary font-medium">MRR</span>
                 </div>
-                <p className="mt-1 text-xl font-semibold text-white">
+                <p className="text-base font-semibold text-white">
                   {formatCurrency(mrr)}
                 </p>
-                <div className="mt-1 flex items-center gap-1 text-xs text-linear-success">
-                  <TrendingUp className="h-3 w-3" />
-                  <span>MRR</span>
-                </div>
               </div>
               
-              <div className="border-t border-linear-border pt-3">
-                <div className="flex items-center gap-2">
-                  <Users className="h-3.5 w-3.5 text-emerald-500" />
-                  <p className="text-xs text-linear-text-secondary">Subscribed Users</p>
+              <div className="bg-linear-hover/50 rounded-lg border border-linear-border p-3">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Users className="h-3 w-3 text-emerald-500" />
+                  <span className="text-[10px] uppercase tracking-wide text-linear-text-tertiary font-medium">Subscribers</span>
                 </div>
-                <p className="mt-1 text-xl font-semibold text-white">
+                <p className="text-base font-semibold text-white">
                   {subscribedUsers.toLocaleString()}
                 </p>
-                <div className="mt-1 flex items-center gap-1 text-xs text-linear-success">
-                  <TrendingUp className="h-3 w-3" />
-                  <span>HubSpot</span>
-                </div>
               </div>
             </div>
           </>
