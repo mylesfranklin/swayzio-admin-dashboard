@@ -1,34 +1,80 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowUpRight, ArrowDownRight, ExternalLink, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowUpRight, ArrowDownRight, ExternalLink, TrendingUp, Minus } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+
+interface KitDashboardData {
+  growthStats: {
+    cancellations: number;
+    net_new_subscribers: number;
+    new_subscribers: number;
+    subscribers: number;
+    starting: string;
+    ending: string;
+  };
+  emailStats: {
+    sent: number;
+    clicked: number;
+    opened: number;
+  };
+  totalSubscribers: number;
+  forms: Array<{
+    id: number;
+    name: string;
+    type: string;
+  }>;
+}
 
 interface KitNewsletterProps {
   className?: string;
 }
 
 export function KitNewsletter({ className }: KitNewsletterProps) {
-  const newsletterData = {
-    subscribers: {
-      today: 97,
-      past7Days: 908,
-      past7DaysGrowth: 190.1,
-      past30Days: 2310,
-      past30DaysGrowth: 77.6,
-      total: 12726
-    },
-    topForms: [
-      { name: "Sync Money Meta (syncmoney.ai/ig)", subscribers: 33, growth: 0 },
-      { name: "Insta Bio Link Subscribers", subscribers: 27, growth: 42.1 },
-      { name: "Top 22 Libraries Offer", subscribers: 20, growth: 11.1 },
-      { name: "Myles Cold Email Landing Page (aka syncmoney.ai)", subscribers: 17, growth: -29.2 },
-      { name: "AudioMack in-app sign up flow", subscribers: 3, growth: 0 }
-    ]
-  };
+  const { data, isLoading } = useQuery<KitDashboardData>({
+    queryKey: ["/api/kit/live/dashboard"],
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const totalSubscribers = newsletterData.topForms.reduce((acc, form) => acc + form.subscribers, 0);
   const colors = ['#5e6ad2', '#59a200', '#f2c94c', '#f2994a', '#eb5757'];
+
+  if (isLoading) {
+    return (
+      <Card className={className}>
+        <CardHeader className="p-4 border-b border-linear-border flex flex-row items-center justify-between">
+          <CardTitle className="text-sm font-medium text-white">Kit Newsletter</CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 space-y-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="p-3 rounded-md bg-linear-hover border border-linear-border">
+                <Skeleton className="h-3 w-16 mb-2 bg-linear-card" />
+                <Skeleton className="h-6 w-20 bg-linear-card" />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const totalSubscribers = data?.totalSubscribers || 0;
+  const netNew = data?.growthStats?.net_new_subscribers || 0;
+  const newSubs = data?.growthStats?.new_subscribers || 0;
+  const emailsSent = data?.emailStats?.sent || 0;
+  const opened = data?.emailStats?.opened || 0;
+  const clicked = data?.emailStats?.clicked || 0;
   
+  const openRate = emailsSent > 0 ? ((opened / emailsSent) * 100).toFixed(1) : '0';
+  const clickRate = emailsSent > 0 ? ((clicked / emailsSent) * 100).toFixed(1) : '0';
+
+  const topForms = (data?.forms || []).slice(0, 5).map((form, index) => ({
+    name: form.name,
+    type: form.type,
+    color: colors[index % colors.length]
+  }));
+
   return (
     <Card className={className}>
       <CardHeader className="p-4 border-b border-linear-border flex flex-row items-center justify-between">
@@ -41,118 +87,78 @@ export function KitNewsletter({ className }: KitNewsletterProps) {
       <CardContent className="p-4 space-y-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="p-3 rounded-md bg-linear-hover border border-linear-border">
-            <p className="text-xs text-linear-text-secondary">Today</p>
-            <p className="text-xl font-semibold text-white mt-1">{newsletterData.subscribers.today}</p>
-            <p className="text-xs text-linear-text-tertiary mt-1">New subscribers</p>
+            <p className="text-xs text-linear-text-secondary">Total Subscribers</p>
+            <p className="text-xl font-semibold text-white mt-1">{totalSubscribers.toLocaleString()}</p>
+            <p className="text-xs text-linear-text-tertiary mt-1">Active</p>
           </div>
           
           <div className="p-3 rounded-md bg-linear-hover border border-linear-border">
-            <p className="text-xs text-linear-text-secondary">Past 7 days</p>
+            <p className="text-xs text-linear-text-secondary">Net New (90d)</p>
             <div className="flex items-end gap-2 mt-1">
-              <p className="text-xl font-semibold text-white">{newsletterData.subscribers.past7Days}</p>
-              <span className="text-xs font-medium text-linear-success flex items-center mb-0.5">
-                <TrendingUp className="h-3 w-3 mr-0.5" />
-                {newsletterData.subscribers.past7DaysGrowth}%
-              </span>
+              <p className="text-xl font-semibold text-white">{netNew.toLocaleString()}</p>
+              {netNew > 0 && (
+                <span className="text-xs font-medium text-linear-success flex items-center mb-0.5">
+                  <TrendingUp className="h-3 w-3 mr-0.5" />
+                </span>
+              )}
             </div>
-            <p className="text-xs text-linear-text-tertiary mt-1">New subscribers</p>
+            <p className="text-xs text-linear-text-tertiary mt-1">Growth</p>
           </div>
           
           <div className="p-3 rounded-md bg-linear-hover border border-linear-border">
-            <p className="text-xs text-linear-text-secondary">Past 30 days</p>
-            <div className="flex items-end gap-2 mt-1">
-              <p className="text-xl font-semibold text-white">{newsletterData.subscribers.past30Days.toLocaleString()}</p>
-              <span className="text-xs font-medium text-linear-success flex items-center mb-0.5">
-                <TrendingUp className="h-3 w-3 mr-0.5" />
-                {newsletterData.subscribers.past30DaysGrowth}%
-              </span>
-            </div>
-            <p className="text-xs text-linear-text-tertiary mt-1">New subscribers</p>
+            <p className="text-xs text-linear-text-secondary">Open Rate</p>
+            <p className="text-xl font-semibold text-white mt-1">{openRate}%</p>
+            <p className="text-xs text-linear-text-tertiary mt-1">{opened.toLocaleString()} opens</p>
           </div>
           
           <div className="p-3 rounded-md bg-linear-hover border border-linear-border">
-            <p className="text-xs text-linear-text-secondary">Total</p>
-            <p className="text-xl font-semibold text-white mt-1">{newsletterData.subscribers.total.toLocaleString()}</p>
-            <p className="text-xs text-linear-text-tertiary mt-1">Subscribers</p>
+            <p className="text-xs text-linear-text-secondary">Click Rate</p>
+            <p className="text-xl font-semibold text-white mt-1">{clickRate}%</p>
+            <p className="text-xs text-linear-text-tertiary mt-1">{clicked.toLocaleString()} clicks</p>
           </div>
         </div>
         
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-white">Top forms and landing pages</h3>
-            <Badge variant="secondary">Last 7 days</Badge>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="p-3 rounded-md bg-linear-hover/50 border border-linear-border">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-linear-text-secondary">Emails Sent (90d)</p>
+              <Badge variant="secondary" className="text-[10px]">Last 90 days</Badge>
+            </div>
+            <p className="text-2xl font-semibold text-white mt-2">{emailsSent.toLocaleString()}</p>
           </div>
           
-          <div className="flex gap-6">
-            <div className="relative w-28 h-28 flex-shrink-0">
-              <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
-                {newsletterData.topForms.map((form, index, array) => {
-                  const percentage = (form.subscribers / totalSubscribers) * 100;
-                  const previousPercentages = array
-                    .slice(0, index)
-                    .reduce((acc, prev) => acc + (prev.subscribers / totalSubscribers) * 100, 0);
-                  
-                  const radius = 40;
-                  const circumference = 2 * Math.PI * radius;
-                  const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
-                  const strokeDashoffset = `${(-(previousPercentages) / 100) * circumference}`;
-                  
-                  return (
-                    <circle
-                      key={index}
-                      cx="50"
-                      cy="50"
-                      r={radius}
-                      fill="none"
-                      stroke={colors[index % colors.length]}
-                      strokeWidth="18"
-                      strokeDasharray={strokeDasharray}
-                      strokeDashoffset={strokeDashoffset}
-                    />
-                  );
-                })}
-                <circle cx="50" cy="50" r="30" fill="#17181a" />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-lg font-semibold text-white">{totalSubscribers}</span>
-              </div>
+          <div className="p-3 rounded-md bg-linear-hover/50 border border-linear-border">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-linear-text-secondary">New Subscribers (90d)</p>
+              <Badge variant="secondary" className="text-[10px]">Last 90 days</Badge>
+            </div>
+            <p className="text-2xl font-semibold text-white mt-2">{newSubs.toLocaleString()}</p>
+          </div>
+        </div>
+
+        {topForms.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-medium text-white">Active Forms</h3>
+              <Badge variant="secondary">{topForms.length} forms</Badge>
             </div>
             
-            <div className="flex-grow space-y-2">
-              {newsletterData.topForms.map((form, index) => (
-                <div key={index} className="flex justify-between items-center text-sm py-1 hover:bg-linear-hover rounded px-2 -mx-2 transition-colors">
+            <div className="space-y-2">
+              {topForms.map((form, index) => (
+                <div key={index} className="flex justify-between items-center text-sm py-1.5 px-2 hover:bg-linear-hover rounded transition-colors">
                   <div className="flex items-center gap-2 min-w-0">
                     <div 
-                      className="h-2.5 w-2.5 rounded-full flex-shrink-0" 
-                      style={{ backgroundColor: colors[index % colors.length] }}
+                      className="h-2 w-2 rounded-full flex-shrink-0" 
+                      style={{ backgroundColor: form.color }}
                     />
-                    <span className="truncate text-linear-text-secondary">{form.name}</span>
+                    <span className="truncate text-linear-text-secondary text-xs">{form.name}</span>
                   </div>
-                  <div className="flex items-center gap-3 flex-shrink-0 ml-2">
-                    <span className="text-white font-medium">{form.subscribers}</span>
-                    {form.growth > 0 && (
-                      <span className="text-xs text-linear-success flex items-center">
-                        <ArrowUpRight className="h-3 w-3" />
-                        {form.growth}%
-                      </span>
-                    )}
-                    {form.growth < 0 && (
-                      <span className="text-xs text-linear-error flex items-center">
-                        <ArrowDownRight className="h-3 w-3" />
-                        {Math.abs(form.growth)}%
-                      </span>
-                    )}
-                    {form.growth === 0 && (
-                      <span className="text-xs text-linear-text-tertiary flex items-center">
-                        <Minus className="h-3 w-3" />
-                      </span>
-                    )}
-                  </div>
+                  <Badge variant="outline" className="text-[10px] capitalize">{form.type}</Badge>
                 </div>
               ))}
             </div>
           </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );
