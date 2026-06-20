@@ -23,6 +23,17 @@ next-env.d.ts
 # local agent/harness state
 .local
 
+# auto-installed agent skills (reproducible via skills-lock.json + `npx skills add`; symlink-heavy).
+# skills-lock.json IS committed (the manifest); the installed/symlinked copies are not.
+.agents/skills
+.claude/skills
+.devin/
+.factory/
+.goose/
+.hermes/
+.kiro/
+.windsurf/
+
 # misc
 .DS_Store
 vite.config.ts.*

@@ -16,8 +16,13 @@ Next.js structure as it comes online. Do not delete legacy code until the migrat
 
 ## Target stack
 Next.js 16 (App Router, **Turbopack**) · React 19 · Tailwind CSS 4 + **daisyUI 5** (CSS-first config)
-· **ApexCharts** (via the `daisyui-charts` skill) · TanStack Query · Clerk (founders-only) · Drizzle
-+ **Neon** Postgres · **Vercel** (hosting + Cron + Fluid Compute) · **eve.dev** agent (later phase).
+· **ApexCharts** (via the `daisyui-charts` skill) · TanStack Query · Clerk (founders-only) · **Neon**
+Postgres via the **serverless driver + plain SQL** (no Drizzle — see DECISIONS.md) · Zod for
+validation · **Vercel** (hosting + Cron + Fluid Compute) · **eve.dev** agent (later phase).
+
+DB: dedicated Neon project `swayzio-admin-dashboard`; `DATABASE_URL` in `.env.local`. Stripe coding
+skills installed under `.agents/skills` (`npx skills add https://docs.stripe.com`); Stripe MCP in
+`.mcp.json`.
 
 ## Hard rules
 1. **Preserve the look.** The Linear dark aesthetic is liked and stays. Implement it as the

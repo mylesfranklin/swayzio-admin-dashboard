@@ -4,6 +4,26 @@ Short, dated records of architectural decisions and *why*. Newest first.
 
 ---
 
+## 2026-06-20 — Drop Drizzle ORM; talk to Neon directly (supersedes "Keep Neon + Drizzle")
+**Decision:** Use the **Neon serverless driver** (`@neondatabase/serverless`) with plain SQL +
+a hand-written migration file. Remove `drizzle-orm`, `drizzle-kit`, `drizzle-zod`. Keep **Neon** as
+the database and **Zod** for validation.
+**Why:** Founder preference for fewer abstractions ("use Neon instead of Drizzle"). The DB workload
+is light (mostly a cache table; the heavy lifting is Stripe API calls), so the typed query-builder +
+auto-migrations don't earn their keep here. Note: Neon and Drizzle were never alternatives — Neon is
+the DB host, Drizzle is an ORM on top; this drops only the ORM layer.
+**Database:** dedicated Neon project `swayzio-admin-dashboard` (project `little-glade-22134511`, org
+"Myles", pg17). `DATABASE_URL` (pooled endpoint) is in gitignored `.env.local`.
+
+## 2026-06-20 — Stripe agent tooling
+**Decision:** Installed Stripe's coding skills (`stripe-best-practices`, `stripe-directory`,
+`stripe-projects`, `upgrade-stripe`) via `npx skills add https://docs.stripe.com`. Added the Stripe
+**MCP server** to `.mcp.json` (`npx @stripe/mcp@latest`, key via `${STRIPE_SECRET_KEY}` env
+expansion — no secret committed) for conversational Stripe queries now and the eve.dev agent later.
+**Key:** a **restricted live key** (`rk_live_…`) in `.env.local`; verified read access to balance,
+customers, subscriptions, charges, invoices, products, events (least privilege for a read-only
+dashboard).
+
 ## 2026-06-20 — Adopt Next.js 16 + Vercel as the target stack
 **Context:** Dashboard exported from Replit (React/Vite/Wouter + Express + Neon). Founder wants
 Turbopack, an eve.dev agent chat, daisyUI (drop hand-maintained Tailwind), and to "go all in on
