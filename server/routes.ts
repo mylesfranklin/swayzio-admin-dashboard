@@ -9,6 +9,24 @@ import { cacheManager } from "./cache-manager";
 
 const CACHE_TTL_MINUTES = 7 * 60;
 const KIT_CACHE_TTL_MINUTES = 7 * 60;
+const CUSTOMER_COUNT_TTL_MINUTES = 24 * 60; // 24 hours — customer count changes slowly
+
+// Non-blocking helper: return cached customer count immediately; refresh in background if stale/missing
+async function getCustomerCountNonBlocking(): Promise<number> {
+  const cached = await cacheManager.get<number>('stripe', 'customer-count');
+  if (cached) {
+    if (cached.isStale) {
+      // Refresh in background, return stale value immediately
+      cacheManager.getOrFetch('stripe', 'customer-count', () => stripeService.getCustomerCount(), CUSTOMER_COUNT_TTL_MINUTES)
+        .catch((err: any) => console.error('Customer count background refresh error:', err.message));
+    }
+    return cached.data;
+  }
+  // Cache miss: trigger background fetch, return 0 for now
+  cacheManager.getOrFetch('stripe', 'customer-count', () => stripeService.getCustomerCount(), CUSTOMER_COUNT_TTL_MINUTES)
+    .catch((err: any) => console.error('Customer count background fetch error:', err.message));
+  return 0;
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // ===== HubSpot Live API Routes =====
@@ -205,15 +223,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await cacheManager.invalidate('stripe', 'dashboard');
       }
       
-      const result = await cacheManager.getOrFetch(
-        'stripe',
-        'dashboard',
-        () => stripeService.getDashboardStats(),
-        CACHE_TTL_MINUTES
-      );
+      const [result, totalCustomers] = await Promise.all([
+        cacheManager.getOrFetch(
+          'stripe',
+          'dashboard',
+          () => stripeService.getDashboardStats(),
+          CACHE_TTL_MINUTES
+        ),
+        getCustomerCountNonBlocking()
+      ]);
       
       res.json({
         ...result.data,
+        totalCustomers,
         _cache: {
           lastUpdated: result.lastUpdated,
           isStale: result.isStale,
@@ -700,8 +722,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const kitData = kitResult?.data;
       const mercuryData = mercuryResult?.data;
 
-      // Build KPI metrics from live data
-      const totalCustomers = stripeData?.totalCustomers || 0;
+      // Get customer count non-blocking (24h cache, separate from dashboard stats)
+      const totalCustomers = await getCustomerCountNonBlocking();
       const connectedCustomers = hubspotData?.totalUsers || 0;
       const totalRevenue = stripeData?.totalRevenue || 0;
       const activeSubscriptions = stripeData?.activeSubscriptions || 0;
@@ -1155,6 +1177,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Start background refresh every 6 hours
   cacheManager.startBackgroundRefresh(6);
+
+  // Kick off customer count in the background at startup (separate 24h cache, ~40s fetch)
+  // Runs independently so it never blocks dashboard loads
+  setTimeout(() => {
+    console.log('Starting background customer count fetch...');
+    cacheManager.getOrFetch('stripe', 'customer-count', () => stripeService.getCustomerCount(), CUSTOMER_COUNT_TTL_MINUTES)
+      .then(() => console.log('Background customer count fetch complete'))
+      .catch((err: any) => console.error('Background customer count fetch failed:', err.message));
+  }, 10000); // 10 seconds after startup
 
   const httpServer = createServer(app);
 

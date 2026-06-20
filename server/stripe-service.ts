@@ -425,6 +425,14 @@ export class StripeService {
     }
   }
 
+  // Separate method: full customer pagination for 24h cache (slow, ~40s)
+  async getCustomerCount(): Promise<number> {
+    console.log('Fetching total Stripe customer count (full pagination)...');
+    const allCustomers = await this.getAllCustomers();
+    console.log(`Total Stripe customer count: ${allCustomers.length}`);
+    return allCustomers.length;
+  }
+
   async getDashboardStats(): Promise<{
     totalCustomers: number;
     activeSubscriptions: number;
@@ -437,13 +445,14 @@ export class StripeService {
     revenueByMonth: Array<{ month: string; revenue: number }>;
   }> {
     try {
-      console.log('Starting Stripe dashboard stats fetch...');
+      console.log('Starting Stripe dashboard stats fetch (fast path)...');
       
-      const [customers, subscriptions, grossVolumeData, recentCharges, payments, invoices] = await Promise.all([
-        this.getAllCustomers(),
+      // Fast path: skip getAllCustomers (~40s) and getGrossVolume (~50s)
+      // Customer count is served from a separate 24h cache via getCustomerCount()
+      // Total revenue is derived from the 12-month charges we already fetch
+      const [subscriptions, recentCharges, payments, invoices] = await Promise.all([
         this.getAllSubscriptions(),
-        this.getGrossVolume(0), // Fetch all balance transactions for accurate gross volume
-        this.getRecentCharges(12, 30),
+        this.getRecentCharges(12, 10), // cap to 10 pages (1,000 records) — enough for monthly chart
         this.getPaymentIntents(100),
         this.getInvoices(100)
       ]);
@@ -513,13 +522,18 @@ export class StripeService {
         });
       }
 
-      console.log('Stripe dashboard stats complete');
+      // Total 12-month revenue from successful charges (replaces slow getGrossVolume)
+      const totalRevenue12m = successfulRecentCharges.reduce((sum: number, c: any) =>
+        sum + (c.amount - (c.amountRefunded || 0)), 0
+      );
+
+      console.log(`Stripe dashboard stats complete. MRR: $${(mrr / 100).toFixed(2)}, 12m revenue: $${(totalRevenue12m / 100).toFixed(2)}`);
 
       return {
-        totalCustomers: customers.length,
+        totalCustomers: 0, // Populated by route layer from separate 24h customer-count cache
         activeSubscriptions: activeSubscriptions.length,
         mrr: mrr / 100,
-        totalRevenue: grossVolumeData.grossVolume / 100,
+        totalRevenue: totalRevenue12m / 100,
         churnRate,
         recentPayments: payments.slice(0, 10),
         recentInvoices: invoices.slice(0, 10),
