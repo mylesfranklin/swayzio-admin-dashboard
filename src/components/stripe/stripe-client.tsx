@@ -27,12 +27,12 @@ export function StripeClient({ stripe, error }: { stripe: StripeDashboard | null
         </p>
       </div>
 
-      {/* KPIs */}
+      {/* KPIs — honest framing */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard title="MRR (run-rate)" value={formatCurrency(stripe.mrr)} icon={Wallet} accent="brand" />
-        <KpiCard title="Active Subscriptions" value={formatNumber(stripe.activeSubscriptions)} icon={CreditCard} accent="brand" animationDelay={75} />
+        <KpiCard title="Collected (last mo)" value={formatCurrency(stripe.collectedLastFullMonth)} icon={Wallet} accent="success" />
+        <KpiCard title="Paying Subscriptions" value={formatNumber(stripe.payingSubscriptions)} icon={CreditCard} accent="brand" animationDelay={75} />
         <KpiCard title="Past-due Subs" value={formatNumber(stripe.pastDueSubscriptions)} icon={AlertTriangle} accent="error" animationDelay={150} />
-        <KpiCard title="Churn (30d)" value={`${stripe.churnRatePct}%`} icon={TrendingDown} accent="warning" animationDelay={225} />
+        <KpiCard title="Booked MRR (list)" value={formatCurrency(stripe.mrr)} icon={TrendingDown} accent="brand" animationDelay={225} />
       </div>
 
       {/* Collection reality: radial + revenue */}
@@ -70,11 +70,11 @@ export function StripeClient({ stripe, error }: { stripe: StripeDashboard | null
           <StatusDonut byStatus={stripe.byStatus} />
         </div>
         <div className="lg:col-span-2 grid grid-cols-2 gap-4 sm:grid-cols-3">
+          <Stat label="Paying rate" value={`${stripe.payingRatePct}%`} sub={`${formatNumber(stripe.payingSubscriptions)} of ${formatNumber(stripe.activeSubscriptions)} active`} />
+          <Stat label="Void invoices" value={formatNumber(stripe.voidInvoiceSubscriptions)} sub="active, broken billing" tone="error" />
           <Stat label="At-risk MRR" value={`${formatCurrency(stripe.pastDueMrrAtRisk)}/mo`} sub={`${formatNumber(stripe.pastDueSubscriptions)} past-due`} tone="error" />
-          <Stat label="Annualized run-rate" value={formatCurrency(stripe.mrrAnnualizedRunRate)} sub="MRR × 12" />
+          <Stat label="Booked run-rate" value={`${formatCurrency(stripe.mrr)}/mo`} sub={`${formatCurrency(stripe.mrrAnnualizedRunRate)}/yr list price`} />
           <Stat label="12-mo collected" value={formatCurrency(stripe.revenue12mo)} sub="real cash" />
-          <Stat label="Monthly subs" value={formatNumber(stripe.byInterval.monthly)} sub="active, monthly" icon />
-          <Stat label="Annual subs" value={formatNumber(stripe.byInterval.annual)} sub="active, yearly" icon />
           <Stat label="Canceled (30d)" value={formatNumber(stripe.canceledLast30Days)} sub={`${stripe.churnRatePct}% churn`} />
         </div>
       </div>

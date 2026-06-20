@@ -60,9 +60,12 @@ function monthLabel(d: Date): string {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface SubscriptionMetrics {
-  mrr: number;                 // $/mo — active USD run-rate
+  mrr: number;                 // $/mo — BOOKED (list-price) active USD run-rate
   mrrAnnualizedRunRate: number;// $/yr — mrr * 12
-  activeSubscriptions: number;
+  activeSubscriptions: number; // status === 'active' (nominal)
+  payingSubscriptions: number; // active AND latest invoice paid (actually billing)
+  payingMrr: number;           // $/mo booked for paying subs only
+  voidInvoiceSubscriptions: number; // active but latest invoice VOID (broken billing)
   pastDueSubscriptions: number;
   pausedSubscriptions: number;
   pastDueMrrAtRisk: number;    // $/mo of past_due subs (USD)
@@ -88,6 +91,7 @@ interface RawSub {
   customer: string;
   plan: string;
   nextBilling: number | null;
+  latestInvoiceStatus: string | null;
   created: number;
   canceledAt: number | null;
 }
@@ -120,6 +124,8 @@ function mapSub(sub: Stripe.Subscription): RawSub {
   const cust = sub.customer;
   const custObj = cust && typeof cust === "object" && !("deleted" in cust && cust.deleted) ? (cust as Stripe.Customer) : null;
   const firstPrice = items[0]?.price;
+  const inv = sub.latest_invoice;
+  const latestInvoiceStatus = inv && typeof inv === "object" ? (inv.status ?? null) : null;
 
   return {
     id: sub.id,
@@ -131,6 +137,7 @@ function mapSub(sub: Stripe.Subscription): RawSub {
     plan: firstPrice?.nickname || `Plan ${firstPrice?.id?.slice(-8) ?? "?"}`,
     // period now lives on the item (API 2025-11-17.clover)
     nextBilling: items[0]?.current_period_end ?? null,
+    latestInvoiceStatus,
     created: sub.created,
     canceledAt: sub.canceled_at ?? null,
   };
@@ -153,7 +160,7 @@ async function fetchNonCanceledSubs(): Promise<RawSub[]> {
       const page = await s.subscriptions.list({
         limit: 100,
         created: { gte: r.gte, lt: r.lt },
-        expand: ["data.items.data.price", "data.customer"],
+        expand: ["data.items.data.price", "data.customer", "data.latest_invoice"],
         ...(startingAfter ? { starting_after: startingAfter } : {}),
       });
       acc.push(...page.data.map(mapSub));
@@ -168,6 +175,7 @@ export async function getSubscriptionMetrics(): Promise<SubscriptionMetrics> {
   const subs = await fetchNonCanceledSubs();
   const byStatus: Record<string, number> = {};
   let mrrCents = 0, pastDueCents = 0, activeCount = 0, pastDue = 0, paused = 0, nonUsdActive = 0;
+  let payingCount = 0, payingCents = 0, voidInvoiceCount = 0;
   const byInterval = { monthly: 0, annual: 0, other: 0 };
 
   for (const sub of subs) {
@@ -175,6 +183,11 @@ export async function getSubscriptionMetrics(): Promise<SubscriptionMetrics> {
     if (sub.status === "active") {
       activeCount++;
       mrrCents += sub.monthly;
+      // "paying" = active AND latest invoice actually paid. ~2/3 of this account's
+      // active subs have VOID latest invoices (broken billing) — this separates the
+      // real billing base from the nominal one. (see memory: stripe-data-findings)
+      if (sub.latestInvoiceStatus === "paid") { payingCount++; payingCents += sub.monthly; }
+      else if (sub.latestInvoiceStatus === "void") voidInvoiceCount++;
       if (sub.currency !== "usd") nonUsdActive++;
       if (sub.interval === "month") byInterval.monthly++;
       else if (sub.interval === "year") byInterval.annual++;
@@ -205,6 +218,9 @@ export async function getSubscriptionMetrics(): Promise<SubscriptionMetrics> {
     mrr,
     mrrAnnualizedRunRate: mrr * 12,
     activeSubscriptions: activeCount,
+    payingSubscriptions: payingCount,
+    payingMrr: Math.round(payingCents / 100),
+    voidInvoiceSubscriptions: voidInvoiceCount,
     pastDueSubscriptions: pastDue,
     pausedSubscriptions: paused,
     pastDueMrrAtRisk: Math.round(pastDueCents / 100),

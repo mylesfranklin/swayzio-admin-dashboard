@@ -39,7 +39,9 @@ async function readL2(key: string): Promise<Entry | null> {
       FROM integration_cache WHERE cache_key = ${key}
     `) as Array<{ data: unknown; updated_ms: number; expires_ms: number }>;
     if (!rows.length) return null;
-    return { data: rows[0].data, updatedAt: rows[0].updated_ms, expiresAt: rows[0].expires_ms };
+    // Neon returns numeric/double (epoch ms) as strings — coerce so Date math and
+    // new Date(...).toISOString() don't blow up ("Invalid time value").
+    return { data: rows[0].data, updatedAt: Number(rows[0].updated_ms), expiresAt: Number(rows[0].expires_ms) };
   } catch (err) {
     console.error(`[cache] L2 read failed for ${key}:`, (err as Error).message);
     return null;

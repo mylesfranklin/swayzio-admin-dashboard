@@ -47,28 +47,31 @@ export function DashboardClient({ stripe, error }: { stripe: StripeDashboard | n
         </div>
       )}
 
-      {/* KPI grid — real Stripe data */}
+      {/* KPI grid — real Stripe data, honest framing */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard title="MRR (run-rate)" value={stripe ? formatCurrency(stripe.mrr) : "—"} icon={Wallet} accent="brand" animationDelay={0} />
-        <KpiCard title="Active Subscriptions" value={stripe ? formatNumber(stripe.activeSubscriptions) : "—"} icon={CreditCard} accent="brand" animationDelay={75} />
+        <KpiCard title="Collected (last mo)" value={stripe ? formatCurrency(stripe.collectedLastFullMonth) : "—"} icon={Wallet} accent="success" animationDelay={0} />
+        <KpiCard title="Paying Subscriptions" value={stripe ? formatNumber(stripe.payingSubscriptions) : "—"} icon={CreditCard} accent="brand" animationDelay={75} />
         <KpiCard title="Past-due Subs" value={stripe ? formatNumber(stripe.pastDueSubscriptions) : "—"} icon={AlertTriangle} accent="error" animationDelay={150} />
-        <KpiCard title="Stripe Customers" value={stripe ? formatNumber(stripe.customers) : "—"} icon={Users} accent="brand" animationDelay={225} />
+        <KpiCard title="Booked MRR (list)" value={stripe ? formatCurrency(stripe.mrr) : "—"} icon={Users} accent="brand" animationDelay={225} />
       </div>
 
-      {/* The collection-reality callout — the truth the old dashboard hid */}
+      {/* The billing-reality callout — the truth the old dashboard hid */}
       {stripe && (
         <div className="rounded-box border border-warning/30 bg-warning/5 p-5">
           <div className="flex items-start gap-3">
             <TrendingDown className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
             <div className="flex-1">
               <p className="text-sm font-semibold text-ink">
-                You’re collecting {stripe.collectionRatePct}% of your MRR run-rate.
+                Only {stripe.payingRatePct}% of your active subscriptions are actually billing.
               </p>
               <p className="mt-1 text-sm text-ink-muted">
-                Nominal run-rate is <span className="font-semibold text-ink">{formatCurrency(stripe.mrr)}/mo</span> ({formatCurrency(stripe.mrrAnnualizedRunRate)}/yr),
-                but last full month you actually collected <span className="font-semibold text-ink">{formatCurrency(stripe.collectedLastFullMonth)}</span>.
-                {" "}<span className="font-semibold text-error">{formatNumber(stripe.pastDueSubscriptions)} subscriptions are past-due</span>
-                {" "}({formatCurrency(stripe.pastDueMrrAtRisk)}/mo at risk).
+                <span className="font-semibold text-ink">{formatNumber(stripe.payingSubscriptions)}</span> of {formatNumber(stripe.activeSubscriptions)} “active” subs have a paid invoice;
+                {" "}<span className="font-semibold text-error">{formatNumber(stripe.voidInvoiceSubscriptions)} have voided invoices</span> and {formatNumber(stripe.pastDueSubscriptions)} are past-due.
+                Booked list-price run-rate is <span className="font-semibold text-ink">{formatCurrency(stripe.mrr)}/mo</span>, but last full month you actually collected{" "}
+                <span className="font-semibold text-ink">{formatCurrency(stripe.collectedLastFullMonth)}</span> ({stripe.collectionRatePct}% of booked).
+              </p>
+              <p className="mt-1 text-xs text-ink-faint">
+                Stripe’s Billing overview reports its own MRR figure that excludes much of the broken base — the gap is the void/past-due invoices, not coupons (there are none).
               </p>
             </div>
           </div>

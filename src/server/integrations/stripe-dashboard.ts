@@ -12,11 +12,15 @@ const MIN = 60 * 1000;
 
 export interface StripeDashboard {
   // headline
-  mrr: number;                   // $/mo active run-rate
+  mrr: number;                   // $/mo BOOKED (list-price) run-rate
   mrrAnnualizedRunRate: number;  // $/yr
-  activeSubscriptions: number;
+  activeSubscriptions: number;   // status active (nominal)
   customers: number;
   // the real story
+  payingSubscriptions: number;   // active AND latest invoice paid
+  payingMrr: number;             // booked $/mo for paying subs only
+  payingRatePct: number;         // payingSubscriptions / activeSubscriptions * 100
+  voidInvoiceSubscriptions: number; // active w/ VOID latest invoice (broken billing)
   collectedLastFullMonth: number;
   collectionRatePct: number;     // collectedLastFullMonth / mrr * 100
   revenue12mo: number;
@@ -59,11 +63,19 @@ export async function getStripeDashboard(): Promise<StripeDashboard> {
     .slice(-1)[0] ?? null;
   const stale = [subs, rev, customers, canceled30].some((c) => c.meta.stale);
 
+  const payingRatePct = s.activeSubscriptions > 0
+    ? Math.round((s.payingSubscriptions / s.activeSubscriptions) * 1000) / 10
+    : 0;
+
   return {
     mrr: s.mrr,
     mrrAnnualizedRunRate: s.mrrAnnualizedRunRate,
     activeSubscriptions: s.activeSubscriptions,
     customers: customers.data,
+    payingSubscriptions: s.payingSubscriptions,
+    payingMrr: s.payingMrr,
+    payingRatePct,
+    voidInvoiceSubscriptions: s.voidInvoiceSubscriptions,
     collectedLastFullMonth: r.lastFullMonth,
     collectionRatePct,
     revenue12mo: r.total12mo,
