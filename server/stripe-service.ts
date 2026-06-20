@@ -388,17 +388,24 @@ export class StripeService {
       return subscriptions.data.map((sub) => {
         const item = sub.items.data[0];
         const price = item?.price;
+        const interval: string = price?.recurring?.interval || 'month';
+        const intervalCount: number = price?.recurring?.interval_count || 1;
+        const planAmount = price?.unit_amount || 0;
         
         return {
           id: sub.id,
-          customerId: typeof sub.customer === 'string' ? sub.customer : sub.customer.id,
+          customerId: typeof sub.customer === 'string' ? sub.customer : (sub.customer as any)?.id || '',
+          customerName: '',   // not expanded in this lightweight single-page path
           status: sub.status,
           currentPeriodStart: sub.current_period_start,
           currentPeriodEnd: sub.current_period_end,
-          planAmount: price?.unit_amount || 0,
-          planInterval: price?.recurring?.interval || 'month',
-          planName: price?.nickname || `Plan ${price?.id?.slice(-8) || 'Unknown'}`,
+          planAmount,
+          planInterval: interval,
+          planName: (price as any)?.nickname || `Plan ${price?.id?.slice(-8) || 'Unknown'}`,
+          monthlyAmount: normalizeToMonthlyCents(planAmount, interval, intervalCount),
+          currency: (price as any)?.currency || 'usd',
           cancelAtPeriodEnd: sub.cancel_at_period_end,
+          canceledAt: (sub as any).canceled_at ?? null,
           created: sub.created
         };
       });
@@ -719,8 +726,14 @@ export class StripeService {
       // canceledLast30DaysCount comes from the Events API (customer.subscription.deleted,
       // created >= 30d ago) — events are ordered by deletion time, so this captures ALL
       // subs canceled in the window regardless of when they were originally created.
+      // Cohort-adjusted active-at-start: subs that existed and were active at the
+      // beginning of the 30-day window = (currently active) - (created during window)
+      // + (canceled during window). New subs that started in the window weren't there
+      // at period start, so removing them avoids overstating the denominator.
+      const thirtyDaysAgoTs = nowTs - 30 * 24 * 60 * 60;
+      const newSubsLast30Days = activeSubscriptions.filter(s => s.created >= thirtyDaysAgoTs).length;
       const canceledLast30Days = canceledLast30DaysCount;
-      const activeAtStart = activeSubscriptions.length + canceledLast30Days;
+      const activeAtStart = (activeSubscriptions.length - newSubsLast30Days) + canceledLast30Days;
       const churnRate = activeAtStart > 0
         ? Math.min(100, (canceledLast30Days / activeAtStart) * 100)
         : 0;

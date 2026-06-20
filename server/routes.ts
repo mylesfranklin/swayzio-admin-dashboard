@@ -1215,8 +1215,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: `Invalid integration: ${integration}` });
       }
       
-      await cacheManager.invalidate(integration);
-      
+      // For stripe, each branch handles its own targeted invalidation so revenue cache
+      // is never blanket-cleared (which would serve $0 revenue until background warm-up).
+      if (integration !== 'stripe') {
+        await cacheManager.invalidate(integration);
+      }
+
       let result;
       switch (integration) {
         case 'hubspot':
