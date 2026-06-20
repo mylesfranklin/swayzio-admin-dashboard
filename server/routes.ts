@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { hubspotService } from "./hubspot-service";
-import { stripeService, getStripePublishableKey } from "./stripe-service";
+import { stripeService, getStripePublishableKey, getUncachableStripeClient } from "./stripe-service";
 import { mercuryService } from "./mercury-service";
 import { kitService } from "./kit-service";
 import { cacheManager } from "./cache-manager";
@@ -10,6 +10,28 @@ import { cacheManager } from "./cache-manager";
 const CACHE_TTL_MINUTES = 7 * 60;
 const KIT_CACHE_TTL_MINUTES = 7 * 60;
 const CUSTOMER_COUNT_TTL_MINUTES = 24 * 60; // 24 hours — customer count changes slowly
+const REVENUE_TTL_MINUTES = 12 * 60; // 12 hours — heavy 12-month charge history changes slowly
+
+type RevenueHistory = { totalRevenue: number; byMonth: Record<string, number> };
+
+// Non-blocking helper: return cached 12-month revenue history immediately; refresh in
+// background if stale/missing. Decoupled from the core dashboard stats because the
+// charge pagination behind it can be large/slow and must never block MRR/churn/table.
+async function getRevenueHistoryNonBlocking(): Promise<RevenueHistory> {
+  const empty: RevenueHistory = { totalRevenue: 0, byMonth: {} };
+  const cached = await cacheManager.get<RevenueHistory>('stripe', 'revenue');
+  if (cached) {
+    if (cached.isStale) {
+      cacheManager.getOrFetch('stripe', 'revenue', () => stripeService.getRevenueHistory(), REVENUE_TTL_MINUTES)
+        .catch((err: any) => console.error('Revenue history background refresh error:', err.message));
+    }
+    return cached.data;
+  }
+  // Cache miss: trigger background fetch, return zeros for now (fills in once warm)
+  cacheManager.getOrFetch('stripe', 'revenue', () => stripeService.getRevenueHistory(), REVENUE_TTL_MINUTES)
+    .catch((err: any) => console.error('Revenue history background fetch error:', err.message));
+  return empty;
+}
 
 // Non-blocking helper: return cached customer count immediately; refresh in background if stale/missing
 async function getCustomerCountNonBlocking(): Promise<number> {
@@ -26,6 +48,52 @@ async function getCustomerCountNonBlocking(): Promise<number> {
   cacheManager.getOrFetch('stripe', 'customer-count', () => stripeService.getCustomerCount(), CUSTOMER_COUNT_TTL_MINUTES)
     .catch((err: any) => console.error('Customer count background fetch error:', err.message));
   return 0;
+}
+
+// Debounced Stripe cache refresh triggered by webhooks. Bursts of events (e.g. an
+// invoice paid emitting several events) are coalesced into a single refresh so the
+// heavy full-pagination fetch doesn't run repeatedly.
+let stripeRefreshTimer: NodeJS.Timeout | null = null;
+let stripeRefreshInFlight = false;
+let revenueRefreshInFlight = false;
+
+// Recompute the heavy 12-month revenue history and overwrite its cache. The old
+// cached value keeps serving until this completes, so reads never see zeros. Guarded
+// by a single in-flight flag because the underlying charge pagination is slow.
+function scheduleRevenueRefresh(): void {
+  if (revenueRefreshInFlight) return;
+  revenueRefreshInFlight = true;
+  (async () => {
+    try {
+      const data = await stripeService.getRevenueHistory();
+      await cacheManager.set('stripe', 'revenue', data, REVENUE_TTL_MINUTES);
+      console.log('Stripe revenue cache refreshed via webhook');
+    } catch (err: any) {
+      console.error('Stripe revenue webhook refresh failed:', err.message);
+    } finally {
+      revenueRefreshInFlight = false;
+    }
+  })();
+}
+
+function scheduleStripeRefresh(): void {
+  if (stripeRefreshTimer) return;
+  stripeRefreshTimer = setTimeout(async () => {
+    stripeRefreshTimer = null;
+    // Kick the decoupled revenue refresh too so all Stripe data follows events.
+    scheduleRevenueRefresh();
+    if (stripeRefreshInFlight) return;
+    stripeRefreshInFlight = true;
+    try {
+      await cacheManager.invalidate('stripe', 'dashboard');
+      await cacheManager.getOrFetch('stripe', 'dashboard', () => stripeService.getDashboardStats(), CACHE_TTL_MINUTES);
+      console.log('Stripe dashboard cache refreshed via webhook');
+    } catch (err: any) {
+      console.error('Stripe webhook-triggered refresh failed:', err.message);
+    } finally {
+      stripeRefreshInFlight = false;
+    }
+  }, 30000); // 30s debounce window
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -223,19 +291,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await cacheManager.invalidate('stripe', 'dashboard');
       }
       
-      const [result, totalCustomers] = await Promise.all([
+      const [result, totalCustomers, revenue] = await Promise.all([
         cacheManager.getOrFetch(
           'stripe',
           'dashboard',
           () => stripeService.getDashboardStats(),
           CACHE_TTL_MINUTES
         ),
-        getCustomerCountNonBlocking()
+        getCustomerCountNonBlocking(),
+        getRevenueHistoryNonBlocking()
       ]);
-      
+
+      // Merge the separately-cached revenue history into the dashboard payload.
+      const revenueByMonth = (result.data.revenueByMonth || []).map((m: any) => ({
+        ...m,
+        revenue: revenue.byMonth[m.month] ?? m.revenue ?? 0
+      }));
+
       res.json({
         ...result.data,
         totalCustomers,
+        totalRevenue: revenue.totalRevenue,
+        revenueByMonth,
         _cache: {
           lastUpdated: result.lastUpdated,
           isStale: result.isStale,
@@ -722,10 +799,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const kitData = kitResult?.data;
       const mercuryData = mercuryResult?.data;
 
-      // Get customer count non-blocking (24h cache, separate from dashboard stats)
-      const totalCustomers = await getCustomerCountNonBlocking();
+      // Get customer count + revenue history non-blocking (separate caches; both are
+      // decoupled from the core dashboard stats so they never block subscription metrics)
+      const [totalCustomers, revenueHistory] = await Promise.all([
+        getCustomerCountNonBlocking(),
+        getRevenueHistoryNonBlocking()
+      ]);
       const connectedCustomers = hubspotData?.totalUsers || 0;
-      const totalRevenue = stripeData?.totalRevenue || 0;
+      const totalRevenue = revenueHistory.totalRevenue || 0;
       const activeSubscriptions = stripeData?.activeSubscriptions || 0;
       const mrr = stripeData?.mrr || 0;
       const totalSubscribers = kitData?.totalSubscribers || 0;
@@ -734,28 +815,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // HubSpot subscribed users count
       const subscribedUsers = hubspotData?.subscribedUsers || 0;
 
-      // Transform revenue data for chart with subscriber growth
-      // Spread MRR evenly across months (represents average monthly run rate)
-      // and show subscriber growth trend
+      // Real monthly MRR + subscriber history reconstructed from subscription lifecycles
+      // (computed in stripeService.getDashboardStats from created/canceledAt timestamps).
       const revenueByMonth = stripeData?.revenueByMonth || [];
-      const monthlyMrr = mrr; // Use the calculated MRR value
-      
-      const revenueSubscriberData = revenueByMonth.map((item: any, index: number) => {
-        // Simulate MRR growth trend (gradual increase over time)
-        const monthsFromEnd = revenueByMonth.length - index;
-        const mrrGrowthFactor = Math.max(0.4, 1 - (monthsFromEnd * 0.05));
-        const estimatedMrr = Math.round(monthlyMrr * mrrGrowthFactor);
-        
-        // Simulate subscriber growth trend
-        const subscriberGrowthFactor = Math.max(0.3, 1 - (monthsFromEnd * 0.06));
-        const estimatedSubscribers = Math.round(subscribedUsers * subscriberGrowthFactor);
-        
-        return {
-          name: item.month,
-          mrr: estimatedMrr,
-          subscribers: estimatedSubscribers
-        };
-      });
+      const revenueSubscriberData = revenueByMonth.map((item: any) => ({
+        name: item.month,
+        mrr: item.mrr ?? 0,
+        subscribers: item.subscribers ?? 0
+      }));
 
       // Build recent activity from Stripe payments and invoices
       const recentActivity: any[] = [];
@@ -954,14 +1021,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Stripe webhook endpoint
+  // Stripe webhook endpoint — keeps dashboard data near-real-time.
+  // Note: this route receives a raw body (see express.raw mount in server/index.ts)
+  // so the Stripe signature can be verified.
   app.post("/api/webhooks/stripe", async (req, res) => {
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    const rawBody: any = (req as any).body;
+    let event: any;
+
     try {
-      await storage.handleStripeWebhook(req.body);
-      res.status(200).send("OK");
-    } catch (error: any) {
-      console.error("Stripe webhook error:", error);
-      res.status(500).json({ message: error.message });
+      if (webhookSecret) {
+        const sig = req.headers["stripe-signature"] as string;
+        const stripe = getUncachableStripeClient();
+        event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
+      } else if (process.env.NODE_ENV === "production") {
+        // Fail closed in production: never process unverified webhooks, since an
+        // unauthenticated caller could otherwise trigger expensive refresh cycles.
+        console.error("STRIPE_WEBHOOK_SECRET not set in production — rejecting unverified webhook");
+        return res.status(400).send("Webhook Error: signature verification not configured");
+      } else {
+        // Development only — parse without verification so webhooks can be tested locally.
+        console.warn("STRIPE_WEBHOOK_SECRET not set — processing webhook without signature verification (dev only)");
+        event = Buffer.isBuffer(rawBody)
+          ? JSON.parse(rawBody.toString("utf8"))
+          : (typeof rawBody === "string" ? JSON.parse(rawBody) : rawBody);
+      }
+    } catch (err: any) {
+      console.error("Stripe webhook signature verification failed:", err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    // Acknowledge immediately so Stripe does not retry while we refresh in the background.
+    res.status(200).json({ received: true });
+
+    try {
+      const type: string = event?.type || "";
+      const relevant =
+        type.startsWith("customer.subscription.") ||
+        type.startsWith("invoice.") ||
+        type.startsWith("charge.") ||
+        type === "customer.created" ||
+        type === "customer.deleted";
+      if (relevant) {
+        console.log(`Stripe webhook received: ${type} — scheduling cache refresh`);
+        scheduleStripeRefresh();
+      }
+    } catch (err: any) {
+      console.error("Stripe webhook handling error:", err.message);
     }
   });
   
@@ -1172,6 +1278,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register scheduled refreshers for background cache warming
   cacheManager.registerRefresher('hubspot', 'music-catalog', () => hubspotService.getMusicCatalogDashboard());
   cacheManager.registerRefresher('stripe', 'dashboard', () => stripeService.getDashboardStats());
+  cacheManager.registerRefresher('stripe', 'revenue', () => stripeService.getRevenueHistory());
   cacheManager.registerRefresher('mercury', 'dashboard', () => mercuryService.getDashboardStats());
   cacheManager.registerRefresher('kit', 'dashboard', () => kitService.getDashboardStats());
   

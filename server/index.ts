@@ -3,6 +3,9 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
+// Stripe webhooks need the raw request body to verify the signature, so this must be
+// registered before the JSON body parser consumes the stream.
+app.use("/api/webhooks/stripe", express.raw({ type: "*/*" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

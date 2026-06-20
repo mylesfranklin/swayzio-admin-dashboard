@@ -150,17 +150,19 @@ export default function StripeAnalytics() {
             type: 'payment',
             createdAt: new Date(p.created * 1000).toISOString(),
           })) || []}
-          subscriptions={[]}
-          revenueHistory={dashboard?.revenueByMonth?.map((m: any, index: number, arr: any[]) => {
-            const monthlyMrr = dashboard.mrr || 0;
-            const monthsFromEnd = arr.length - index;
-            const mrrGrowthFactor = Math.max(0.4, 1 - (monthsFromEnd * 0.05));
-            return {
-              name: m.month,
-              revenue: m.revenue || Math.round(monthlyMrr * mrrGrowthFactor),
-              mrr: Math.round(monthlyMrr * mrrGrowthFactor),
-            };
-          }) || []}
+          subscriptions={dashboard?.activeSubscriptionsList?.map((s: any) => ({
+            id: s.id,
+            customer: s.customer,
+            plan: s.plan,
+            amount: s.amount,
+            status: s.status,
+            nextBillingDate: s.nextBillingDate,
+          })) || []}
+          revenueHistory={dashboard?.revenueByMonth?.map((m: any) => ({
+            name: m.month,
+            revenue: m.revenue || 0,
+            mrr: m.mrr || 0,
+          })) || []}
           planDistribution={dashboard?.subscriptionsByPlan ? 
             Object.entries(dashboard.subscriptionsByPlan).map(([name, value]) => ({ name, value: value as number })) : []}
         />

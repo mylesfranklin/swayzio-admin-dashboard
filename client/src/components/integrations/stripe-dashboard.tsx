@@ -161,7 +161,7 @@ export function StripeDashboard({
     negative?: boolean;
   }> = [
     {
-      title: "Total Revenue",
+      title: "Revenue (12mo)",
       value: stats?.revenue ?? 0,
       icon: DollarSign,
       format: formatCurrency,

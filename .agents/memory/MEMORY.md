@@ -1,0 +1,1 @@
+- [Stripe revenue accuracy & speed](stripe-revenue-accuracy.md) — revenue must use charges.search status:'succeeded', and stay decoupled from the core dashboard stats cache.
