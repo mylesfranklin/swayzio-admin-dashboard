@@ -30,11 +30,18 @@ Handlers + Vercel Cron. See `DECISIONS.md`.
 - [ ] **Eyeball check with Myles: confirm the look is preserved** before mass-porting other pages.
 - [ ] (Deferred to Phase 3) wire real cached data — currently uses `src/lib/fixtures/dashboard.ts`.
 
-## Phase 2 — Auth (Clerk, founders-only)
-- [ ] Add Clerk (`@clerk/nextjs`), `<ClerkProvider>` in root layout.
-- [ ] `middleware.ts` guards `(dashboard)` + `/api/*` (except webhooks/clerk routes).
-- [ ] Founders allowlist + `publicMetadata.role === "founder"` check. Disable open sign-up.
-- [ ] Sign-in route under `(auth)/`.
+## Phase 2 — Auth (Clerk, founders-only)  ✅ code done (needs Clerk keys to go live)
+- [x] Added Clerk (`@clerk/nextjs` 7.5.7 + `@clerk/themes`), `<ClerkProvider>` (dark theme,
+      brand `#3b5bdb`) wrapped in root layout — only when keys present.
+- [x] `src/proxy.ts` (Next 16's renamed middleware) guards everything except `/sign-in` +
+      `/api/webhooks`. **Fails closed in production** without keys; open in keyless local dev.
+- [x] Founder gate in `(dashboard)/layout.tsx` via `currentUser()` → `isFounder(email, role)`:
+      `FOUNDER_EMAILS` allowlist OR `publicMetadata.role === "founder"`; else → `/not-authorized`.
+- [x] `(auth)/sign-in/[[...sign-in]]` route + `/not-authorized` page; sidebar user wired to
+      Clerk `<UserButton>`/`useUser` (static "Dev Mode" fallback when keyless).
+- [x] `src/lib/auth.ts` centralizes config flags + the fail-closed assertion.
+- [ ] **Manual (Myles):** create Clerk app, add keys + `FOUNDER_EMAILS` to `.env` and Vercel,
+      set sign-up to "restricted"/off in Clerk dashboard. Then auth activates automatically.
 
 ## Phase 3 — Port the backend (services → Route Handlers)
 - [ ] Move `server/` services into `src/server/integrations/*` (plain TS, minimal changes).

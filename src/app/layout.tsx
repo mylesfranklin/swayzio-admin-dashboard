@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
+import { dark } from "@clerk/themes";
+import { isClerkConfigured } from "@/lib/auth";
 import "./globals.css";
 
 const inter = Inter({
@@ -17,11 +20,24 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  return (
+  const tree = (
     <html lang="en" data-theme="swayzio" className={inter.variable}>
       <body className="min-h-screen bg-base-100 text-base-content antialiased">
         {children}
       </body>
     </html>
+  );
+
+  // ClerkProvider requires keys; in keyless local dev we render without it so
+  // the app still boots. Production always has keys (enforced in proxy).
+  return isClerkConfigured ? (
+    <ClerkProvider
+      afterSignOutUrl="/sign-in"
+      appearance={{ theme: dark, variables: { colorPrimary: "#3b5bdb" } }}
+    >
+      {tree}
+    </ClerkProvider>
+  ) : (
+    tree
   );
 }

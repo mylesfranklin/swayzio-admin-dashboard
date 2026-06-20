@@ -12,6 +12,8 @@
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.5.7",
+    "@clerk/themes": "^2.4.57",
     "@hubspot/api-client": "^12.0.1",
     "@neondatabase/serverless": "^0.10.4",
     "@tanstack/react-query": "^5.60.5",

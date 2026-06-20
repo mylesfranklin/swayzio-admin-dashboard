@@ -6,6 +6,7 @@ import { useState } from "react";
 import { ChevronDown, ChevronRight, Search, Command } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { navSections } from "./nav-config";
+import { SidebarUser } from "./sidebar-user";
 
 export default function Sidebar({ isOpen }: { isOpen: boolean }) {
   const pathname = usePathname();
@@ -104,19 +105,7 @@ export default function Sidebar({ isOpen }: { isOpen: boolean }) {
 
       {/* User */}
       <div className="border-t border-line/50 p-3">
-        <div className="group flex cursor-pointer items-center gap-3 rounded-lg p-2 transition-colors hover:bg-base-300">
-          <div className="relative">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-brand to-info">
-              <span className="text-xs font-medium text-white">JS</span>
-            </div>
-            <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-sidebar bg-success" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-ink">Jane Smith</p>
-            <p className="text-[11px] text-ink-faint">Admin</p>
-          </div>
-          <ChevronRight className="h-4 w-4 text-ink-faint opacity-0 transition-opacity group-hover:opacity-100" />
-        </div>
+        <SidebarUser />
       </div>
     </aside>
   );
