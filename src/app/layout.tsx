@@ -20,24 +20,25 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const tree = (
-    <html lang="en" data-theme="swayzio" className={inter.variable}>
-      <body className="min-h-screen bg-base-100 text-base-content antialiased">
-        {children}
-      </body>
-    </html>
-  );
-
-  // ClerkProvider requires keys; in keyless local dev we render without it so
-  // the app still boots. Production always has keys (enforced in proxy).
-  return isClerkConfigured ? (
+  // ClerkProvider lives inside <body> (Clerk's Next 16 guidance). Requires keys,
+  // so in keyless local dev we render children directly; production always has
+  // keys (enforced in proxy.ts).
+  const body = isClerkConfigured ? (
     <ClerkProvider
       afterSignOutUrl="/sign-in"
       appearance={{ theme: dark, variables: { colorPrimary: "#3b5bdb" } }}
     >
-      {tree}
+      {children}
     </ClerkProvider>
   ) : (
-    tree
+    children
+  );
+
+  return (
+    <html lang="en" data-theme="swayzio" className={inter.variable}>
+      <body className="min-h-screen bg-base-100 text-base-content antialiased">
+        {body}
+      </body>
+    </html>
   );
 }
