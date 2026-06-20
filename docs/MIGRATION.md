@@ -43,14 +43,19 @@ Handlers + Vercel Cron. See `DECISIONS.md`.
 - [ ] **Manual (Myles):** create Clerk app, add keys + `FOUNDER_EMAILS` to `.env` and Vercel,
       set sign-up to "restricted"/off in Clerk dashboard. Then auth activates automatically.
 
-## Phase 3 — Port the backend (services → Route Handlers)
-- [ ] Move `server/` services into `src/server/integrations/*` (plain TS, minimal changes).
-- [ ] **De-Replit HubSpot auth:** swap Replit connector → `HUBSPOT_ACCESS_TOKEN` private-app token.
-- [ ] Re-expose each endpoint as a Next Route Handler (Node runtime). Keep responses identical.
-- [ ] Port `cache-manager` + Drizzle client; point at Neon.
-- [ ] Webhooks: `/api/webhooks/stripe` with raw-body signature verification.
-- [ ] Replace the in-process 6h timer with **Vercel Cron** → `/api/cron/refresh` (CRON_SECRET).
-- [ ] Set `maxDuration` (Fluid Compute) for the Stripe revenue handler.
+## Phase 3 — Backend + first real screen (Stripe)  ◄ Stripe done
+- [x] Neon-direct data layer: `src/server/db` (neon driver) + `src/server/cache.ts`
+      (two-tier SWR cache, `integration_cache` table created in Neon). No Drizzle.
+- [x] **Rebuilt Stripe service** `src/server/integrations/stripe.ts` for accuracy —
+      reads item-level period (API clover moved it), real collected revenue, collection
+      rate, past_due at-risk, churn. Verified against live data (see DECISIONS / memory).
+- [x] Route handlers: `/api/stripe/metrics` + `/api/cron/refresh` (CRON_SECRET, `maxDuration`).
+- [x] Dashboard + `/analytics/stripe` wired to REAL Stripe data; daisyUI ApexCharts
+      (collected-revenue area, status donut, collection radial), top-subs table.
+- [x] `vercel.json` cron (every 6h) to keep caches warm.
+- [ ] **De-Replit HubSpot auth** (Replit connector → `HUBSPOT_ACCESS_TOKEN`) — next.
+- [ ] Port Kit + Mercury; replace remaining fixtures (newsletter still sample data).
+- [ ] Stripe webhook `/api/webhooks/stripe` (raw-body verify) — when we add write paths.
 
 ## Phase 4 — Port remaining pages + kill mocks
 - [ ] Port all pages: Stripe, HubSpot, Customers (+detail), Mercury, SEO, Socials, Settings, Sync.

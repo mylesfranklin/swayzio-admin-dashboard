@@ -1,11 +1,10 @@
 import { getStripeDashboard, type StripeDashboard } from "@/server/integrations/stripe-dashboard";
-import { DashboardClient } from "@/components/dashboard/dashboard-client";
+import { StripeClient } from "@/components/stripe/stripe-client";
 
-// Cached (Neon) — fast after first warm; founder gate already makes this dynamic.
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-export default async function DashboardPage() {
+export default async function StripeAnalyticsPage() {
   let stripe: StripeDashboard | null = null;
   let error: string | null = null;
   try {
@@ -13,5 +12,5 @@ export default async function DashboardPage() {
   } catch (e) {
     error = (e as Error).message;
   }
-  return <DashboardClient stripe={stripe} error={error} />;
+  return <StripeClient stripe={stripe} error={error} />;
 }

@@ -10,6 +10,7 @@ const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/api/webhooks(.*)",
+  "/api/cron(.*)", // secured by CRON_SECRET, not Clerk
 ]);
 
 // With keys → protect everything except public routes.
