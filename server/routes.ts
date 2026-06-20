@@ -1224,8 +1224,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await cacheManager.set('hubspot', 'music-catalog', result, CACHE_TTL_MINUTES);
           break;
         case 'stripe':
+          // Only invalidate/rebuild the dashboard subkey — revenue keeps its cached value
+          // while a background refresh runs, so interim reads never return $0 revenue.
+          await cacheManager.invalidate('stripe', 'dashboard');
           result = await stripeService.getDashboardStats();
           await cacheManager.set('stripe', 'dashboard', result, CACHE_TTL_MINUTES);
+          scheduleRevenueRefresh(); // non-blocking, in-flight guarded
           break;
         case 'mercury':
           result = await mercuryService.getDashboardStats();
