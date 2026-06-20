@@ -461,31 +461,24 @@ export class StripeService {
         c.paid === true && c.status === 'succeeded'
       );
       
-      // Calculate 12-month revenue (ARR) from recent charges
-      const twelveMonthRevenue = successfulRecentCharges.reduce((sum: number, c: any) => 
-        sum + (c.amount - (c.amountRefunded || 0)), 0
-      );
+      // MRR = sum of active subscription amounts normalized to monthly
+      // This matches Stripe's MRR definition exactly: each active subscription contributes
+      // its plan amount converted to a monthly equivalent
+      const mrr = activeSubscriptions.reduce((sum, sub) => {
+        const amount = sub.planAmount; // in cents
+        const interval = sub.planInterval;
+        if (interval === 'year') {
+          return sum + Math.round(amount / 12);
+        } else if (interval === 'week') {
+          return sum + Math.round((amount * 52) / 12);
+        } else if (interval === 'day') {
+          return sum + Math.round((amount * 365) / 12);
+        }
+        // default: monthly
+        return sum + amount;
+      }, 0);
       
-      // Calculate last month's revenue for MRR
-      const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-      const oneMonthAgoTimestamp = Math.floor(oneMonthAgo.getTime() / 1000);
-      
-      const lastMonthCharges = successfulRecentCharges.filter((c: any) => 
-        c.created >= oneMonthAgoTimestamp
-      );
-      
-      const lastMonthRevenue = lastMonthCharges.reduce((sum: number, c: any) => 
-        sum + (c.amount - (c.amountRefunded || 0)), 0
-      );
-      
-      // MRR = Average monthly revenue (ARR / 12)
-      // This matches Stripe's definition: the monthly run rate based on annual recurring revenue
-      // Using gross volume as the ARR basis since it represents total lifetime value
-      // and aligns with Stripe dashboard's "Gross volume" and "Annual recurring revenue" metrics
-      const arr = grossVolumeData.grossVolume; // Use gross volume as ARR basis
-      const mrr = arr / 12; // MRR = ARR / 12
-      
-      console.log(`Revenue metrics: Gross Volume (ARR): $${(arr / 100).toFixed(2)}, MRR (ARR/12): $${(mrr / 100).toFixed(2)}, Last 30d revenue: $${(lastMonthRevenue / 100).toFixed(2)}`);
+      console.log(`MRR from ${activeSubscriptions.length} active subscriptions: $${(mrr / 100).toFixed(2)}`);
 
       const subscriptionsByStatus: Record<string, number> = {};
       const subscriptionsByPlan: Record<string, number> = {};
