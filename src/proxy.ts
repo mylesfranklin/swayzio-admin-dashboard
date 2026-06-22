@@ -29,7 +29,7 @@ export default middleware;
 export const config = {
   matcher: [
     // Skip Next internals and static files, but always run on routes + API.
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest|md)).*)",
     "/(api|trpc)(.*)",
     // Clerk handshake/auto-proxy path
     "/__clerk/(.*)",
