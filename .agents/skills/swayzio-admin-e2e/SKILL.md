@@ -58,6 +58,15 @@ browser-use close                         # stop the cloud browser (ends billing
 If `state` shows the sign-in page (session expired), re-auth once via the code loop
 (section 2), then the profile carries the session forward again.
 
+> **Gotcha (verified 2026-06-22):** drive sign-in with the **connected-session** model
+> (`browser-use cloud connect` + `open`/`state`/`click`/`input`) — all steps share one
+> persistent browser, so the email→password→**code** loop works across steps. Do **not**
+> use the Cloud **v2 tasks API** (`cloud v2 POST /tasks`) for the code loop: each task
+> **stops its browser session on completion** ("Browser session is stopped"), so you can't
+> read the AgentMail code and re-enter it on the same session. Sessions also cap at 240s.
+> First admin sign-in always needs an email code (new browser = new device); once the
+> profile is signed in, subsequent runs reuse it codelessly.
+
 ### 2. Receive Clerk codes (AgentMail)
 ```bash
 python3 .agents/skills/swayzio-admin-e2e/lib/admin_e2e.py inbox-codes   # newest 6-digit Clerk codes
