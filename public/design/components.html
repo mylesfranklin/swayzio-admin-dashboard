@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Swayzio — Design System Gallery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* ── Swayzio tokens (mirror of design/swayzio.DESIGN.md) ── */
+  :root{
+    --base-100:#101012; --base-200:#17181a; --base-300:#1e2024; --base-content:#fff;
+    --primary:#3b5bdb; --brand:#3b5bdb; --brand-hover:#3450cf;
+    --sidebar:#090909; --line:#23252a;
+    --ink:#fff; --ink-muted:#6b6f76; --ink-faint:#545760;
+    --info:#2f80ed; --success:#59a200; --warning:#f2c94c; --error:#eb5757; --violet:#9b6bdb; --teal:#2f9e8f; --lblue:#5570ec;
+    --r-field:0.25rem; --r-box:0.375rem;
+    --shadow-md:0 4px 8px rgba(0,0,0,.3); --shadow-lg:0 8px 16px rgba(0,0,0,.4);
+  }
+  /* 90% density root — the master knob */
+  html{font-size:90%;}
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:Inter,system-ui,sans-serif; background:var(--base-100); color:var(--base-content);
+    -webkit-font-smoothing:antialiased; font-feature-settings:"cv02","cv03","cv04","cv11";
+    font-size:0.8125rem; line-height:1.4;
+  }
+  ::selection{background:rgb(59 91 219 / .3);}
+  ::-webkit-scrollbar{width:8px;height:8px;} ::-webkit-scrollbar-thumb{background:#2a2c32;border-radius:9999px;}
+  ::-webkit-scrollbar-thumb:hover{background:#34373e;} ::-webkit-scrollbar-track{background:transparent;}
+
+  .wrap{max-width:1100px;margin:0 auto;padding:2.5rem 1.5rem 6rem;}
+  header.top{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;margin-bottom:.5rem;flex-wrap:wrap;}
+  h1{font-size:1.5rem;line-height:1.2;font-weight:700;margin:0;letter-spacing:-.01em;}
+  .lede{color:var(--ink-muted);font-size:.875rem;margin:.25rem 0 0;}
+  section{margin-top:2.75rem;}
+  h2{font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-faint);
+     border-bottom:1px solid var(--line);padding-bottom:.5rem;margin:0 0 1rem;}
+  .row{display:flex;flex-wrap:wrap;gap:1rem;align-items:flex-start;}
+  .grid{display:grid;gap:1rem;}
+  @media(min-width:720px){.grid-4{grid-template-columns:repeat(4,1fr);}.grid-3{grid-template-columns:repeat(3,1fr);}.grid-2{grid-template-columns:repeat(2,1fr);}}
+  .muted{color:var(--ink-muted);} .faint{color:var(--ink-faint);} .mono{font-family:"Berkeley Mono",ui-monospace,monospace;}
+  .note{color:var(--ink-faint);font-size:.6875rem;margin:.4rem 0 0;}
+
+  /* ── Card ── */
+  .card{border:1px solid var(--line);background:var(--base-200);border-radius:var(--r-box);}
+  .card.p{padding:1.25rem;} /* p-5 */
+  .card h3{font-size:.875rem;font-weight:500;color:var(--ink-muted);margin:0 0 .75rem;}
+
+  /* ── KPI card (signature) ── */
+  .kpi{position:relative;overflow:hidden;border:1px solid var(--line);background:var(--base-200);border-radius:var(--r-box);
+       padding:1.25rem;transition:all .3s ease-out;animation:fadeInUp .5s ease-out both;}
+  .kpi::after{content:"";position:absolute;top:0;right:0;width:120px;height:120px;
+       background:radial-gradient(circle at top right,rgba(59,91,219,.08),transparent 70%);pointer-events:none;}
+  .kpi:hover{transform:translateY(-2px);border-color:rgba(59,91,219,.4);box-shadow:var(--shadow-md);}
+  .kpi .bar{position:absolute;bottom:0;left:0;height:2px;width:0;background:var(--brand);transition:width .3s ease-out;}
+  .kpi:hover .bar{width:100%;}
+  .kpi .head{display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;}
+  .kpi .title{font-size:.6875rem;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint);}
+  .kpi .val{font-size:1.75rem;font-weight:700;line-height:1;letter-spacing:-.02em;margin-top:.4rem;}
+  .kpi .sub{font-size:.6875rem;color:var(--ink-faint);margin-top:.5rem;}
+  .kpi .tile{display:flex;height:2.5rem;width:2.5rem;align-items:center;justify-content:center;border-radius:.75rem;
+       background:rgba(59,91,219,.1);color:var(--brand);transition:background .3s;}
+  .kpi:hover .tile{background:rgba(59,91,219,.2);}
+  .kpi.success .tile{background:rgba(89,162,0,.12);color:var(--success);}
+  svg.i{width:1.125rem;height:1.125rem;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+
+  /* ── Buttons ── */
+  .btn{border:0;cursor:pointer;font-family:inherit;font-size:.8125rem;font-weight:500;border-radius:var(--r-field);
+       padding:.5rem .85rem;transition:all .2s ease-out;}
+  .btn-primary{background:var(--primary);color:#fff;} .btn-primary:hover{background:var(--brand-hover);box-shadow:0 0 20px rgba(59,91,219,.15),0 4px 12px rgba(0,0,0,.3);}
+  .btn-ghost{background:var(--base-300);color:var(--base-content);} .btn-ghost:hover{background:#26282e;}
+
+  /* ── Badge ── */
+  .badge{display:inline-flex;align-items:center;border-radius:var(--r-field);padding:.1rem .375rem;font-size:.625rem;font-weight:500;}
+  .badge.success{background:var(--success);color:var(--base-100);} .badge.error{background:var(--error);color:var(--base-100);}
+  .badge.info{background:var(--info);color:var(--base-100);} .badge.warning{background:var(--warning);color:#101012;}
+  .badge.neutral{background:var(--base-300);color:var(--ink-faint);}
+
+  /* ── Pill / legend chip ── */
+  .pill{display:inline-flex;align-items:center;gap:.375rem;border:1px solid var(--line);background:rgba(30,32,36,.4);
+        border-radius:9999px;padding:.25rem .625rem;font-size:.75rem;color:var(--ink-muted);}
+  .dot{width:.5rem;height:.5rem;border-radius:9999px;display:inline-block;}
+
+  /* ── Segmented control ── */
+  .seg{display:inline-flex;border:1px solid var(--line);background:var(--base-200);border-radius:.5rem;padding:.125rem;}
+  .seg button{border:0;background:transparent;cursor:pointer;font-family:inherit;border-radius:var(--r-field);
+        padding:.25rem .625rem;font-size:.75rem;font-weight:500;color:var(--ink-faint);transition:color .2s;}
+  .seg button:hover{color:var(--ink-muted);} .seg button.active{background:var(--base-300);color:var(--ink);}
+
+  /* ── Input ── */
+  .input{width:16rem;border:1px solid var(--line);background:var(--base-200);color:var(--base-content);
+        border-radius:var(--r-field);padding:.45rem .6rem;font-family:inherit;font-size:.8125rem;}
+  .input::placeholder{color:var(--ink-faint);} .input:focus{outline:none;border-color:var(--brand);}
+
+  /* ── Table ── */
+  .tbl-wrap{border:1px solid var(--line);background:var(--base-200);border-radius:var(--r-box);overflow:hidden;}
+  .tbl-head{border-bottom:1px solid var(--line);padding:1rem;}
+  .tbl-head h3{margin:0;font-size:.875rem;font-weight:500;color:var(--ink);}
+  table{width:100%;border-collapse:collapse;font-size:.8125rem;}
+  thead th{text-align:left;font-size:.625rem;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint);padding:.5rem 1rem;}
+  thead th.sort{cursor:pointer;} thead th.sort .arrow{color:var(--brand);}
+  tbody tr{border-top:1px solid rgba(35,37,42,.6);transition:background .15s;} tbody tr:hover{background:rgba(30,32,36,.4);}
+  tbody td{padding:.5rem 1rem;} td.num{font-variant-numeric:tabular-nums;color:var(--ink-muted);}
+  .sizebar{display:flex;align-items:center;gap:.5rem;} .sizebar .track{height:.375rem;width:6rem;background:var(--base-300);border-radius:9999px;overflow:hidden;}
+  .sizebar .fill{height:100%;background:rgba(59,91,219,.6);border-radius:9999px;}
+
+  /* ── BarList (ranked) ── */
+  .barlist{display:flex;flex-direction:column;gap:.375rem;}
+  .barlist .b{position:relative;display:flex;align-items:center;justify-content:space-between;gap:.75rem;height:2rem;padding:0 .625rem;border-radius:var(--r-field);overflow:hidden;}
+  .barlist .b .f{position:absolute;inset:0 auto 0 0;background:rgba(59,91,219,.15);border-radius:var(--r-field);}
+  .barlist .b .l{position:relative;z-index:1;color:var(--ink);} .barlist .b .v{position:relative;z-index:1;color:var(--ink-muted);font-variant-numeric:tabular-nums;}
+
+  /* ── InfoHint (eye tooltip) ── */
+  .hint{position:relative;display:inline-flex;align-items:center;cursor:help;color:var(--ink-faint);}
+  .hint:hover{color:var(--ink-muted);}
+  .hint .pop{position:absolute;top:100%;left:0;margin-top:.5rem;width:16rem;border:1px solid var(--line);background:var(--base-300);
+        border-radius:.5rem;padding:.75rem;font-size:.6875rem;line-height:1.5;color:var(--ink-muted);
+        opacity:0;pointer-events:none;transition:opacity .15s;box-shadow:var(--shadow-lg);z-index:5;}
+  .hint:hover .pop{opacity:1;}
+
+  /* ── Sidebar nav items ── */
+  .nav{width:15.25rem;background:var(--sidebar);border:1px solid var(--line);border-radius:var(--r-box);padding:.5rem;}
+  .nav a{position:relative;display:flex;align-items:center;gap:.6rem;padding:.45rem .65rem;border-radius:var(--r-field);
+        color:var(--ink-muted);text-decoration:none;font-size:.8125rem;transition:all .2s ease-out;}
+  .nav a::before{content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);width:2px;height:0;background:var(--brand);border-radius:1px;transition:height .2s ease-out;}
+  .nav a:hover{color:var(--ink);} .nav a:hover::before{height:16px;}
+  .nav a.active{background:var(--base-300);color:var(--ink);} .nav a.active::before{height:16px;}
+
+  /* ── Live pulse ── */
+  .pulse{display:inline-flex;align-items:center;gap:.5rem;border:1px solid var(--line);background:var(--base-200);border-radius:9999px;padding:.35rem .75rem;font-size:.75rem;color:var(--ink-muted);}
+  .pulse .p{position:relative;width:.5rem;height:.5rem;} .pulse .p .ring{position:absolute;inset:0;border-radius:9999px;background:rgba(89,162,0,.7);animation:ping 1.4s cubic-bezier(0,0,.2,1) infinite;}
+  .pulse .p .core{position:relative;width:.5rem;height:.5rem;border-radius:9999px;background:var(--success);}
+
+  /* ── Skeleton ── */
+  .skel{position:relative;overflow:hidden;background:var(--base-300);border-radius:var(--r-field);height:1.5rem;}
+  .skel::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.04),transparent);transform:translateX(-100%);animation:shimmer 1.5s ease-in-out infinite;}
+
+  .sw{display:flex;flex-direction:column;gap:.4rem;} .sw .chip{height:3rem;border-radius:var(--r-box);border:1px solid var(--line);}
+  .sw small{font-size:.625rem;color:var(--ink-faint);} .sw .mono{font-size:.625rem;color:var(--ink-muted);}
+
+  @keyframes fadeInUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes shimmer{0%{transform:translateX(-100%);}100%{transform:translateX(100%);}}
+  @keyframes ping{75%,100%{transform:scale(2.2);opacity:0;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Swayzio Design System</h1>
+      <p class="lede">Linear-inspired near-black UI · one deep-blue accent · dense, calm, precise. Live mirror of <span class="mono">design/swayzio.DESIGN.md</span>.</p>
+    </div>
+    <span class="pulse"><span class="p"><span class="ring"></span><span class="core"></span></span> live · last write 8s ago</span>
+  </header>
+
+  <!-- COLORS -->
+  <section>
+    <h2>Color — surface &amp; ink ladders, accent, semantic</h2>
+    <div class="grid grid-4">
+      <div class="sw"><div class="chip" style="background:#101012"></div><small>base-100 · app bg</small><span class="mono">#101012</span></div>
+      <div class="sw"><div class="chip" style="background:#17181a"></div><small>base-200 · cards</small><span class="mono">#17181a</span></div>
+      <div class="sw"><div class="chip" style="background:#1e2024"></div><small>base-300 · raised/hover</small><span class="mono">#1e2024</span></div>
+      <div class="sw"><div class="chip" style="background:#090909"></div><small>sidebar</small><span class="mono">#090909</span></div>
+      <div class="sw"><div class="chip" style="background:#3b5bdb"></div><small>brand / primary</small><span class="mono">#3b5bdb</span></div>
+      <div class="sw"><div class="chip" style="background:#3450cf"></div><small>brand-hover (AA)</small><span class="mono">#3450cf</span></div>
+      <div class="sw"><div class="chip" style="background:#23252a"></div><small>line · hairline</small><span class="mono">#23252a</span></div>
+      <div class="sw"><div class="chip" style="background:#ffffff"></div><small>ink (primary text)</small><span class="mono">#ffffff</span></div>
+      <div class="sw"><div class="chip" style="background:#6b6f76"></div><small>ink-muted</small><span class="mono">#6b6f76</span></div>
+      <div class="sw"><div class="chip" style="background:#545760"></div><small>ink-faint</small><span class="mono">#545760</span></div>
+      <div class="sw"><div class="chip" style="background:#2f80ed"></div><small>info</small><span class="mono">#2f80ed</span></div>
+      <div class="sw"><div class="chip" style="background:#59a200"></div><small>success</small><span class="mono">#59a200</span></div>
+      <div class="sw"><div class="chip" style="background:#f2c94c"></div><small>warning (dark text)</small><span class="mono">#f2c94c</span></div>
+      <div class="sw"><div class="chip" style="background:#eb5757"></div><small>error</small><span class="mono">#eb5757</span></div>
+    </div>
+  </section>
+
+  <!-- TYPOGRAPHY -->
+  <section>
+    <h2>Typography — Inter, tight leading</h2>
+    <div class="card p" style="display:flex;flex-direction:column;gap:.6rem;">
+      <div style="font-size:1.5rem;line-height:1.2;font-weight:700;letter-spacing:-.01em;">3xl · Page title &amp; hero numbers <span class="faint mono" style="font-size:.7rem">1.5rem / 700</span></div>
+      <div style="font-size:1.25rem;line-height:1.2;font-weight:600;">2xl · Section head <span class="faint mono" style="font-size:.7rem">1.25rem</span></div>
+      <div style="font-size:1rem;line-height:1.2;font-weight:500;">lg · Card title <span class="faint mono" style="font-size:.7rem">1rem / 1.2</span></div>
+      <div style="font-size:.875rem;">md · Emphasized body <span class="faint mono" style="font-size:.7rem">0.875rem / 1.4</span></div>
+      <div style="font-size:.8125rem;">base · Body text — the default reading size at the 90% root. <span class="faint mono" style="font-size:.7rem">0.8125rem / 1.4</span></div>
+      <div style="font-size:.75rem;" class="muted">sm · Labels &amp; secondary <span class="faint mono">0.75rem</span></div>
+      <div style="font-size:.6875rem;text-transform:uppercase;letter-spacing:.06em;" class="faint">xs · Micro-label · uppercase · tracking-wider <span class="mono" style="text-transform:none">0.6875rem</span></div>
+    </div>
+  </section>
+
+  <!-- KPI CARDS -->
+  <section>
+    <h2>KPI cards — hover for the lift + accent bar</h2>
+    <div class="grid grid-4">
+      <div class="kpi" style="animation-delay:0ms"><div class="head"><div><div class="title">Database Size</div><div class="val">952 MB</div><div class="sub">167 indexes</div></div>
+        <div class="tile"><svg class="i" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/><path d="M3 12c0 1.7 4 3 9 3s9-1.3 9-3"/></svg></div></div><div class="bar"></div></div>
+      <div class="kpi" style="animation-delay:75ms"><div class="head"><div><div class="title">Total Rows</div><div class="val">760,171</div><div class="sub">across all tables</div></div>
+        <div class="tile"><svg class="i" viewBox="0 0 24 24"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg></div></div><div class="bar"></div></div>
+      <div class="kpi success" style="animation-delay:150ms"><div class="head"><div><div class="title">Live Tracks</div><div class="val">128,886</div><div class="sub">11,208 owners</div></div>
+        <div class="tile"><svg class="i" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div></div><div class="bar"></div></div>
+      <div class="kpi" style="animation-delay:225ms"><div class="head"><div><div class="title">Vector Embeddings</div><div class="val">8,883</div><div class="sub">6.9% of tracks</div></div>
+        <div class="tile"><svg class="i" viewBox="0 0 24 24"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z"/></svg></div></div><div class="bar"></div></div>
+    </div>
+  </section>
+
+  <!-- BUTTONS / BADGES / PILLS / SEG / INPUT -->
+  <section>
+    <h2>Controls — buttons, badges, pills, segmented, input</h2>
+    <div class="card p" style="display:flex;flex-direction:column;gap:1.25rem;">
+      <div class="row" style="align-items:center;"><button class="btn btn-primary">Primary action</button><button class="btn btn-ghost">Ghost</button><span class="note">one primary per view · hover lifts to brand-hover + glow</span></div>
+      <div class="row" style="align-items:center;">
+        <span class="badge success">Yes</span><span class="badge error">No</span>
+        <span class="badge info">Info</span><span class="badge warning">Warning</span><span class="badge neutral">Neutral</span>
+        <span class="note">badges are dark-on-color (WCAG AA)</span>
+      </div>
+      <div class="row" style="align-items:center;">
+        <span class="pill"><span class="dot" style="background:#3b5bdb"></span> Last active</span>
+        <span class="pill"><span class="dot" style="background:#59a200"></span> High-value (50+)</span>
+        <span class="pill"><span class="dot" style="background:#7e93f0"></span> Cumulative pool</span>
+        <span class="note">custom chart legend = pill chips</span>
+      </div>
+      <div class="row" style="align-items:center;">
+        <div class="seg"><button class="active">12M</button><button>6M</button><button>3M</button><button>1M</button></div>
+        <input class="input" placeholder="Search…" />
+        <span class="hint">
+          <svg class="i" style="width:.875rem;height:.875rem" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span class="pop">InfoHint — an eye icon revealing explanatory copy on hover, so it stays off the surface. Named-group CSS so it never fires on a parent card hover.</span>
+        </span>
+        <span class="note">hover the eye →</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- BARLIST + DONUT-ish + chart palette -->
+  <section>
+    <h2>Charts — bar list, legend, palette</h2>
+    <div class="grid grid-2">
+      <div class="card p">
+        <h3>Rows by table (BarList)</h3>
+        <div class="barlist">
+          <div class="b"><span class="f" style="width:100%"></span><span class="l">events</span><span class="v">187,886</span></div>
+          <div class="b"><span class="f" style="width:69%"></span><span class="l">assets</span><span class="v">130,398</span></div>
+          <div class="b"><span class="f" style="width:69%"></span><span class="l">tracks</span><span class="v">129,299</span></div>
+          <div class="b"><span class="f" style="width:37%"></span><span class="l">pack_tracks</span><span class="v">70,412</span></div>
+          <div class="b"><span class="f" style="width:16%"></span><span class="l">track_split_entries</span><span class="v">30,574</span></div>
+          <div class="b"><span class="f" style="width:13%"></span><span class="l">packs</span><span class="v">25,353</span></div>
+        </div>
+      </div>
+      <div class="card p">
+        <h3>Canonical chart palette</h3>
+        <div class="row">
+          <div class="sw"><div class="chip" style="background:#3b5bdb;width:3.5rem"></div><span class="mono">#3b5bdb</span></div>
+          <div class="sw"><div class="chip" style="background:#2f80ed;width:3.5rem"></div><span class="mono">#2f80ed</span></div>
+          <div class="sw"><div class="chip" style="background:#59a200;width:3.5rem"></div><span class="mono">#59a200</span></div>
+          <div class="sw"><div class="chip" style="background:#f2c94c;width:3.5rem"></div><span class="mono">#f2c94c</span></div>
+          <div class="sw"><div class="chip" style="background:#eb5757;width:3.5rem"></div><span class="mono">#eb5757</span></div>
+          <div class="sw"><div class="chip" style="background:#9b6bdb;width:3.5rem"></div><span class="mono">#9b6bdb</span></div>
+          <div class="sw"><div class="chip" style="background:#5570ec;width:3.5rem"></div><span class="mono">#5570ec</span></div>
+          <div class="sw"><div class="chip" style="background:#2f9e8f;width:3.5rem"></div><span class="mono">#2f9e8f</span></div>
+        </div>
+        <p class="note">ApexCharts via the <span class="mono">Chart</span> wrapper (ssr:false) · re-themes via <span class="mono">var(--color-*)</span> · BarList beats a donut when one category dominates.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- TABLE -->
+  <section>
+    <h2>Table — sortable header, hover rows, size bars</h2>
+    <div class="tbl-wrap">
+      <div class="tbl-head"><h3>Table Explorer</h3></div>
+      <table>
+        <thead><tr>
+          <th class="sort">Table</th><th>Domain</th>
+          <th class="sort">Rows <span class="arrow">↓</span></th><th class="sort">Size</th><th>Index</th>
+        </tr></thead>
+        <tbody>
+          <tr><td style="color:var(--ink)">tracks</td><td><span class="pill" style="border:0;background:transparent;padding:0"><span class="dot" style="background:#3b5bdb"></span> Catalog</span></td><td class="num">129,299</td><td><div class="sizebar"><div class="track"><div class="fill" style="width:100%"></div></div><span class="num">333 MB</span></div></td><td class="num faint">117 MB</td></tr>
+          <tr><td style="color:var(--ink)">track_audio_embeddings</td><td><span class="pill" style="border:0;background:transparent;padding:0"><span class="dot" style="background:#9b6bdb"></span> Intelligence</span></td><td class="num">8,883</td><td><div class="sizebar"><div class="track"><div class="fill" style="width:50%"></div></div><span class="num">165 MB</span></div></td><td class="num faint">91 MB</td></tr>
+          <tr><td style="color:var(--ink)">assets</td><td><span class="pill" style="border:0;background:transparent;padding:0"><span class="dot" style="background:#3b5bdb"></span> Catalog</span></td><td class="num">130,398</td><td><div class="sizebar"><div class="track"><div class="fill" style="width:44%"></div></div><span class="num">147 MB</span></div></td><td class="num faint">107 MB</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- NAV + STATES -->
+  <section>
+    <h2>Navigation &amp; states</h2>
+    <div class="row">
+      <nav class="nav">
+        <a class="active" href="#"><span class="dot" style="background:var(--brand)"></span> Dashboard</a>
+        <a href="#"><span class="dot" style="background:var(--ink-faint)"></span> Stripe</a>
+        <a href="#"><span class="dot" style="background:var(--ink-faint)"></span> HubSpot</a>
+        <a href="#"><span class="dot" style="background:var(--ink-faint)"></span> Database</a>
+      </nav>
+      <div class="card p" style="flex:1;min-width:260px;display:flex;flex-direction:column;gap:.75rem;">
+        <h3 style="margin:0">Skeleton (loading)</h3>
+        <div class="skel" style="width:60%"></div>
+        <div class="skel" style="width:90%"></div>
+        <div class="skel" style="width:40%"></div>
+        <p class="note">Entrance = staggered <span class="mono">fadeInUp</span> · hover = <span class="mono">-translate-y-0.5</span> + accent bar · nav = 2px left bar grows to 16px.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer style="margin-top:3rem;border-top:1px solid var(--line);padding-top:1rem;" class="note">
+    Generated from <span class="mono">design/swayzio.DESIGN.md</span>. Open this file in a browser to view; update it when adding a component. The React components live in <span class="mono">src/components/</span>.
+  </footer>
+</div>
+</body>
+</html>

@@ -13,13 +13,16 @@
  * Usage:  tsx scripts/build-theme.ts          # write the artifact
  *         tsx scripts/build-theme.ts --check   # exit 1 if the artifact is stale (CI)
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, copyFileSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { parse } from "yaml";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const SRC = resolve(ROOT, "design/swayzio.DESIGN.md");
 const OUT = resolve(ROOT, "src/app/theme.generated.css");
+const TOKENS_OUT = resolve(ROOT, "src/app/design-tokens.generated.json"); // consumed by the /design-system page
+const HTML_SRC = resolve(ROOT, "design/components.html");
+const PUBLIC_DIR = resolve(ROOT, "public/design");
 
 // Colors daisyUI owns → routed into @plugin "daisyui/theme"; everything else → @theme.
 const DAISY_COLORS = new Set([
@@ -57,12 +60,20 @@ function frontMatter(md: string): string {
   return m[1];
 }
 
-function generate(): string {
-  const tokens = parse(frontMatter(readFileSync(SRC, "utf8"))) as {
-    colors?: Record<string, string>;
-    typography?: Record<string, Typography>;
-    rounded?: Record<string, string>;
-  };
+interface Tokens {
+  name?: string;
+  description?: string;
+  colors?: Record<string, string>;
+  typography?: Record<string, Typography>;
+  rounded?: Record<string, string>;
+  components?: Record<string, Record<string, string>>;
+}
+
+function parseTokens(): Tokens {
+  return parse(frontMatter(readFileSync(SRC, "utf8"))) as Tokens;
+}
+
+function generate(tokens: Tokens): string {
   const colors = tokens.colors ?? {};
   const typography = tokens.typography ?? {};
   const rounded = tokens.rounded ?? {};
@@ -107,7 +118,9 @@ function generate(): string {
   ].join("\n");
 }
 
-const css = generate();
+const tokens = parseTokens();
+const css = generate(tokens);
+const tokensJson = JSON.stringify(tokens, null, 2) + "\n";
 
 if (process.argv.includes("--check")) {
   let current = "";
@@ -119,5 +132,10 @@ if (process.argv.includes("--check")) {
   console.log("✓ theme.generated.css is up to date.");
 } else {
   writeFileSync(OUT, css);
-  console.log(`✓ wrote ${OUT.replace(ROOT + "/", "")}`);
+  writeFileSync(TOKENS_OUT, tokensJson); // page reads this so the styleguide reflects the source
+  // Publish the source + gallery as static, downloadable assets for the in-app Design System page.
+  mkdirSync(PUBLIC_DIR, { recursive: true });
+  copyFileSync(SRC, resolve(PUBLIC_DIR, "swayzio.DESIGN.md"));
+  copyFileSync(HTML_SRC, resolve(PUBLIC_DIR, "components.html"));
+  console.log(`✓ wrote ${OUT.replace(ROOT + "/", "")}, design-tokens.generated.json, and public/design/*`);
 }

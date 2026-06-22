@@ -6,6 +6,7 @@ import {
   Mail,
   Landmark,
   Database,
+  Palette,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -41,6 +42,7 @@ export const navSections: NavSection[] = [
       { title: "Mercury", href: "/mercury", icon: Landmark },
       { title: "SEO", href: "/seo", icon: BarChart3 },
       { title: "GitHub", href: "/analytics/github", icon: SiGithub },
+      { title: "Design System", href: "/design-system", icon: Palette },
     ],
   },
   {
