@@ -12,5 +12,5 @@ const cat = await refresh("hubspot:catalog", () => getCatalogScan(40), 60 * MIN)
 await refresh("hubspot:power-users", () => getPowerUsers(50), 30 * MIN);
 console.log("done. sample companies (with lastActivity):");
 for (const co of cat.companies.slice(0, 6))
-  console.log(`  ${co.domain.padEnd(26)} tracks=${String(co.tracks).padStart(5)} users=${co.users} subs=${co.subscribed} last=${(co.lastActivity || "").slice(0, 10) || "—"}`);
+  console.log(`  ${co.domain.padEnd(24)} email=${(co.email || "—").padEnd(30)} tracks=${String(co.tracks).padStart(5)} subs=${co.subscribed} last=${(co.lastActivity || "").slice(0, 10) || "—"}`);
 process.exit(0);
