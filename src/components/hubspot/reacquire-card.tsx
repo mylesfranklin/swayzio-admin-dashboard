@@ -91,7 +91,7 @@ export function ReacquireCard({ data }: { data: ReacquireCandidates }) {
           <Target className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
           <div>
             <div className="flex items-center gap-1.5">
-              <h3 className="text-sm font-medium text-ink-muted">Reacquire Candidates</h3>
+              <h3 className="text-sm font-medium text-ink-muted">Reactivation Candidates</h3>
               <InfoHint text="Artists who built a catalog but never subscribed — your warmest win-back pool. Bars are how many were last active per month; the green line is the high-value subset (50+ tracks) and the dashed line the cumulative pool." />
             </div>
             <p className="mt-1 text-3xl font-bold tracking-tight text-ink">{formatNumber(data.totalTargets)}</p>
@@ -114,8 +114,10 @@ export function ReacquireCard({ data }: { data: ReacquireCandidates }) {
         </div>
       </div>
 
-      {/* custom legend pills */}
-      <div className="mb-2 flex flex-wrap gap-2">
+      <Chart options={options} series={series} type="line" height={320} />
+
+      {/* custom legend pills — below the chart, flush-left with the y-axis start */}
+      <div className="mt-3 flex flex-wrap gap-2">
         {SERIES.map((s) => (
           <span key={s.label} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-base-300/40 px-2.5 py-1 text-xs text-ink-muted">
             <span className="size-2 rounded-full" style={{ backgroundColor: s.color }} />
@@ -123,8 +125,6 @@ export function ReacquireCard({ data }: { data: ReacquireCandidates }) {
           </span>
         ))}
       </div>
-
-      <Chart options={options} series={series} type="line" height={320} />
     </Card>
   );
 }
