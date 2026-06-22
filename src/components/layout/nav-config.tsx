@@ -5,6 +5,7 @@ import {
   BarChart3,
   Mail,
   Landmark,
+  Database,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -36,6 +37,7 @@ export const navSections: NavSection[] = [
       { title: "Dashboard", href: "/", icon: LayoutDashboard },
       { title: "Stripe", href: "/analytics/stripe", icon: SiStripe },
       { title: "HubSpot", href: "/analytics/hubspot", icon: SiHubspot },
+      { title: "Database", href: "/database", icon: Database },
       { title: "Mercury", href: "/mercury", icon: Landmark },
       { title: "SEO", href: "/seo", icon: BarChart3 },
       { title: "GitHub", href: "/analytics/github", icon: SiGithub },

@@ -17,6 +17,7 @@ import {
   getEnumDistribution,
 } from "@/server/integrations/hubspot";
 import { getTracksUploadedByMonth } from "@/server/integrations/app-tracks";
+import { getCatalogIngestion } from "@/server/integrations/app-db-stats";
 
 // Warms the integration caches so user requests always hit warm data (ARCHITECTURE §9).
 // Public route (excluded from Clerk in proxy.ts), secured by CRON_SECRET instead.
@@ -48,6 +49,7 @@ export async function GET(req: Request) {
     ["hubspot:roles", () => getEnumDistribution("role"), 60 * MIN],
     ["hubspot:company-types", () => getEnumDistribution("company_type"), 60 * MIN],
     ["app:tracks-uploaded", getTracksUploadedByMonth, 60 * MIN],
+    ["appdb:ingestion", getCatalogIngestion, 60 * MIN],
   ];
 
   const results = await Promise.allSettled(jobs.map(([key, fn, ttl]) => refresh(key, fn, ttl)));
