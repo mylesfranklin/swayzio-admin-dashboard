@@ -1,0 +1,66 @@
+/* AUTO-GENERATED from design/swayzio.DESIGN.md by scripts/build-theme.ts.
+   Do not edit by hand — run `npm run design:build`. */
+
+@plugin "daisyui/theme" {
+  name: "swayzio";
+  default: true;
+  prefersdark: true;
+  color-scheme: dark;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+
+  --color-base-100: #101012;
+  --color-base-200: #17181a;
+  --color-base-300: #1e2024;
+  --color-base-content: #ffffff;
+  --color-primary: #3b5bdb;
+  --color-primary-content: #ffffff;
+  --color-accent: #3b5bdb;
+  --color-accent-content: #ffffff;
+  --color-secondary: #1e2024;
+  --color-secondary-content: #ffffff;
+  --color-neutral: #17181a;
+  --color-neutral-content: #ffffff;
+  --color-info: #2f80ed;
+  --color-info-content: #ffffff;
+  --color-success: #59a200;
+  --color-success-content: #ffffff;
+  --color-warning: #f2c94c;
+  --color-warning-content: #101012;
+  --color-error: #eb5757;
+  --color-error-content: #ffffff;
+
+  --radius-selector: 0.25rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.375rem;
+}
+
+@theme {
+  --color-sidebar: #090909;
+  --color-line: #23252a;
+  --color-ink: #ffffff;
+  --color-ink-muted: #6b6f76;
+  --color-ink-faint: #545760;
+  --color-brand: #3b5bdb;
+  --color-brand-hover: #5570ec;
+
+  --text-xs: 0.6875rem;
+  --text-xs--line-height: 1.4;
+  --text-sm: 0.75rem;
+  --text-sm--line-height: 1.4;
+  --text-base: 0.8125rem;
+  --text-base--line-height: 1.4;
+  --text-md: 0.875rem;
+  --text-md--line-height: 1.4;
+  --text-lg: 1rem;
+  --text-lg--line-height: 1.2;
+  --text-xl: 1.125rem;
+  --text-xl--line-height: 1.2;
+  --text-2xl: 1.25rem;
+  --text-2xl--line-height: 1.2;
+  --text-3xl: 1.5rem;
+  --text-3xl--line-height: 1.2;
+}
