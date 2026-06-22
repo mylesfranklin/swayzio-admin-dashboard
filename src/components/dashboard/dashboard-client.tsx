@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { Download, RefreshCw, ChevronDown, Wallet, CreditCard, AlertTriangle, Users, TrendingDown, ArrowRight } from "lucide-react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Download, RefreshCw, ChevronDown, Wallet, CreditCard, Users, DollarSign, TrendingUp } from "lucide-react";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { RevenueAreaChart } from "@/components/charts/revenue-area-chart";
-import { StatusDonut } from "@/components/charts/status-donut";
 import { NewsletterAnalytics } from "@/components/dashboard/newsletter-analytics";
 import { cn, formatCurrency, formatNumber } from "@/lib/utils";
 import { dashboardFixture } from "@/lib/fixtures/dashboard";
@@ -15,6 +14,9 @@ const TABS = ["Overview", "Subscriptions", "Revenue", "Integrations"] as const;
 
 export function DashboardClient({ stripe, error }: { stripe: StripeDashboard | null; error: string | null }) {
   const [tab, setTab] = useState<(typeof TABS)[number]>("Overview");
+  const [period, setPeriod] = useState("30");
+  const router = useRouter();
+  const [isSyncing, startSync] = useTransition();
 
   return (
     <div className="space-y-6">
@@ -22,22 +24,33 @@ export function DashboardClient({ stripe, error }: { stripe: StripeDashboard | n
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-ink">Dashboard</h1>
-          <p className="mt-1 text-sm text-ink-muted">
-            Monitor your key metrics and customer data
-            {stripe?.updatedAt && (
-              <span className="text-ink-faint">
-                {" "}· Stripe updated {new Date(stripe.updatedAt).toLocaleString()}{stripe.stale ? " (refreshing…)" : ""}
-              </span>
-            )}
-          </p>
+          <p className="mt-1 text-sm text-ink-muted">Monitor your key metrics and customer data</p>
         </div>
         <div className="mt-4 flex items-center gap-2 md:mt-0">
-          <button className="flex h-8 items-center gap-1 rounded border border-line px-3 text-sm text-ink-muted transition-colors hover:bg-base-300 hover:text-ink">
+          <div className="relative">
+            <select
+              value={period}
+              onChange={(e) => setPeriod(e.target.value)}
+              className="h-8 appearance-none rounded-md border border-line bg-base-200 pl-3 pr-8 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-brand"
+            >
+              <option value="7">Last 7 days</option>
+              <option value="30">Last 30 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="365">Year to date</option>
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
+          </div>
+          <button className="flex h-8 items-center gap-1.5 rounded-md border border-line px-3 text-sm text-ink-muted transition-colors hover:bg-base-300 hover:text-ink">
             <Download className="h-4 w-4" /> Export
           </button>
-          <Link href="/analytics/stripe" className="flex h-8 items-center gap-1 rounded bg-primary px-3 text-sm font-medium text-primary-content transition-colors hover:bg-brand-hover">
-            Stripe detail <ArrowRight className="h-4 w-4" />
-          </Link>
+          <button
+            onClick={() => startSync(() => router.refresh())}
+            disabled={isSyncing}
+            className="flex h-8 items-center gap-1.5 rounded-md bg-primary px-3 text-sm font-medium text-primary-content transition-colors hover:bg-brand-hover disabled:opacity-60"
+          >
+            <RefreshCw className={cn("h-4 w-4", isSyncing && "animate-spin")} />
+            {isSyncing ? "Syncing…" : "Sync"}
+          </button>
         </div>
       </div>
 
@@ -47,36 +60,13 @@ export function DashboardClient({ stripe, error }: { stripe: StripeDashboard | n
         </div>
       )}
 
-      {/* KPI grid — real Stripe data, honest framing */}
+      {/* KPI grid — clean, generalized Stripe overview */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard title="Collected (last mo)" value={stripe ? formatCurrency(stripe.collectedLastFullMonth) : "—"} icon={Wallet} accent="success" animationDelay={0} />
-        <KpiCard title="Paying Subscriptions" value={stripe ? formatNumber(stripe.payingSubscriptions) : "—"} icon={CreditCard} accent="brand" animationDelay={75} />
-        <KpiCard title="Past-due Subs" value={stripe ? formatNumber(stripe.pastDueSubscriptions) : "—"} icon={AlertTriangle} accent="error" animationDelay={150} />
-        <KpiCard title="Booked MRR (list)" value={stripe ? formatCurrency(stripe.mrr) : "—"} icon={Users} accent="brand" animationDelay={225} />
+        <KpiCard title="Monthly Revenue (MRR)" value={stripe ? formatCurrency(stripe.mrr) : "—"} icon={Wallet} accent="brand" animationDelay={0} />
+        <KpiCard title="Active Subscriptions" value={stripe ? formatNumber(stripe.activeSubscriptions) : "—"} icon={CreditCard} accent="brand" animationDelay={75} />
+        <KpiCard title="Stripe Customers" value={stripe ? formatNumber(stripe.customers) : "—"} icon={Users} accent="brand" animationDelay={150} />
+        <KpiCard title="Total Revenue" value={stripe ? formatCurrency(stripe.revenue12mo) : "—"} icon={DollarSign} accent="success" animationDelay={225} />
       </div>
-
-      {/* The billing-reality callout — the truth the old dashboard hid */}
-      {stripe && (
-        <div className="rounded-box border border-warning/30 bg-warning/5 p-5">
-          <div className="flex items-start gap-3">
-            <TrendingDown className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-ink">
-                Only {stripe.payingRatePct}% of your active subscriptions are actually billing.
-              </p>
-              <p className="mt-1 text-sm text-ink-muted">
-                <span className="font-semibold text-ink">{formatNumber(stripe.payingSubscriptions)}</span> of {formatNumber(stripe.activeSubscriptions)} “active” subs have a paid invoice;
-                {" "}<span className="font-semibold text-error">{formatNumber(stripe.voidInvoiceSubscriptions)} have voided invoices</span> and {formatNumber(stripe.pastDueSubscriptions)} are past-due.
-                Booked list-price run-rate is <span className="font-semibold text-ink">{formatCurrency(stripe.mrr)}/mo</span>, but last full month you actually collected{" "}
-                <span className="font-semibold text-ink">{formatCurrency(stripe.collectedLastFullMonth)}</span> ({stripe.collectionRatePct}% of booked).
-              </p>
-              <p className="mt-1 text-xs text-ink-faint">
-                Stripe’s Billing overview reports its own MRR figure that excludes much of the broken base — the gap is the void/past-due invoices, not coupons (there are none).
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Tabs */}
       <div>
@@ -88,29 +78,31 @@ export function DashboardClient({ stripe, error }: { stripe: StripeDashboard | n
           ))}
         </div>
 
-        {tab === "Overview" ? (
+        {tab === "Overview" && stripe ? (
           <div className="mt-4 space-y-6">
-            {stripe && (
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                {/* Real collected-revenue trend */}
-                <div className="lg:col-span-2 rounded-box border border-line bg-base-200 p-5">
-                  <div className="mb-4 flex items-start justify-between">
-                    <div>
-                      <h3 className="text-sm font-medium text-ink-muted">Collected Revenue</h3>
-                      <p className="mt-1 text-3xl font-bold tracking-tight text-ink">{formatCurrency(stripe.revenue12mo)}</p>
-                      <p className="text-xs text-ink-faint">trailing 12 months · real cash collected</p>
-                    </div>
-                  </div>
-                  <RevenueAreaChart data={stripe.revenueByMonth} />
+            {/* Revenue hero */}
+            <div className="rounded-box border border-line bg-base-200">
+              <div className="flex items-center justify-between border-b border-line p-5">
+                <div>
+                  <h3 className="text-sm font-medium text-ink-muted">Revenue &amp; Growth</h3>
+                  <p className="mt-1 text-3xl font-bold tracking-tight text-ink">{formatCurrency(stripe.revenue12mo)}</p>
+                  <p className="text-xs text-ink-faint">trailing 12 months</p>
                 </div>
-                {/* Subscription health */}
-                <div className="rounded-box border border-line bg-base-200 p-5">
-                  <h3 className="mb-2 text-sm font-medium text-ink-muted">Subscription Health</h3>
-                  <StatusDonut byStatus={stripe.byStatus} />
+                <div className="hidden items-center gap-2 text-xs text-ink-muted sm:flex">
+                  <span className="h-2 w-2 rounded-full bg-brand" /> Revenue
                 </div>
               </div>
-            )}
+              <div className="p-5">
+                <RevenueAreaChart data={stripe.revenueByMonth} label="Revenue" />
+                <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <SummaryTile icon={<DollarSign className="h-3.5 w-3.5 text-ink-faint" />} label="Total Revenue" value={formatCurrency(stripe.revenue12mo)} />
+                  <SummaryTile icon={<span className="h-1.5 w-1.5 rounded-full bg-brand" />} label="MRR" value={formatCurrency(stripe.mrr)} />
+                  <SummaryTile icon={<TrendingUp className="h-3.5 w-3.5 text-success" />} label="Active Subscriptions" value={formatNumber(stripe.activeSubscriptions)} />
+                </div>
+              </div>
+            </div>
 
+            {/* Newsletter (fixture until Kit is wired) */}
             <div>
               <div className="mb-2 flex items-center gap-2">
                 <h2 className="text-lg font-semibold text-ink">Newsletter Analytics</h2>
@@ -119,10 +111,22 @@ export function DashboardClient({ stripe, error }: { stripe: StripeDashboard | n
               <NewsletterAnalytics data={dashboardFixture.newsletter} />
             </div>
           </div>
-        ) : (
-          <div className="mt-4 p-8 text-center text-sm text-ink-muted">{tab} view coming soon — see the Stripe detail page for full breakdowns.</div>
-        )}
+        ) : tab !== "Overview" ? (
+          <div className="mt-4 p-8 text-center text-sm text-ink-muted">{tab} view coming soon — see the Stripe page for full breakdowns.</div>
+        ) : null}
       </div>
+    </div>
+  );
+}
+
+function SummaryTile({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-line bg-base-300/40 p-3.5">
+      <div className="mb-1 flex items-center gap-1.5">
+        {icon}
+        <span className="text-[10px] font-medium uppercase tracking-wide text-ink-faint">{label}</span>
+      </div>
+      <p className="text-lg font-semibold text-ink">{value}</p>
     </div>
   );
 }

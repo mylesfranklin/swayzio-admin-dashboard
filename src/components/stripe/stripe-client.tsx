@@ -1,10 +1,9 @@
 "use client";
 
-import { Wallet, CreditCard, AlertTriangle, Users, TrendingDown, Repeat } from "lucide-react";
+import { Wallet, CreditCard, Users, DollarSign } from "lucide-react";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { RevenueAreaChart } from "@/components/charts/revenue-area-chart";
 import { StatusDonut } from "@/components/charts/status-donut";
-import { CollectionRadial } from "@/components/charts/collection-radial";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import type { StripeDashboard } from "@/server/integrations/stripe-dashboard";
 
@@ -22,60 +21,32 @@ export function StripeClient({ stripe, error }: { stripe: StripeDashboard | null
       <div>
         <h1 className="text-2xl font-bold text-ink">Stripe</h1>
         <p className="mt-1 text-sm text-ink-muted">
-          Revenue, subscriptions & collection health
+          Revenue, subscriptions &amp; customers
           {stripe.updatedAt && <span className="text-ink-faint"> · updated {new Date(stripe.updatedAt).toLocaleString()}{stripe.stale ? " (refreshing…)" : ""}</span>}
         </p>
       </div>
 
-      {/* KPIs — honest framing */}
+      {/* KPIs */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard title="Collected (last mo)" value={formatCurrency(stripe.collectedLastFullMonth)} icon={Wallet} accent="success" />
-        <KpiCard title="Paying Subscriptions" value={formatNumber(stripe.payingSubscriptions)} icon={CreditCard} accent="brand" animationDelay={75} />
-        <KpiCard title="Past-due Subs" value={formatNumber(stripe.pastDueSubscriptions)} icon={AlertTriangle} accent="error" animationDelay={150} />
-        <KpiCard title="Booked MRR (list)" value={formatCurrency(stripe.mrr)} icon={TrendingDown} accent="brand" animationDelay={225} />
+        <KpiCard title="Monthly Revenue (MRR)" value={formatCurrency(stripe.mrr)} icon={Wallet} accent="brand" />
+        <KpiCard title="Active Subscriptions" value={formatNumber(stripe.activeSubscriptions)} icon={CreditCard} accent="brand" animationDelay={75} />
+        <KpiCard title="Stripe Customers" value={formatNumber(stripe.customers)} icon={Users} accent="brand" animationDelay={150} />
+        <KpiCard title="Total Revenue" value={formatCurrency(stripe.revenue12mo)} icon={DollarSign} accent="success" animationDelay={225} />
       </div>
 
-      {/* Collection reality: radial + revenue */}
+      {/* Revenue + subscription mix */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="rounded-box border border-line bg-base-200 p-5">
-          <h3 className="text-sm font-medium text-ink-muted">Collection Rate</h3>
-          <p className="text-xs text-ink-faint">last full month ÷ MRR run-rate</p>
-          <CollectionRadial pct={stripe.collectionRatePct} />
-          <div className="mt-2 grid grid-cols-2 gap-2 text-center">
-            <div className="rounded-lg border border-line bg-base-300/50 p-2">
-              <p className="text-[10px] uppercase tracking-wide text-ink-faint">Run-rate</p>
-              <p className="text-sm font-semibold text-ink">{formatCurrency(stripe.mrr)}/mo</p>
-            </div>
-            <div className="rounded-lg border border-line bg-base-300/50 p-2">
-              <p className="text-[10px] uppercase tracking-wide text-ink-faint">Collected</p>
-              <p className="text-sm font-semibold text-ink">{formatCurrency(stripe.collectedLastFullMonth)}</p>
-            </div>
-          </div>
-        </div>
-
         <div className="lg:col-span-2 rounded-box border border-line bg-base-200 p-5">
           <div className="mb-4">
-            <h3 className="text-sm font-medium text-ink-muted">Collected Revenue</h3>
+            <h3 className="text-sm font-medium text-ink-muted">Revenue</h3>
             <p className="mt-1 text-3xl font-bold tracking-tight text-ink">{formatCurrency(stripe.revenue12mo)}</p>
-            <p className="text-xs text-ink-faint">trailing 12 months · real cash collected</p>
+            <p className="text-xs text-ink-faint">trailing 12 months</p>
           </div>
-          <RevenueAreaChart data={stripe.revenueByMonth} />
+          <RevenueAreaChart data={stripe.revenueByMonth} label="Revenue" />
         </div>
-      </div>
-
-      {/* Status + at-risk */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="rounded-box border border-line bg-base-200 p-5">
-          <h3 className="mb-2 text-sm font-medium text-ink-muted">Subscriptions by Status</h3>
+          <h3 className="mb-2 text-sm font-medium text-ink-muted">Subscriptions</h3>
           <StatusDonut byStatus={stripe.byStatus} />
-        </div>
-        <div className="lg:col-span-2 grid grid-cols-2 gap-4 sm:grid-cols-3">
-          <Stat label="Paying rate" value={`${stripe.payingRatePct}%`} sub={`${formatNumber(stripe.payingSubscriptions)} of ${formatNumber(stripe.activeSubscriptions)} active`} />
-          <Stat label="Void invoices" value={formatNumber(stripe.voidInvoiceSubscriptions)} sub="active, broken billing" tone="error" />
-          <Stat label="At-risk MRR" value={`${formatCurrency(stripe.pastDueMrrAtRisk)}/mo`} sub={`${formatNumber(stripe.pastDueSubscriptions)} past-due`} tone="error" />
-          <Stat label="Booked run-rate" value={`${formatCurrency(stripe.mrr)}/mo`} sub={`${formatCurrency(stripe.mrrAnnualizedRunRate)}/yr list price`} />
-          <Stat label="12-mo collected" value={formatCurrency(stripe.revenue12mo)} sub="real cash" />
-          <Stat label="Canceled (30d)" value={formatNumber(stripe.canceledLast30Days)} sub={`${stripe.churnRatePct}% churn`} />
         </div>
       </div>
 
@@ -107,19 +78,6 @@ export function StripeClient({ stripe, error }: { stripe: StripeDashboard | null
           </table>
         </div>
       </div>
-    </div>
-  );
-}
-
-function Stat({ label, value, sub, tone, icon }: { label: string; value: string; sub: string; tone?: "error"; icon?: boolean }) {
-  return (
-    <div className="rounded-box border border-line bg-base-200 p-4">
-      <div className="flex items-center gap-1.5">
-        {icon && <Repeat className="h-3 w-3 text-ink-faint" />}
-        <p className="text-[11px] font-medium uppercase tracking-wide text-ink-faint">{label}</p>
-      </div>
-      <p className={`mt-1 text-xl font-bold ${tone === "error" ? "text-error" : "text-ink"}`}>{value}</p>
-      <p className="text-[11px] text-ink-faint">{sub}</p>
     </div>
   );
 }
