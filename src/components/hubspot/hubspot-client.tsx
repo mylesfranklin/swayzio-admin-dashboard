@@ -1,6 +1,6 @@
 "use client";
 
-import { Users, UserCheck, Handshake, Music, Building2, ExternalLink, CreditCard } from "lucide-react";
+import { Users, UserCheck, Music, Building2, ExternalLink, CreditCard } from "lucide-react";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -45,7 +45,7 @@ export function HubspotClient({
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard title="Total Contacts" value={formatNumber(data.totalContacts)} subtitle={`${formatNumber(data.artists)} artists`} icon={Users} accent="brand" />
         <KpiCard
           title="Paying Subscribers"
@@ -63,10 +63,9 @@ export function HubspotClient({
           icon={UserCheck}
           accent="brand"
           animationDelay={150}
-          hint="HubSpot subscribed contacts who actually logged in within 30 days (value) / 60 days (subtitle), from last_login. A real-engagement signal — most flagged subscribers haven't logged in recently."
+          hint="HubSpot subscribed contacts who logged in within 30 days (value) / 60 days (subtitle), from last_login. Caveat: HubSpot's last_login is synced from the app and currently lags (newest value ~Jun 3), so this undercounts — the app DB is the true activity source."
         />
-        <KpiCard title="Signed to Deal" value={formatNumber(data.signedToDeal)} icon={Handshake} accent="brand" animationDelay={225} />
-        <KpiCard title="Total Tracks" value={formatNumber(data.totalTracks)} subtitle={`${formatNumber(data.taggedTracksTotal)} tagged · ${formatNumber(data.untaggedTracksTotal)} untagged`} icon={Music} accent="brand" animationDelay={300} />
+        <KpiCard title="Total Tracks" value={formatNumber(data.totalTracks)} subtitle={`${formatNumber(data.taggedTracksTotal)} tagged · ${formatNumber(data.untaggedTracksTotal)} untagged`} icon={Music} accent="brand" animationDelay={225} />
       </div>
 
       {/* Reacquire candidates — catalog-builders who aren't subscribed, by recency */}
