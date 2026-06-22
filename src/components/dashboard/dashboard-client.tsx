@@ -7,6 +7,9 @@ import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Greeting } from "@/components/dashboard/greeting";
 import { RevenueAreaChart } from "@/components/charts/revenue-area-chart";
 import { NewsletterAnalytics } from "@/components/dashboard/newsletter-analytics";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { cn, formatCurrency, formatNumber } from "@/lib/utils";
 import { dashboardFixture } from "@/lib/fixtures/dashboard";
 import type { StripeDashboard } from "@/server/integrations/stripe-dashboard";
@@ -57,17 +60,13 @@ export function DashboardClient({ stripe, error }: { stripe: StripeDashboard | n
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button className="flex h-9 items-center gap-1.5 rounded-md border border-line px-3 text-sm text-ink-muted transition-colors hover:bg-base-300 hover:text-ink">
+          <Button variant="outline">
             <Download className="h-4 w-4" /> Export
-          </button>
-          <button
-            onClick={() => startSync(() => router.refresh())}
-            disabled={isSyncing}
-            className="flex h-9 items-center gap-1.5 rounded-md bg-primary px-3.5 text-sm font-medium text-primary-content shadow-glow-brand transition-colors hover:bg-brand-hover disabled:opacity-60"
-          >
+          </Button>
+          <Button variant="primary" onClick={() => startSync(() => router.refresh())} disabled={isSyncing}>
             <RefreshCw className={cn("h-4 w-4", isSyncing && "animate-spin")} />
             {isSyncing ? "Syncing…" : "Sync"}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -97,7 +96,7 @@ export function DashboardClient({ stripe, error }: { stripe: StripeDashboard | n
       {tab === "Overview" ? (
         <div className="space-y-6">
           {/* Revenue hero */}
-          <div className="rounded-box border border-line bg-base-200">
+          <Card>
             <div className="flex items-start justify-between gap-4 border-b border-line p-5">
               <div>
                 <h3 className="text-sm font-medium text-ink-muted">Revenue &amp; Growth</h3>
@@ -133,13 +132,13 @@ export function DashboardClient({ stripe, error }: { stripe: StripeDashboard | n
                 <SummaryTile icon={<TrendingUp className="h-3.5 w-3.5 text-success" />} label="Active Subscriptions" value={stripe ? formatNumber(stripe.activeSubscriptions) : "—"} loading={loading} />
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Newsletter (fixture until Kit is wired) */}
           <div>
             <div className="mb-2 flex items-center gap-2">
               <h2 className="text-lg font-semibold text-ink">Newsletter Analytics</h2>
-              <span className="rounded bg-base-300 px-1.5 py-0.5 text-[0.625rem] text-ink-faint">sample data — Kit not yet wired</span>
+              <Badge>sample data — Kit not yet wired</Badge>
             </div>
             <NewsletterAnalytics data={dashboardFixture.newsletter} />
           </div>

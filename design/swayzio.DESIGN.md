@@ -31,7 +31,7 @@ colors:
   ink-muted: "#6b6f76"
   ink-faint: "#545760"
   brand: "#3b5bdb"
-  brand-hover: "#5570ec"
+  brand-hover: "#3450cf"     # deepen-on-hover — keeps white text at WCAG AA
 typography:
   # token names match Tailwind's text-* scale → export lands drop-in (text-xs … text-3xl)
   xs:   { fontFamily: Inter, fontSize: 0.6875rem, lineHeight: 1.4 }
@@ -74,16 +74,24 @@ components:
     rounded: "{rounded.field}"
   badge-success:
     backgroundColor: "{colors.success}"
-    textColor: "{colors.success-content}"
+    textColor: "{colors.base-100}"      # dark text on mid-green for AA
+  badge-warning:
+    backgroundColor: "{colors.warning}"
+    textColor: "{colors.warning-content}"
   badge-error:
     backgroundColor: "{colors.error}"
-    textColor: "{colors.error-content}"
+    textColor: "{colors.base-100}"      # dark text on coral-red for AA
+  badge-info:
+    backgroundColor: "{colors.info}"
+    textColor: "{colors.base-100}"      # dark text on bright blue for AA (badges are uniformly dark-on-color)
   table-row-hover:
     backgroundColor: "{colors.base-300}"
     textColor: "{colors.base-content}"
+  nav-item:
+    textColor: "{colors.ink-muted}"
   nav-item-active:
     backgroundColor: "{colors.base-300}"
-    textColor: "{colors.brand}"
+    textColor: "{colors.base-content}"
 ---
 
 ## Overview

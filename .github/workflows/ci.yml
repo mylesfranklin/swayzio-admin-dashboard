@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # Design system gates
+      - name: Lint DESIGN.md (fails on errors; warnings allowed)
+        run: npm run design:lint
+      - name: Verify generated theme is up to date
+        run: npm run design:check
+
+      # Type safety
+      - name: Typecheck
+        run: npm run check
+
+      # NOTE: `next build` is intentionally omitted here — it needs runtime env
+      # (DATABASE_URL, STRIPE_SECRET_KEY, Clerk keys) and proxy.ts fails closed in
+      # production without them. Add a build job with repository secrets when ready.
