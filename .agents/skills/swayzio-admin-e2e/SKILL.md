@@ -33,7 +33,7 @@ Source it, never print it: `set -a; source .e2e/env; set +a`
 
 | Asset | Value / location |
 | --- | --- |
-| Test email + inbox | `swayzio-qa@agentmail.to` (`SWAYZIO_E2E_INBOX_ID`, AgentMail) |
+| Test email + inbox | `swayzio-admin-qa@agentmail.to` (`SWAYZIO_E2E_INBOX_ID`, AgentMail) |
 | Clerk QA user (prod) | `SWAYZIO_E2E_CLERK_USER_ID`, instance `SWAYZIO_E2E_PROD_INSTANCE_ID`, `public_metadata.role = "founder"` |
 | Browser session | Browser Use cloud **persistent profile** `SWAYZIO_E2E_BROWSER_PROFILE_ID` |
 | App | `SWAYZIO_E2E_APP_URL` = https://admin.swayzio.com |
@@ -110,10 +110,10 @@ browser-use eval "window.__g"   # expect 401/403/404, never 200 with data
   reads are safe against production.
 
 ## Provisioning (once `.e2e/env` is filled — see env.example)
-1. **AgentMail**: create the inbox `swayzio-qa@agentmail.to` (`AGENTMAIL_API_KEY`).
+1. **AgentMail**: create the inbox `swayzio-admin-qa@agentmail.to` (`AGENTMAIL_API_KEY`).
 2. **Browser Use**: `browser-use cloud login` → `browser-use cloud connect` (creates the
    persistent profile → record `SWAYZIO_E2E_BROWSER_PROFILE_ID`).
-3. **Clerk QA user**: create on the prod instance with email `swayzio-qa@agentmail.to`,
+3. **Clerk QA user**: create on the prod instance with email `swayzio-admin-qa@agentmail.to`,
    set `public_metadata.role = "founder"` (via `clerk` CLI — needs `clerk auth login` on
    the host — or the Clerk Backend API with `sk_live`). Enable **Email code** sign-in on
    the instance.

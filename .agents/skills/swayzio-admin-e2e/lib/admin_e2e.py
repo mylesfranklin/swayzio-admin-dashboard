@@ -58,7 +58,7 @@ def _agentmail(args: list[str]) -> dict:
 
 
 def _inbox_id() -> str:
-    return load_env().get("SWAYZIO_E2E_INBOX_ID", "swayzio-qa@agentmail.to")
+    return load_env().get("SWAYZIO_E2E_INBOX_ID", "swayzio-admin-qa@agentmail.to")
 
 
 def inbox_list(limit: int = 10) -> None:
