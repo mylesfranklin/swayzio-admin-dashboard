@@ -10,6 +10,7 @@ The visual identity lives in **`swayzio.DESIGN.md`** ([DESIGN.md format](https:/
 
 ## Files
 - `swayzio.DESIGN.md` — source of truth (tokens + prose).
+- `components.html` — standalone visual gallery of the whole component system (colors, type, KPIs, buttons, badges, pills, tables, charts, nav, states). **Open it in a browser** (`open design/components.html`); update it when adding a component.
 - `spec.md` — the DESIGN.md format spec (vendored; the v0.3.0 CLI `spec` command is broken).
 - `../scripts/build-theme.ts` — the generator (parses front matter, emits the daisyUI theme block + `@theme` block). See `../docs/DESIGN-SYSTEM.md` for the full pipeline + rationale.
 
