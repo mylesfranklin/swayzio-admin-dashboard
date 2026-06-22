@@ -19,6 +19,8 @@ export interface HubspotDashboard {
   signedToDeal: number;
   hasPro: number;
   taggedTracksTotal: number;
+  untaggedTracksTotal: number;
+  totalTracks: number;
   artistsWithTracks: number;
   proDistribution: Array<{ label: string; value: number }>;
   growthByMonth: Array<{ month: string; contacts: number }>;
@@ -52,6 +54,8 @@ export async function getHubspotDashboard(): Promise<HubspotDashboard> {
     signedToDeal: c.signedToDeal,
     hasPro: c.hasPro,
     taggedTracksTotal: catalog.data.taggedTracksTotal,
+    untaggedTracksTotal: catalog.data.untaggedTracksTotal,
+    totalTracks: catalog.data.taggedTracksTotal + catalog.data.untaggedTracksTotal,
     artistsWithTracks: catalog.data.artistsWithTracks,
     proDistribution: pro.data,
     growthByMonth: growth.data,

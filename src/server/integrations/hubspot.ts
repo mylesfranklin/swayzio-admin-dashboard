@@ -147,6 +147,7 @@ export interface Company {
 }
 export interface CatalogScan {
   taggedTracksTotal: number;
+  untaggedTracksTotal: number;
   artistsWithTracks: number;
   companies: Company[];
 }
@@ -154,6 +155,7 @@ export interface CatalogScan {
 export async function getCatalogScan(topCompanies = 40): Promise<CatalogScan> {
   const c = client();
   let taggedTracksTotal = 0;
+  let untaggedTracksTotal = 0;
   let artistsWithTracks = 0;
   const dom = new Map<string, Company>();
   const topTracks = new Map<string, number>(); // per-domain max, to pick the representative email
@@ -162,7 +164,7 @@ export async function getCatalogScan(topCompanies = 40): Promise<CatalogScan> {
     const page = await search(() =>
       c.crm.contacts.searchApi.doSearch({
         filterGroups: [{ filters: [{ propertyName: "tagged_tracks", operator: "GT", value: "0" } as never] }],
-        properties: ["email", "tagged_tracks", "subscribed", "lastmodifieddate"],
+        properties: ["email", "tagged_tracks", "untagged_tracks", "subscribed", "lastmodifieddate"],
         limit: 100,
         ...(after ? { after } : {}),
       })
@@ -170,6 +172,7 @@ export async function getCatalogScan(topCompanies = 40): Promise<CatalogScan> {
     for (const r of page.results) {
       const tracks = Number(r.properties.tagged_tracks || 0);
       taggedTracksTotal += tracks;
+      untaggedTracksTotal += Number(r.properties.untagged_tracks || 0);
       artistsWithTracks++;
       const email = (r.properties.email || "").toLowerCase();
       const domain = email.split("@")[1];
@@ -187,5 +190,5 @@ export async function getCatalogScan(topCompanies = 40): Promise<CatalogScan> {
   } while (after);
 
   const companies = [...dom.values()].sort((a, b) => b.tracks - a.tracks).slice(0, topCompanies);
-  return { taggedTracksTotal, artistsWithTracks, companies };
+  return { taggedTracksTotal, untaggedTracksTotal, artistsWithTracks, companies };
 }
