@@ -141,8 +141,8 @@ export interface Company {
   domain: string;
   tracks: number;
   users: number;
-  subscribed: number;
-  signed: number;
+  subscribed: number;          // count of subscribed users (rendered as Yes/No in UI)
+  lastActivity: string | null; // most recent lastmodifieddate across the domain's contacts
 }
 export interface CatalogScan {
   taggedTracksTotal: number;
@@ -160,7 +160,7 @@ export async function getCatalogScan(topCompanies = 40): Promise<CatalogScan> {
     const page = await search(() =>
       c.crm.contacts.searchApi.doSearch({
         filterGroups: [{ filters: [{ propertyName: "tagged_tracks", operator: "GT", value: "0" } as never] }],
-        properties: ["email", "tagged_tracks", "subscribed", "signed_to_deal"],
+        properties: ["email", "tagged_tracks", "subscribed", "lastmodifieddate"],
         limit: 100,
         ...(after ? { after } : {}),
       })
@@ -171,11 +171,12 @@ export async function getCatalogScan(topCompanies = 40): Promise<CatalogScan> {
       artistsWithTracks++;
       const domain = (r.properties.email || "").toLowerCase().split("@")[1];
       if (!domain || isPersonalOrInternal(domain)) continue;
-      const e = dom.get(domain) ?? { domain, tracks: 0, users: 0, subscribed: 0, signed: 0 };
+      const e = dom.get(domain) ?? { domain, tracks: 0, users: 0, subscribed: 0, lastActivity: null };
       e.tracks += tracks;
       e.users++;
       if (r.properties.subscribed === "true") e.subscribed++;
-      if (r.properties.signed_to_deal === "true") e.signed++;
+      const lm = r.properties.lastmodifieddate;
+      if (lm && (!e.lastActivity || lm > e.lastActivity)) e.lastActivity = lm; // ISO strings sort chronologically
       dom.set(domain, e);
     }
     after = page.paging?.next?.after;

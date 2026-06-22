@@ -115,7 +115,7 @@ export async function getOrCompute<T>(
   };
 }
 
-/** Force a refresh now (used by the cron/refresh route). */
-export async function refresh<T>(key: string, fn: () => Promise<T>, ttlMs: number): Promise<void> {
-  await compute(key, fn, ttlMs);
+/** Force a refresh now (used by the cron/refresh route). Returns the fresh value. */
+export async function refresh<T>(key: string, fn: () => Promise<T>, ttlMs: number): Promise<T> {
+  return compute(key, fn, ttlMs);
 }

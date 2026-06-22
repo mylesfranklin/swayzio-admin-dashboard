@@ -1,6 +1,6 @@
 "use client";
 
-import { Users, UserCheck, Handshake, Music, Building2 } from "lucide-react";
+import { Users, UserCheck, Handshake, Music, Building2, ExternalLink } from "lucide-react";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -89,7 +89,7 @@ export function HubspotClient({ data, error }: { data: HubspotDashboard | null; 
                   </td>
                   <td className="px-4 py-2 font-medium text-ink">{formatNumber(u.tracks)}</td>
                   <td className="px-4 py-2 text-ink-muted">{u.pro ?? "—"}</td>
-                  <td className="px-4 py-2">{u.subscribed ? <Badge tone="success">Yes</Badge> : <span className="text-ink-faint">—</span>}</td>
+                  <td className="px-4 py-2">{u.subscribed ? <Badge tone="success">Yes</Badge> : <Badge tone="error">No</Badge>}</td>
                   <td className="px-4 py-2 text-ink-muted">{u.lastActivity ? new Date(u.lastActivity).toLocaleDateString() : "—"}</td>
                 </tr>
               ))}
@@ -115,7 +115,7 @@ export function HubspotClient({ data, error }: { data: HubspotDashboard | null; 
                 <th className="px-4 py-2 font-medium">Tracks</th>
                 <th className="px-4 py-2 font-medium">Users</th>
                 <th className="px-4 py-2 font-medium">Subscribed</th>
-                <th className="px-4 py-2 font-medium">Signed</th>
+                <th className="px-4 py-2 font-medium">Last activity</th>
               </tr>
             </thead>
             <tbody>
@@ -124,13 +124,22 @@ export function HubspotClient({ data, error }: { data: HubspotDashboard | null; 
                   <td className="px-4 py-2">
                     <span className="flex items-center gap-1.5">
                       <span className="max-w-[220px] truncate font-medium text-ink">{co.domain}</span>
+                      <a
+                        href={`https://${co.domain}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={`Open ${co.domain}`}
+                        className="p-1 text-ink-faint transition-colors hover:text-ink"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
                       <CopyButton value={co.domain} />
                     </span>
                   </td>
                   <td className="px-4 py-2 font-medium text-ink">{formatNumber(co.tracks)}</td>
                   <td className="px-4 py-2 text-ink-muted">{co.users}</td>
-                  <td className="px-4 py-2 text-ink-muted">{co.subscribed}</td>
-                  <td className="px-4 py-2 text-ink-muted">{co.signed}</td>
+                  <td className="px-4 py-2">{co.subscribed > 0 ? <Badge tone="success">Yes</Badge> : <Badge tone="error">No</Badge>}</td>
+                  <td className="px-4 py-2 text-ink-muted">{co.lastActivity ? new Date(co.lastActivity).toLocaleDateString() : "—"}</td>
                 </tr>
               ))}
             </tbody>
