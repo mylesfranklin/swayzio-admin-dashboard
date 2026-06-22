@@ -22,6 +22,17 @@ jobs:
       - name: Verify generated theme is up to date
         run: npm run design:check
 
+      # Design regression: compare the PR's DESIGN.md against the base branch.
+      # `designmd diff` exits 1 if regressions are detected (e.g. a contrast pair
+      # that dropped below WCAG AA, or removed tokens).
+      - name: Design regression check
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          git show "origin/${{ github.base_ref }}:design/swayzio.DESIGN.md" > /tmp/base.DESIGN.md 2>/dev/null \
+            || cp design/swayzio.DESIGN.md /tmp/base.DESIGN.md
+          npx designmd diff /tmp/base.DESIGN.md design/swayzio.DESIGN.md
+
       # Type safety
       - name: Typecheck
         run: npm run check
