@@ -49,7 +49,7 @@ export function DashboardClient({ stripe, error }: { stripe: StripeDashboard | n
           <p className="mt-1 flex items-center gap-2 text-sm text-ink-muted">
             Here&apos;s how Swayzio is doing today
             {stripe?.updatedAt && (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-base-200 px-2 py-0.5 text-[11px] text-ink-faint">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-base-200 px-2 py-0.5 text-[0.6875rem] text-ink-faint">
                 <span className={cn("h-1.5 w-1.5 rounded-full", stripe.stale ? "bg-warning" : "bg-success")} />
                 Stripe · {stripe.stale ? "refreshing…" : `updated ${timeAgo(stripe.updatedAt)}`}
               </span>
@@ -139,7 +139,7 @@ export function DashboardClient({ stripe, error }: { stripe: StripeDashboard | n
           <div>
             <div className="mb-2 flex items-center gap-2">
               <h2 className="text-lg font-semibold text-ink">Newsletter Analytics</h2>
-              <span className="rounded bg-base-300 px-1.5 py-0.5 text-[10px] text-ink-faint">sample data — Kit not yet wired</span>
+              <span className="rounded bg-base-300 px-1.5 py-0.5 text-[0.625rem] text-ink-faint">sample data — Kit not yet wired</span>
             </div>
             <NewsletterAnalytics data={dashboardFixture.newsletter} />
           </div>
@@ -158,7 +158,7 @@ function SummaryTile({ icon, label, value, loading }: { icon: React.ReactNode; l
     <div className="rounded-lg border border-line bg-base-300/40 p-3.5 transition-colors hover:bg-base-300/70">
       <div className="mb-1.5 flex items-center gap-1.5">
         {icon}
-        <span className="text-[10px] font-medium uppercase tracking-wide text-ink-faint">{label}</span>
+        <span className="text-[0.625rem] font-medium uppercase tracking-wide text-ink-faint">{label}</span>
       </div>
       {loading ? <div className="skeleton-shimmer h-6 w-20 rounded" /> : <p className="text-lg font-semibold text-ink">{value}</p>}
     </div>

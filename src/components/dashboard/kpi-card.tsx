@@ -43,11 +43,11 @@ export function KpiCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[11px] font-medium uppercase tracking-wider text-ink-faint">{title}</p>
+          <p className="truncate text-[0.6875rem] font-medium uppercase tracking-wider text-ink-faint">{title}</p>
           {isLoading ? (
             <div className="skeleton-shimmer mt-2 h-8 w-28 rounded-md" />
           ) : (
-            <p className="mt-1.5 text-[28px] font-bold leading-none tracking-tight text-ink">{value}</p>
+            <p className="mt-1.5 text-[1.75rem] font-bold leading-none tracking-tight text-ink">{value}</p>
           )}
           {!isLoading && change !== undefined && (
             <div className={cn("mt-2.5 flex items-center gap-1.5 text-xs font-medium", positive ? "text-success" : "text-error")}>
@@ -59,11 +59,11 @@ export function KpiCard({
             </div>
           )}
           {!isLoading && subtitle && change === undefined && (
-            <p className="mt-2 text-[11px] text-ink-faint">{subtitle}</p>
+            <p className="mt-2 text-[0.6875rem] text-ink-faint">{subtitle}</p>
           )}
         </div>
         <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-all duration-300", a.tile, a.text)}>
-          <Icon className="h-[18px] w-[18px]" />
+          <Icon className="h-[1.125rem] w-[1.125rem]" />
         </div>
       </div>
       {/* animated accent bar */}

@@ -8,7 +8,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           </div>
           <div>
             <p className="text-sm font-semibold text-ink">Swayzio</p>
-            <p className="text-[11px] text-ink-faint">Admin Dashboard</p>
+            <p className="text-[0.6875rem] text-ink-faint">Admin Dashboard</p>
           </div>
         </div>
         {children}

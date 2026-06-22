@@ -28,7 +28,7 @@ export function NewsletterAnalytics({ data }: { data: DashboardData["newsletter"
                 {t.value}
                 {t.up && <span className="ml-1 align-middle text-xs text-success">↗</span>}
               </p>
-              <p className="mt-0.5 text-[11px] text-ink-faint">{t.sub}</p>
+              <p className="mt-0.5 text-[0.6875rem] text-ink-faint">{t.sub}</p>
             </div>
           ))}
         </div>

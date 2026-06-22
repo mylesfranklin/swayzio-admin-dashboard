@@ -13,7 +13,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
       <Sidebar isOpen={isSidebarOpen} />
       <div
         className="flex flex-1 flex-col overflow-hidden transition-all duration-200"
-        style={{ marginLeft: isSidebarOpen ? "244px" : "0" }}
+        style={{ marginLeft: isSidebarOpen ? "15.25rem" : "0" }}
       >
         <Header
           toggleSidebar={() => setIsSidebarOpen((v) => !v)}

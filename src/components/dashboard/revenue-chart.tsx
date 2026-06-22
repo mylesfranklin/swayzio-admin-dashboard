@@ -138,7 +138,7 @@ function SummaryTile({
     <div className="rounded-lg border border-line bg-base-300/50 p-3">
       <div className="mb-1 flex items-center gap-1.5">
         {icon}
-        <span className="text-[10px] font-medium uppercase tracking-wide text-ink-faint">
+        <span className="text-[0.625rem] font-medium uppercase tracking-wide text-ink-faint">
           {label}
         </span>
       </div>

@@ -25,7 +25,7 @@ export default function Sidebar({ isOpen }: { isOpen: boolean }) {
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-50 hidden h-full w-[244px] flex-col border-r border-line bg-sidebar transition-all duration-300 ease-out md:flex",
+        "fixed left-0 top-0 z-50 hidden h-full w-[15.25rem] flex-col border-r border-line bg-sidebar transition-all duration-300 ease-out md:flex",
         !isOpen && "md:w-0 md:overflow-hidden md:border-r-0"
       )}
     >
@@ -37,7 +37,7 @@ export default function Sidebar({ isOpen }: { isOpen: boolean }) {
           </div>
           <div>
             <span className="text-sm font-semibold text-ink">Swayzio</span>
-            <p className="text-[10px] text-ink-faint">Admin Dashboard</p>
+            <p className="text-[0.625rem] text-ink-faint">Admin Dashboard</p>
           </div>
         </div>
         <ChevronDown className="h-4 w-4 cursor-pointer text-ink-faint transition-colors hover:text-ink-muted" />
@@ -48,7 +48,7 @@ export default function Sidebar({ isOpen }: { isOpen: boolean }) {
         <button className="group flex h-9 w-full items-center gap-2 rounded-lg border border-line bg-base-200 px-3 text-xs text-ink-muted transition-all duration-150 hover:bg-base-300 hover:text-ink">
           <Search className="h-3.5 w-3.5 text-ink-faint transition-colors group-hover:text-ink-muted" />
           <span className="flex-1 text-left">Search...</span>
-          <span className="flex items-center gap-0.5 text-[10px] text-ink-faint">
+          <span className="flex items-center gap-0.5 text-[0.625rem] text-ink-faint">
             <Command className="h-3 w-3" /> K
           </span>
         </button>
@@ -60,7 +60,7 @@ export default function Sidebar({ isOpen }: { isOpen: boolean }) {
           <div key={section.title}>
             <button
               onClick={() => toggle(section.title)}
-              className="flex w-full items-center justify-between px-2 py-1.5 text-[11px] font-medium uppercase tracking-wider text-ink-faint transition-colors duration-150 hover:text-ink-muted"
+              className="flex w-full items-center justify-between px-2 py-1.5 text-[0.6875rem] font-medium uppercase tracking-wider text-ink-faint transition-colors duration-150 hover:text-ink-muted"
             >
               <span>{section.title}</span>
               <ChevronRight
@@ -93,7 +93,7 @@ export default function Sidebar({ isOpen }: { isOpen: boolean }) {
                     )}
                   >
                     <Icon className={cn("h-4 w-4", active && "text-brand")} />
-                    <span className="flex-1 text-[13px]">{item.title}</span>
+                    <span className="flex-1 text-[0.8125rem]">{item.title}</span>
                     {active && <span className="h-1.5 w-1.5 rounded-full bg-brand" />}
                   </Link>
                 );

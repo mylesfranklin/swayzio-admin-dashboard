@@ -68,7 +68,7 @@ export function StripeClient({ stripe, error }: { stripe: StripeDashboard | null
             <tbody>
               {stripe.topSubscriptions.slice(0, 25).map((s) => (
                 <tr key={s.id} className="border-t border-line/60 transition-colors hover:bg-base-300/40">
-                  <td className="max-w-[260px] truncate px-4 py-2 text-ink">{s.customer}</td>
+                  <td className="max-w-[16.25rem] truncate px-4 py-2 text-ink">{s.customer}</td>
                   <td className="px-4 py-2 text-ink-muted">{s.plan}</td>
                   <td className="px-4 py-2 font-medium text-ink">{formatCurrency(s.amount)}/mo</td>
                   <td className="px-4 py-2 text-ink-muted">{s.nextBillingDate ? new Date(s.nextBillingDate).toLocaleDateString() : "—"}</td>

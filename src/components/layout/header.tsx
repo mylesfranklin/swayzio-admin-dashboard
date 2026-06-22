@@ -64,7 +64,7 @@ export default function Header({
         <button className="hidden h-9 items-center gap-2 rounded-md px-3 text-ink-muted transition-colors hover:bg-base-300 hover:text-ink lg:flex">
           <Command className="h-3.5 w-3.5" />
           <span className="text-xs">Quick actions</span>
-          <kbd className="ml-1 rounded bg-line/80 px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
+          <kbd className="ml-1 rounded bg-line/80 px-1.5 py-0.5 font-mono text-[0.625rem]">⌘K</kbd>
         </button>
 
         <button

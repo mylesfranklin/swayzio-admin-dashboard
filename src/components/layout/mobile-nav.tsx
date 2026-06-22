@@ -21,8 +21,8 @@ export default function MobileNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex min-w-[64px] flex-col items-center justify-center gap-1 rounded-xl px-3 py-2 transition-all duration-200",
-                "min-h-[56px]",
+                "flex min-w-[4rem] flex-col items-center justify-center gap-1 rounded-xl px-3 py-2 transition-all duration-200",
+                "min-h-[3.5rem]",
                 active
                   ? "bg-brand/10 text-brand"
                   : "text-ink-faint hover:text-ink-muted active:scale-95"
@@ -34,7 +34,7 @@ export default function MobileNav() {
                   <span className="absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-brand" />
                 )}
               </div>
-              <span className="text-[10px] font-medium tracking-wide">{item.title}</span>
+              <span className="text-[0.625rem] font-medium tracking-wide">{item.title}</span>
             </Link>
           );
         })}

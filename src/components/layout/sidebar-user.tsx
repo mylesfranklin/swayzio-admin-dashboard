@@ -21,7 +21,7 @@ function ClerkUser() {
         <p className="truncate text-sm font-medium text-ink">
           {isLoaded ? name : "…"}
         </p>
-        <p className="text-[11px] text-ink-faint">Founder</p>
+        <p className="text-[0.6875rem] text-ink-faint">Founder</p>
       </div>
     </div>
   );
@@ -38,7 +38,7 @@ function StaticUser() {
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-ink">Dev Mode</p>
-        <p className="text-[11px] text-ink-faint">Auth disabled</p>
+        <p className="text-[0.6875rem] text-ink-faint">Auth disabled</p>
       </div>
       <ChevronRight className="h-4 w-4 text-ink-faint opacity-0 transition-opacity group-hover:opacity-100" />
     </div>
