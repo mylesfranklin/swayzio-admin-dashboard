@@ -53,8 +53,12 @@ Handlers + Vercel Cron. See `DECISIONS.md`.
 - [x] Dashboard + `/analytics/stripe` wired to REAL Stripe data; daisyUI ApexCharts
       (collected-revenue area, status donut, collection radial), top-subs table.
 - [x] `vercel.json` cron (every 6h) to keep caches warm.
-- [ ] **De-Replit HubSpot auth** (Replit connector → `HUBSPOT_ACCESS_TOKEN`) — next.
+- [x] **De-Replit HubSpot auth** (Replit connector → `HUBSPOT_ACCESS_TOKEN` private-app token).
+- [x] **HubSpot integration built** — `/analytics/hubspot` (music-catalog/artist CRM): KPIs, PRO
+      donut, contact-growth, power-users + companies tables w/ email copy. Real data, SWR-cached,
+      cron-warmed. See `docs/INTEGRATIONS-HUBSPOT.md`.
 - [ ] Port Kit + Mercury; replace remaining fixtures (newsletter still sample data).
+- [ ] Add HubSpot tile(s) to the main dashboard overview.
 - [ ] Stripe webhook `/api/webhooks/stripe` (raw-body verify) — when we add write paths.
 
 ## Phase 4 — Port remaining pages + kill mocks
