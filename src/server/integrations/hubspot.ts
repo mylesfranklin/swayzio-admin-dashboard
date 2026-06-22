@@ -68,6 +68,33 @@ export async function getContactCounts(): Promise<ContactCounts> {
   return { totalContacts, artists, subscribed, signedToDeal, hasPro };
 }
 
+// Active subscribers — subscribed contacts who actually logged in recently.
+// last_login is a TEXT property (not search-filterable by date), so paginate the
+// ~1.1k subscribed contacts and parse it. lastmodifieddate is NOT used: it's bumped
+// by CRM syncs so ~all subscribers look "active" (1,105/1,109) — meaningless.
+export async function getActiveSubscribers(days = 30): Promise<number> {
+  const c = client();
+  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+  let active = 0;
+  let after: string | undefined;
+  do {
+    const page = await search(() =>
+      c.crm.contacts.searchApi.doSearch({
+        filterGroups: [{ filters: [{ propertyName: "subscribed", operator: "EQ", value: "true" } as never] }],
+        properties: ["last_login"],
+        limit: 100,
+        ...(after ? { after } : {}),
+      })
+    );
+    for (const r of page.results) {
+      const t = Date.parse(r.properties.last_login || "");
+      if (!Number.isNaN(t) && t >= cutoff) active++;
+    }
+    after = page.paging?.next?.after;
+  } while (after);
+  return active;
+}
+
 // ── PRO distribution (cheap) ─────────────────────────────────────────────────
 const PRO_VALUES = ["BMI", "ASCAP", "PRS", "SOCAN", "SESAC", "Other"] as const;
 

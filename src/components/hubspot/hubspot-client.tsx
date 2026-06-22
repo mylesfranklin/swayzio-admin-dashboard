@@ -39,7 +39,7 @@ export function HubspotClient({ data, error }: { data: HubspotDashboard | null; 
       {/* KPIs */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard title="Total Contacts" value={formatNumber(data.totalContacts)} subtitle={`${formatNumber(data.artists)} artists`} icon={Users} accent="brand" />
-        <KpiCard title="Subscribed" value={formatNumber(data.subscribed)} subtitle={`${data.subscribedConvPct}% of artists`} icon={UserCheck} accent="success" animationDelay={75} />
+        <KpiCard title="Active Subscribers" value={formatNumber(data.activeSubscribers)} subtitle={`of ${formatNumber(data.subscribed)} subscribed · active 30d`} icon={UserCheck} accent="success" animationDelay={75} />
         <KpiCard title="Signed to Deal" value={formatNumber(data.signedToDeal)} icon={Handshake} accent="brand" animationDelay={150} />
         <KpiCard title="Total Tracks" value={formatNumber(data.totalTracks)} subtitle={`${formatNumber(data.taggedTracksTotal)} tagged · ${formatNumber(data.untaggedTracksTotal)} untagged`} icon={Music} accent="brand" animationDelay={225} />
       </div>

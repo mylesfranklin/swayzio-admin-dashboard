@@ -4,10 +4,13 @@ for (const line of readFileSync(".env.local", "utf8").split("\n")) {
   const m = line.match(/^([A-Z0-9_]+)=(.*)$/);
   if (m && process.env[m[1]] === undefined) process.env[m[1]] = m[2];
 }
-const { getCatalogScan, getPowerUsers } = await import("../src/server/integrations/hubspot.ts");
+const { getCatalogScan, getPowerUsers, getContactCounts, getActiveSubscribers } = await import("../src/server/integrations/hubspot.ts");
 const { refresh } = await import("../src/server/cache.ts");
 const MIN = 60_000;
-console.log("refreshing hubspot:catalog (new Company shape) + power-users…");
+console.log("refreshing hubspot:counts + active-subs + catalog + power-users…");
+const counts = await refresh("hubspot:counts", getContactCounts, 15 * MIN);
+const active = await refresh("hubspot:active-subs", () => getActiveSubscribers(30), 30 * MIN);
+console.log("  active subscribers (last_login ≤30d):", active, "of", counts.subscribed, "subscribed");
 const cat = await refresh("hubspot:catalog", () => getCatalogScan(40), 60 * MIN);
 await refresh("hubspot:power-users", () => getPowerUsers(50), 30 * MIN);
 console.log("done. sample companies (with lastActivity):");

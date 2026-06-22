@@ -92,10 +92,8 @@ export function ReacquireCard({ data }: { data: ReacquireCandidates }) {
             <h3 className="text-sm font-medium text-ink-muted">Reacquire Candidates</h3>
             <p className="mt-1 text-3xl font-bold tracking-tight text-ink">{formatNumber(data.totalTargets)}</p>
             <p className="mt-1.5 max-w-2xl text-xs leading-relaxed text-ink-faint">
-              Artists who&apos;ve built a catalog in Swayzio but never subscribed — your warmest win-back pool. Bars show how many were
-              last active each month (more recent = warmer), the green line isolates the high-value subset with 50+ tracks, and the
-              dashed line is the cumulative pool building across the window. Narrow the range to focus on the most recently active
-              candidates worth re-engaging first.
+              Artists who built a catalog but never subscribed — your warmest win-back pool. Bars are how many were last active per
+              month; the green line is the high-value subset (50+ tracks) and the dashed line the cumulative pool.
             </p>
           </div>
         </div>

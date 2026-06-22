@@ -1,6 +1,7 @@
 import { getOrCompute } from "@/server/cache";
 import {
   getContactCounts,
+  getActiveSubscribers,
   getProDistribution,
   getContactGrowth,
   getPowerUsers,
@@ -18,6 +19,7 @@ export interface HubspotDashboard {
   totalContacts: number;
   artists: number;
   subscribed: number;
+  activeSubscribers: number; // subscribed + active in last 30 days
   subscribedConvPct: number; // subscribed ÷ artists
   signedToDeal: number;
   hasPro: number;
@@ -38,8 +40,9 @@ export interface HubspotDashboard {
 }
 
 export async function getHubspotDashboard(): Promise<HubspotDashboard> {
-  const [counts, pro, growth, power, catalog, reacquire, acquisition, roles, companyTypes] = await Promise.all([
+  const [counts, activeSubs, pro, growth, power, catalog, reacquire, acquisition, roles, companyTypes] = await Promise.all([
     getOrCompute("hubspot:counts", getContactCounts, 15 * MIN),
+    getOrCompute("hubspot:active-subs", () => getActiveSubscribers(30), 30 * MIN),
     getOrCompute("hubspot:pro", getProDistribution, 30 * MIN),
     getOrCompute("hubspot:growth", getContactGrowth, 6 * 60 * MIN),
     getOrCompute("hubspot:power-users", () => getPowerUsers(50), 30 * MIN),
@@ -53,7 +56,7 @@ export async function getHubspotDashboard(): Promise<HubspotDashboard> {
   const c = counts.data;
   const subscribedConvPct = c.artists > 0 ? Math.round((c.subscribed / c.artists) * 1000) / 10 : 0;
 
-  const cached = [counts, pro, growth, power, catalog, reacquire, acquisition, roles, companyTypes];
+  const cached = [counts, activeSubs, pro, growth, power, catalog, reacquire, acquisition, roles, companyTypes];
   const updatedAt = cached.map((x) => x.meta.updatedAt).filter(Boolean).sort().slice(-1)[0] ?? null;
   const stale = cached.some((x) => x.meta.stale);
 
@@ -61,6 +64,7 @@ export async function getHubspotDashboard(): Promise<HubspotDashboard> {
     totalContacts: c.totalContacts,
     artists: c.artists,
     subscribed: c.subscribed,
+    activeSubscribers: activeSubs.data,
     subscribedConvPct,
     signedToDeal: c.signedToDeal,
     hasPro: c.hasPro,
