@@ -22,7 +22,7 @@ export function Donut({
     colors,
     stroke: { width: 0 },
     dataLabels: { enabled: false },
-    legend: { position: "bottom", labels: { colors: "#6b6f76" }, fontSize: "12px", markers: { strokeWidth: 0 } },
+    legend: { show: false }, // custom pill legend below
     plotOptions: {
       pie: {
         donut: {
@@ -45,5 +45,20 @@ export function Donut({
       y: { formatter: (v: number) => `${v.toLocaleString()} (${total ? Math.round((v / total) * 100) : 0}%)` },
     },
   };
-  return <Chart options={options} series={data.map((d) => d.value)} type="donut" height={300} />;
+  return (
+    <div>
+      <Chart options={options} series={data.map((d) => d.value)} type="donut" height={260} />
+      <div className="mt-3 flex flex-wrap justify-center gap-2">
+        {data.map((d, i) => (
+          <span
+            key={d.label}
+            className="inline-flex items-center gap-1.5 rounded-full border border-line bg-base-300/40 px-2.5 py-1 text-xs text-ink-muted"
+          >
+            <span className="size-2 rounded-full" style={{ backgroundColor: colors[i % colors.length] }} />
+            {d.label}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
 }
