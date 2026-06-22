@@ -38,3 +38,6 @@ next-env.d.ts
 .DS_Store
 vite.config.ts.*
 *.tar.gz
+
+# E2E harness secrets/artifacts (swayzio-admin-e2e)
+.e2e/
