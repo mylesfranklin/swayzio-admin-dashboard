@@ -41,7 +41,7 @@ export async function GET(req: Request) {
     ["hubspot:active-subs", getActiveSubscribers, 30 * MIN],
     ["hubspot:pro", getProDistribution, 30 * MIN],
     ["hubspot:growth", getContactGrowth, 6 * 60 * MIN],
-    ["hubspot:power-users", () => getPowerUsers(50), 30 * MIN],
+    ["hubspot:power-users", () => getPowerUsers(100), 30 * MIN],
     ["hubspot:catalog", () => getCatalogScan(40), 60 * MIN],
     ["hubspot:reacquire", () => getReacquireCandidates(200), 30 * MIN],
     ["hubspot:acquisition", () => getEnumDistribution("acquisition_channel"), 60 * MIN],

@@ -9,6 +9,7 @@ import { CompanyLogo } from "@/components/ui/company-logo";
 import { Donut } from "@/components/charts/donut";
 import { ReacquireCard } from "@/components/hubspot/reacquire-card";
 import { TracksUploadedCard } from "@/components/hubspot/tracks-uploaded-card";
+import { PowerUsersTable } from "@/components/hubspot/power-users-table";
 import { BarList } from "@/components/charts/bar-list";
 import type { MonthlyUploads } from "@/server/integrations/app-tracks";
 import { formatNumber } from "@/lib/utils";
@@ -32,8 +33,6 @@ export function HubspotClient({
       </div>
     );
   }
-
-  const allEmails = data.powerUsers.map((u) => u.email).filter(Boolean).join(", ");
 
   return (
     <div className="space-y-6">
@@ -103,46 +102,7 @@ export function HubspotClient({
       </div>
 
       {/* Power users */}
-      <Card>
-        <div className="flex items-center justify-between border-b border-line p-4">
-          <div>
-            <h3 className="text-sm font-medium text-ink">Power Users</h3>
-            <p className="text-xs text-ink-faint">top artists by catalog size + recent activity</p>
-          </div>
-          <CopyButton label={`Copy ${data.powerUsers.length} emails`} value={allEmails} title="Copy all power-user emails" />
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs uppercase tracking-wide text-ink-faint">
-                <th className="px-4 py-2 font-medium">Artist</th>
-                <th className="px-4 py-2 font-medium">Email</th>
-                <th className="px-4 py-2 font-medium">Tracks</th>
-                <th className="px-4 py-2 font-medium">PRO</th>
-                <th className="px-4 py-2 font-medium">Subscribed</th>
-                <th className="px-4 py-2 font-medium">Last activity</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.powerUsers.map((u) => (
-                <tr key={u.id} className="border-t border-line/60 transition-colors hover:bg-base-300/40">
-                  <td className="max-w-[180px] truncate px-4 py-2 font-medium text-ink">{u.name}</td>
-                  <td className="px-4 py-2">
-                    <span className="flex items-center gap-1.5">
-                      <span className="max-w-[200px] truncate text-ink-muted">{u.email || "—"}</span>
-                      {u.email && <CopyButton value={u.email} />}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2 font-medium text-ink">{formatNumber(u.tracks)}</td>
-                  <td className="px-4 py-2 text-ink-muted">{u.pro ?? "—"}</td>
-                  <td className="px-4 py-2">{u.subscribed ? <Badge tone="success">Yes</Badge> : <Badge tone="error">No</Badge>}</td>
-                  <td className="px-4 py-2 text-ink-muted">{u.lastActivity ? new Date(u.lastActivity).toLocaleDateString() : "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+      <PowerUsersTable users={data.powerUsers} />
 
       {/* Companies */}
       <Card>

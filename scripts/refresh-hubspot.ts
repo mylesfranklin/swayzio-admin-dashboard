@@ -12,7 +12,7 @@ const counts = await refresh("hubspot:counts", getContactCounts, 15 * MIN);
 const active = await refresh("hubspot:active-subs", getActiveSubscribers, 30 * MIN);
 console.log("  active subscribers (last_login):", active.last30, "in 30d ·", active.last60, "in 60d · of", counts.subscribed, "subscribed");
 const cat = await refresh("hubspot:catalog", () => getCatalogScan(40), 60 * MIN);
-await refresh("hubspot:power-users", () => getPowerUsers(50), 30 * MIN);
+await refresh("hubspot:power-users", () => getPowerUsers(100), 30 * MIN);
 console.log("done. sample companies (with lastActivity):");
 for (const co of cat.companies.slice(0, 6))
   console.log(`  ${co.domain.padEnd(24)} email=${(co.email || "—").padEnd(30)} tracks=${String(co.tracks).padStart(5)} subs=${co.subscribed} last=${(co.lastActivity || "").slice(0, 10) || "—"}`);

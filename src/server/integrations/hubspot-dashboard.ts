@@ -46,7 +46,7 @@ export async function getHubspotDashboard(): Promise<HubspotDashboard> {
     getOrCompute("hubspot:active-subs", getActiveSubscribers, 30 * MIN),
     getOrCompute("hubspot:pro", getProDistribution, 30 * MIN),
     getOrCompute("hubspot:growth", getContactGrowth, 6 * 60 * MIN),
-    getOrCompute("hubspot:power-users", () => getPowerUsers(50), 30 * MIN),
+    getOrCompute("hubspot:power-users", () => getPowerUsers(100), 30 * MIN),
     getOrCompute("hubspot:catalog", () => getCatalogScan(40), 60 * MIN),
     getOrCompute("hubspot:reacquire", () => getReacquireCandidates(200), 30 * MIN),
     getOrCompute("hubspot:acquisition", () => getEnumDistribution("acquisition_channel"), 60 * MIN),
