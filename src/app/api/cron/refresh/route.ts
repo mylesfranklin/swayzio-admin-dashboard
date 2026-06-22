@@ -37,7 +37,7 @@ export async function GET(req: Request) {
     ["stripe:customers", getCustomerCount, 24 * 60 * MIN],
     ["stripe:churn", getCanceledLast30Days, 60 * MIN],
     ["hubspot:counts", getContactCounts, 15 * MIN],
-    ["hubspot:active-subs", () => getActiveSubscribers(30), 30 * MIN],
+    ["hubspot:active-subs", getActiveSubscribers, 30 * MIN],
     ["hubspot:pro", getProDistribution, 30 * MIN],
     ["hubspot:growth", getContactGrowth, 6 * 60 * MIN],
     ["hubspot:power-users", () => getPowerUsers(50), 30 * MIN],

@@ -1,6 +1,6 @@
 "use client";
 
-import { Users, UserCheck, Handshake, Music, Building2, ExternalLink } from "lucide-react";
+import { Users, UserCheck, Handshake, Music, Building2, ExternalLink, CreditCard } from "lucide-react";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +13,15 @@ import { BarList } from "@/components/charts/bar-list";
 import { formatNumber } from "@/lib/utils";
 import type { HubspotDashboard } from "@/server/integrations/hubspot-dashboard";
 
-export function HubspotClient({ data, error }: { data: HubspotDashboard | null; error: string | null }) {
+export function HubspotClient({
+  data,
+  error,
+  payingSubscribers,
+}: {
+  data: HubspotDashboard | null;
+  error: string | null;
+  payingSubscribers: number | null;
+}) {
   if (error || !data) {
     return (
       <div className="rounded-box border border-error/30 bg-error/10 p-6 text-sm text-error">
@@ -37,11 +45,28 @@ export function HubspotClient({ data, error }: { data: HubspotDashboard | null; 
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <KpiCard title="Total Contacts" value={formatNumber(data.totalContacts)} subtitle={`${formatNumber(data.artists)} artists`} icon={Users} accent="brand" />
-        <KpiCard title="Active Subscribers" value={formatNumber(data.activeSubscribers)} subtitle={`of ${formatNumber(data.subscribed)} subscribed · active 30d`} icon={UserCheck} accent="success" animationDelay={75} />
-        <KpiCard title="Signed to Deal" value={formatNumber(data.signedToDeal)} icon={Handshake} accent="brand" animationDelay={150} />
-        <KpiCard title="Total Tracks" value={formatNumber(data.totalTracks)} subtitle={`${formatNumber(data.taggedTracksTotal)} tagged · ${formatNumber(data.untaggedTracksTotal)} untagged`} icon={Music} accent="brand" animationDelay={225} />
+        <KpiCard
+          title="Paying Subscribers"
+          value={payingSubscribers != null ? formatNumber(payingSubscribers) : "—"}
+          subtitle="Stripe · source of truth"
+          icon={CreditCard}
+          accent="success"
+          animationDelay={75}
+          hint="Active Stripe subscriptions whose latest invoice is paid — the authoritative paying-subscriber count, independent of HubSpot's subscribed flag."
+        />
+        <KpiCard
+          title="Active Subscribers"
+          value={formatNumber(data.activeSubscribers.last30)}
+          subtitle={`${formatNumber(data.activeSubscribers.last60)} active in 60d`}
+          icon={UserCheck}
+          accent="brand"
+          animationDelay={150}
+          hint="HubSpot subscribed contacts who actually logged in within 30 days (value) / 60 days (subtitle), from last_login. A real-engagement signal — most flagged subscribers haven't logged in recently."
+        />
+        <KpiCard title="Signed to Deal" value={formatNumber(data.signedToDeal)} icon={Handshake} accent="brand" animationDelay={225} />
+        <KpiCard title="Total Tracks" value={formatNumber(data.totalTracks)} subtitle={`${formatNumber(data.taggedTracksTotal)} tagged · ${formatNumber(data.untaggedTracksTotal)} untagged`} icon={Music} accent="brand" animationDelay={300} />
       </div>
 
       {/* Reacquire candidates — catalog-builders who aren't subscribed, by recency */}

@@ -72,10 +72,18 @@ export async function getContactCounts(): Promise<ContactCounts> {
 // last_login is a TEXT property (not search-filterable by date), so paginate the
 // ~1.1k subscribed contacts and parse it. lastmodifieddate is NOT used: it's bumped
 // by CRM syncs so ~all subscribers look "active" (1,105/1,109) — meaningless.
-export async function getActiveSubscribers(days = 30): Promise<number> {
+export interface ActiveSubscribers {
+  last30: number;
+  last60: number;
+}
+
+export async function getActiveSubscribers(): Promise<ActiveSubscribers> {
   const c = client();
-  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
-  let active = 0;
+  const now = Date.now();
+  const c30 = now - 30 * 86_400_000;
+  const c60 = now - 60 * 86_400_000;
+  let last30 = 0;
+  let last60 = 0;
   let after: string | undefined;
   do {
     const page = await search(() =>
@@ -88,11 +96,13 @@ export async function getActiveSubscribers(days = 30): Promise<number> {
     );
     for (const r of page.results) {
       const t = Date.parse(r.properties.last_login || "");
-      if (!Number.isNaN(t) && t >= cutoff) active++;
+      if (Number.isNaN(t)) continue;
+      if (t >= c30) last30++;
+      if (t >= c60) last60++;
     }
     after = page.paging?.next?.after;
   } while (after);
-  return active;
+  return { last30, last60 };
 }
 
 // ── PRO distribution (cheap) ─────────────────────────────────────────────────

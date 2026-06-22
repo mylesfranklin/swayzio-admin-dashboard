@@ -1,5 +1,6 @@
 import { ArrowUpRight, ArrowDownRight, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { InfoHint } from "@/components/ui/info-hint";
 
 type Accent = "brand" | "success" | "warning" | "error" | "info";
 
@@ -20,6 +21,7 @@ export function KpiCard({
   accent = "brand",
   animationDelay = 0,
   isLoading = false,
+  hint,
 }: {
   title: string;
   value: string;
@@ -29,6 +31,7 @@ export function KpiCard({
   accent?: Accent;
   animationDelay?: number;
   isLoading?: boolean;
+  hint?: string;
 }) {
   const a = accents[accent];
   const positive = change !== undefined && change >= 0;
@@ -43,7 +46,10 @@ export function KpiCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[0.6875rem] font-medium uppercase tracking-wider text-ink-faint">{title}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="truncate text-[0.6875rem] font-medium uppercase tracking-wider text-ink-faint">{title}</p>
+            {hint && <InfoHint text={hint} className="shrink-0" />}
+          </div>
           {isLoading ? (
             <div className="skeleton-shimmer mt-2 h-8 w-28 rounded-md" />
           ) : (

@@ -2,6 +2,7 @@ import { getOrCompute } from "@/server/cache";
 import {
   getContactCounts,
   getActiveSubscribers,
+  type ActiveSubscribers,
   getProDistribution,
   getContactGrowth,
   getPowerUsers,
@@ -19,7 +20,7 @@ export interface HubspotDashboard {
   totalContacts: number;
   artists: number;
   subscribed: number;
-  activeSubscribers: number; // subscribed + active in last 30 days
+  activeSubscribers: ActiveSubscribers; // subscribed + logged in within 30 / 60 days
   subscribedConvPct: number; // subscribed ÷ artists
   signedToDeal: number;
   hasPro: number;
@@ -42,7 +43,7 @@ export interface HubspotDashboard {
 export async function getHubspotDashboard(): Promise<HubspotDashboard> {
   const [counts, activeSubs, pro, growth, power, catalog, reacquire, acquisition, roles, companyTypes] = await Promise.all([
     getOrCompute("hubspot:counts", getContactCounts, 15 * MIN),
-    getOrCompute("hubspot:active-subs", () => getActiveSubscribers(30), 30 * MIN),
+    getOrCompute("hubspot:active-subs", getActiveSubscribers, 30 * MIN),
     getOrCompute("hubspot:pro", getProDistribution, 30 * MIN),
     getOrCompute("hubspot:growth", getContactGrowth, 6 * 60 * MIN),
     getOrCompute("hubspot:power-users", () => getPowerUsers(50), 30 * MIN),

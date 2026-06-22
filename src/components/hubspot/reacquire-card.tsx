@@ -5,6 +5,7 @@ import { Target } from "lucide-react";
 import type { ApexOptions } from "apexcharts";
 import { Card } from "@/components/ui/card";
 import { Chart } from "@/components/charts/chart";
+import { InfoHint } from "@/components/ui/info-hint";
 import { cn, formatNumber } from "@/lib/utils";
 import type { ReacquireCandidates } from "@/server/integrations/hubspot";
 
@@ -89,12 +90,11 @@ export function ReacquireCard({ data }: { data: ReacquireCandidates }) {
         <div className="flex items-start gap-2">
           <Target className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
           <div>
-            <h3 className="text-sm font-medium text-ink-muted">Reacquire Candidates</h3>
+            <div className="flex items-center gap-1.5">
+              <h3 className="text-sm font-medium text-ink-muted">Reacquire Candidates</h3>
+              <InfoHint text="Artists who built a catalog but never subscribed — your warmest win-back pool. Bars are how many were last active per month; the green line is the high-value subset (50+ tracks) and the dashed line the cumulative pool." />
+            </div>
             <p className="mt-1 text-3xl font-bold tracking-tight text-ink">{formatNumber(data.totalTargets)}</p>
-            <p className="mt-1.5 max-w-2xl text-xs leading-relaxed text-ink-faint">
-              Artists who built a catalog but never subscribed — your warmest win-back pool. Bars are how many were last active per
-              month; the green line is the high-value subset (50+ tracks) and the dashed line the cumulative pool.
-            </p>
           </div>
         </div>
         <div className="inline-flex shrink-0 rounded-lg border border-line bg-base-200 p-0.5">
