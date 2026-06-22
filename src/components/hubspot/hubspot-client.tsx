@@ -1,6 +1,6 @@
 "use client";
 
-import { Users, UserCheck, Handshake, Music, Building2, ExternalLink } from "lucide-react";
+import { Users, UserCheck, Handshake, Music, Building2, ExternalLink, Target } from "lucide-react";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { CopyButton } from "@/components/ui/copy-button";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { Donut } from "@/components/charts/donut";
 import { AreaTrend } from "@/components/charts/area-trend";
+import { ColumnChart } from "@/components/charts/column-chart";
 import { formatNumber } from "@/lib/utils";
 import type { HubspotDashboard } from "@/server/integrations/hubspot-dashboard";
 
@@ -40,6 +41,44 @@ export function HubspotClient({ data, error }: { data: HubspotDashboard | null; 
         <KpiCard title="Subscribed" value={formatNumber(data.subscribed)} subtitle={`${data.subscribedConvPct}% of artists`} icon={UserCheck} accent="success" animationDelay={75} />
         <KpiCard title="Signed to Deal" value={formatNumber(data.signedToDeal)} icon={Handshake} accent="brand" animationDelay={150} />
         <KpiCard title="Total Tracks" value={formatNumber(data.totalTracks)} subtitle={`${formatNumber(data.taggedTracksTotal)} tagged · ${formatNumber(data.untaggedTracksTotal)} untagged`} icon={Music} accent="brand" animationDelay={225} />
+      </div>
+
+      {/* Upsell targets — engaged artists who aren't subscribed */}
+      <Card className="p-5">
+        <div className="mb-4 flex items-start justify-between gap-4">
+          <div className="flex items-start gap-2">
+            <Target className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+            <div>
+              <h3 className="text-sm font-medium text-ink-muted">Upsell Targets</h3>
+              <p className="mt-1 text-3xl font-bold tracking-tight text-ink">{formatNumber(data.upsell.totalTargets)}</p>
+              <p className="text-xs text-ink-faint">artists with catalog who aren&apos;t subscribed · by catalog size</p>
+            </div>
+          </div>
+          {data.upsell.emails.length > 0 && (
+            <CopyButton
+              label={`Copy top ${data.upsell.emails.length} emails`}
+              value={data.upsell.emails.join(", ")}
+              title="Copy highest-catalog upsell-target emails"
+            />
+          )}
+        </div>
+        <ColumnChart data={data.upsell.buckets} label="Targets" />
+      </Card>
+
+      {/* Audience & acquisition breakdowns */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <Card className="p-5">
+          <h3 className="mb-2 text-sm font-medium text-ink-muted">Acquisition Channels</h3>
+          <Donut data={data.acquisitionChannels} centerLabel="Contacts" />
+        </Card>
+        <Card className="p-5">
+          <h3 className="mb-2 text-sm font-medium text-ink-muted">Roles</h3>
+          <Donut data={data.roleDistribution} centerLabel="Contacts" />
+        </Card>
+        <Card className="p-5">
+          <h3 className="mb-2 text-sm font-medium text-ink-muted">Company Types</h3>
+          <Donut data={data.companyTypeDistribution} centerLabel="Contacts" />
+        </Card>
       </div>
 
       {/* PRO donut + contact growth */}

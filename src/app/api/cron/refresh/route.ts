@@ -12,6 +12,8 @@ import {
   getContactGrowth,
   getPowerUsers,
   getCatalogScan,
+  getUpsellTargets,
+  getEnumDistribution,
 } from "@/server/integrations/hubspot";
 
 // Warms the integration caches so user requests always hit warm data (ARCHITECTURE §9).
@@ -38,6 +40,10 @@ export async function GET(req: Request) {
     ["hubspot:growth", getContactGrowth, 6 * 60 * MIN],
     ["hubspot:power-users", () => getPowerUsers(50), 30 * MIN],
     ["hubspot:catalog", () => getCatalogScan(40), 60 * MIN],
+    ["hubspot:upsell", () => getUpsellTargets(200), 30 * MIN],
+    ["hubspot:acquisition", () => getEnumDistribution("acquisition_channel"), 60 * MIN],
+    ["hubspot:roles", () => getEnumDistribution("role"), 60 * MIN],
+    ["hubspot:company-types", () => getEnumDistribution("company_type"), 60 * MIN],
   ];
 
   const results = await Promise.allSettled(jobs.map(([key, fn, ttl]) => refresh(key, fn, ttl)));

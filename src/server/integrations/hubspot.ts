@@ -132,6 +132,64 @@ export async function getPowerUsers(limit = 50): Promise<PowerUser[]> {
   });
 }
 
+// ── Enum distribution (reusable: acquisition_channel, role, company_type, …) ──
+export async function getEnumDistribution(propertyName: string): Promise<Array<{ label: string; value: number }>> {
+  const c = client();
+  const all = await c.crm.properties.coreApi.getAll("contacts");
+  const prop = all.results.find((p) => p.name === propertyName);
+  const options = (prop?.options ?? []).filter((o) => !o.hidden && o.value !== "");
+  const counts = await Promise.all(
+    options.map((o) => searchCount(c, [{ propertyName, operator: "EQ", value: o.value }]))
+  );
+  return options
+    .map((o, i) => ({ label: o.label, value: counts[i] }))
+    .filter((d) => d.value > 0)
+    .sort((a, b) => b.value - a.value);
+}
+
+// ── Upsell targets: artists with catalog who are NOT subscribed ──────────────
+export interface UpsellTargets {
+  totalTargets: number;
+  buckets: Array<{ label: string; value: number }>;
+  emails: string[]; // top targets by catalog size, for outreach copy-all
+}
+
+const NOT_SUBSCRIBED: Filter = { propertyName: "subscribed", operator: "NEQ", value: "true" };
+const TIERS: Array<{ label: string; gte: number; lt?: number }> = [
+  { label: "1–10", gte: 1, lt: 11 },
+  { label: "11–50", gte: 11, lt: 51 },
+  { label: "51–100", gte: 51, lt: 101 },
+  { label: "101–500", gte: 101, lt: 501 },
+  { label: "501–1k", gte: 501, lt: 1001 },
+  { label: "1k+", gte: 1001 },
+];
+
+export async function getUpsellTargets(emailLimit = 200): Promise<UpsellTargets> {
+  const c = client();
+  const tierFilters = (t: { gte: number; lt?: number }): Filter[] => [
+    { propertyName: "tagged_tracks", operator: "GTE", value: String(t.gte) },
+    ...(t.lt ? [{ propertyName: "tagged_tracks", operator: "LT", value: String(t.lt) } as Filter] : []),
+    NOT_SUBSCRIBED,
+  ];
+  const [totalTargets, bucketCounts, top] = await Promise.all([
+    searchCount(c, [{ propertyName: "tagged_tracks", operator: "GT", value: "0" }, NOT_SUBSCRIBED]),
+    Promise.all(TIERS.map((t) => searchCount(c, tierFilters(t)))),
+    search(() =>
+      c.crm.contacts.searchApi.doSearch({
+        filterGroups: [{ filters: [{ propertyName: "tagged_tracks", operator: "GT", value: "0" }, NOT_SUBSCRIBED] as never }],
+        sorts: ["-tagged_tracks" as never],
+        properties: ["email"],
+        limit: emailLimit,
+      })
+    ),
+  ]);
+  return {
+    totalTargets,
+    buckets: TIERS.map((t, i) => ({ label: t.label, value: bucketCounts[i] })),
+    emails: top.results.map((r) => r.properties.email || "").filter(Boolean),
+  };
+}
+
 // ── Catalog scan: tagged-tracks total + company (business-domain) breakdown ──
 const FREE_PROVIDER =
   /^(gmail|googlemail|gmal|gmial|gmai|yahoo|ymail|rocketmail|hotmail|outlook|live|msn|icloud|me|mac|aol|proton|protonmail|gmx|web|mail|freenet|t-online|orange|free|laposte|libero|wanadoo|sky|btinternet|comcast|verizon|att|sbcglobal|cox|qq|163|126|naver)\./;
