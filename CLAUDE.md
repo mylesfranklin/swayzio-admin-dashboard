@@ -9,10 +9,11 @@ HubSpot, Kit, Mercury, and social data, with a built-in AI agent. Fast, beautifu
 ---
 
 ## Current state (2026-06)
-Mid-migration from the Replit export (React/Vite/Wouter + Express) to the target stack. The legacy
-app under `client/` + `server/` still runs (`npm run dev`, port 5000). New work happens in the
-Next.js structure as it comes online. Do not delete legacy code until the migration plan says so
-(Phase 5).
+Migration complete and **live in production**: Next.js app (`src/`) deployed to Vercel (swayzio team)
+at **admin.swayzio.com** — Clerk production auth (founders-only, Google SSO), Stripe + HubSpot + the
+Swayzio-Core app DB (read-only) all wired through the cache, cron warming every 6h. The legacy
+Replit export (Vite/Wouter `client/` + Express `server/` + Drizzle `shared/`) has been **removed** —
+this is a clean Next-only repo. See memory `deployment` + `docs/MIGRATION.md`.
 
 ## Target stack
 Next.js 16 (App Router, **Turbopack**) · React 19 · Tailwind CSS 4 + **daisyUI 5** (CSS-first config)
@@ -58,11 +59,12 @@ skills installed under `.agents/skills` (`npx skills add https://docs.stripe.com
   simple pages.
 - **Match the surrounding code.** Mirror existing naming, structure, and comment density.
 
-## Commands (legacy, until Next is primary)
-- `npm run dev` — legacy Vite+Express on :5000
-- `npm run check` — tsc
-- `npm run db:push` — Drizzle push to Neon
-(Next.js scripts will be added in Phase 1.)
+## Commands
+- `npm run dev` — Next.js (Turbopack) on :3000
+- `npm run build` / `npm run start` — production build / serve
+- `npm run check` — tsc · `npm run lint` — next lint
+- `npm run design:lint|build|check` — DESIGN.md theme pipeline
+- Dev/data utilities in `scripts/` (run with `npx tsx scripts/<name>.ts`): cache warmers + probes.
 
 ## Data reality (live vs mock)
 Live (real API → cache): **Stripe, HubSpot, Kit, Mercury.** Mock (in-memory `MemStorage` sample

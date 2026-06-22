@@ -25,9 +25,6 @@
     "paths": {
       "@/*": [
         "./src/*"
-      ],
-      "@shared/*": [
-        "./shared/*"
       ]
     }
   },
@@ -35,16 +32,10 @@
     "next-env.d.ts",
     "src/**/*.ts",
     "src/**/*.tsx",
-    "shared/**/*.ts",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules",
-    "client",
-    "server",
-    "legacy",
-    "vite.config.ts",
-    "tailwind.config.ts"
+    "node_modules"
   ]
 }

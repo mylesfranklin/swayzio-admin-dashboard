@@ -72,10 +72,11 @@ Handlers + Vercel Cron. See `DECISIONS.md`.
 - [ ] Add XState only where state is genuinely complex (sync status, multi-tab, checkout).
 - [ ] Zod-validated search params for filters/timeframe/page.
 
-## Phase 5 — Cut over & deploy
-- [ ] Delete the legacy Vite client + Express server once parity is reached.
-- [ ] Wire Vercel project: Neon integration, all env vars (`VITE_`→`NEXT_PUBLIC_`), cron schedules.
-- [ ] Production deploy. Verify Stripe numbers match the legacy app (MRR, active, churn, revenue).
+## Phase 5 — Cut over & deploy ✅
+- [x] **Deleted the legacy Vite client + Express server** (and `shared/` Drizzle schema, Replit
+      artifacts, unused deps: drizzle*, date-fns, @tanstack/react-query, ws). Clean Next-only repo.
+- [x] Wired Vercel project: all env vars in Production, cron schedules, custom domain admin.swayzio.com.
+- [x] Production deploy live with Clerk production auth (founders-only). Stripe numbers verified.
 
 ## Phase 6 — AI agent (eve.dev)
 - [ ] Scaffold eve agent in `src/agent/`; tools wrap the read-only cached services.
