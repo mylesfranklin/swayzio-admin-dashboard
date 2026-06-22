@@ -5,6 +5,7 @@ import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CopyButton } from "@/components/ui/copy-button";
+import { CompanyLogo } from "@/components/ui/company-logo";
 import { Donut } from "@/components/charts/donut";
 import { AreaTrend } from "@/components/charts/area-trend";
 import { formatNumber } from "@/lib/utils";
@@ -123,8 +124,9 @@ export function HubspotClient({ data, error }: { data: HubspotDashboard | null; 
               {data.companies.map((co) => (
                 <tr key={co.domain} className="border-t border-line/60 transition-colors hover:bg-base-300/40">
                   <td className="px-4 py-2">
-                    <span className="flex items-center gap-1.5">
-                      <span className="max-w-[200px] truncate font-medium text-ink">{co.domain}</span>
+                    <span className="flex items-center gap-2">
+                      <CompanyLogo domain={co.domain} />
+                      <span className="max-w-[180px] truncate font-medium text-ink">{co.domain}</span>
                       <a
                         href={`https://${co.domain}`}
                         target="_blank"
