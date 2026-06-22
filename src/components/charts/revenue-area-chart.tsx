@@ -30,10 +30,17 @@ export function RevenueAreaChart({
     colors: [BRAND],
     fill: {
       type: "gradient",
-      gradient: { opacityFrom: 0.45, opacityTo: 0, shade: BRAND, gradientToColors: [BRAND] },
+      gradient: { opacityFrom: 0.5, opacityTo: 0, shade: BRAND, gradientToColors: [BRAND], stops: [0, 95] },
     },
     dataLabels: { enabled: false },
-    stroke: { width: 2, curve: "smooth" },
+    stroke: { width: 2.5, curve: "smooth", lineCap: "round" },
+    markers: {
+      size: 0,
+      colors: ["#101012"],
+      strokeColors: BRAND,
+      strokeWidth: 2.5,
+      hover: { size: 6 },
+    },
     grid: { show: true, borderColor: "rgba(255,255,255,0.06)", strokeDashArray: 3, padding: { left: 8, right: 8 } },
     xaxis: {
       categories: data.map((d) => d.month),
