@@ -1,6 +1,6 @@
 "use client";
 
-import { Users, UserCheck, Handshake, Music, Building2, ExternalLink, Target } from "lucide-react";
+import { Users, UserCheck, Handshake, Music, Building2, ExternalLink } from "lucide-react";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,7 @@ import { CopyButton } from "@/components/ui/copy-button";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { Donut } from "@/components/charts/donut";
 import { AreaTrend } from "@/components/charts/area-trend";
-import { ReacquireChart } from "@/components/charts/reacquire-chart";
+import { ReacquireCard } from "@/components/hubspot/reacquire-card";
 import { BarList } from "@/components/charts/bar-list";
 import { formatNumber } from "@/lib/utils";
 import type { HubspotDashboard } from "@/server/integrations/hubspot-dashboard";
@@ -45,26 +45,7 @@ export function HubspotClient({ data, error }: { data: HubspotDashboard | null; 
       </div>
 
       {/* Reacquire candidates — catalog-builders who aren't subscribed, by recency */}
-      <Card className="p-5">
-        <div className="mb-4 flex items-start justify-between gap-4">
-          <div className="flex items-start gap-2">
-            <Target className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
-            <div>
-              <h3 className="text-sm font-medium text-ink-muted">Reacquire Candidates</h3>
-              <p className="mt-1 text-3xl font-bold tracking-tight text-ink">{formatNumber(data.reacquire.totalTargets)}</p>
-              <p className="text-xs text-ink-faint">artists with catalog who aren&apos;t subscribed · by last-activity month</p>
-            </div>
-          </div>
-          {data.reacquire.emails.length > 0 && (
-            <CopyButton
-              label={`Copy top ${data.reacquire.emails.length} emails`}
-              value={data.reacquire.emails.join(", ")}
-              title="Copy highest-catalog reacquire-candidate emails"
-            />
-          )}
-        </div>
-        <ReacquireChart data={data.reacquire.byMonth} />
-      </Card>
+      <ReacquireCard data={data.reacquire} />
 
       {/* Audience & acquisition breakdowns — ranked bar lists */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
