@@ -112,6 +112,7 @@ export function HubspotClient({ data, error }: { data: HubspotDashboard | null; 
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-ink-faint">
                 <th className="px-4 py-2 font-medium">Company</th>
+                <th className="px-4 py-2 font-medium">Email</th>
                 <th className="px-4 py-2 font-medium">Tracks</th>
                 <th className="px-4 py-2 font-medium">Users</th>
                 <th className="px-4 py-2 font-medium">Subscribed</th>
@@ -123,7 +124,7 @@ export function HubspotClient({ data, error }: { data: HubspotDashboard | null; 
                 <tr key={co.domain} className="border-t border-line/60 transition-colors hover:bg-base-300/40">
                   <td className="px-4 py-2">
                     <span className="flex items-center gap-1.5">
-                      <span className="max-w-[220px] truncate font-medium text-ink">{co.domain}</span>
+                      <span className="max-w-[200px] truncate font-medium text-ink">{co.domain}</span>
                       <a
                         href={`https://${co.domain}`}
                         target="_blank"
@@ -133,7 +134,12 @@ export function HubspotClient({ data, error }: { data: HubspotDashboard | null; 
                       >
                         <ExternalLink className="h-3.5 w-3.5" />
                       </a>
-                      <CopyButton value={co.domain} />
+                    </span>
+                  </td>
+                  <td className="px-4 py-2">
+                    <span className="flex items-center gap-1.5">
+                      <span className="max-w-[200px] truncate text-ink-muted">{co.email || "—"}</span>
+                      {co.email && <CopyButton value={co.email} />}
                     </span>
                   </td>
                   <td className="px-4 py-2 font-medium text-ink">{formatNumber(co.tracks)}</td>

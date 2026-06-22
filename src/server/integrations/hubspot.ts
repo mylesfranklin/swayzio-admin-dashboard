@@ -139,6 +139,7 @@ const isPersonalOrInternal = (domain: string) => FREE_PROVIDER.test(domain) || d
 
 export interface Company {
   domain: string;
+  email: string;               // representative contact (the domain's highest-catalog user)
   tracks: number;
   users: number;
   subscribed: number;          // count of subscribed users (rendered as Yes/No in UI)
@@ -155,6 +156,7 @@ export async function getCatalogScan(topCompanies = 40): Promise<CatalogScan> {
   let taggedTracksTotal = 0;
   let artistsWithTracks = 0;
   const dom = new Map<string, Company>();
+  const topTracks = new Map<string, number>(); // per-domain max, to pick the representative email
   let after: string | undefined;
   do {
     const page = await search(() =>
@@ -169,12 +171,14 @@ export async function getCatalogScan(topCompanies = 40): Promise<CatalogScan> {
       const tracks = Number(r.properties.tagged_tracks || 0);
       taggedTracksTotal += tracks;
       artistsWithTracks++;
-      const domain = (r.properties.email || "").toLowerCase().split("@")[1];
+      const email = (r.properties.email || "").toLowerCase();
+      const domain = email.split("@")[1];
       if (!domain || isPersonalOrInternal(domain)) continue;
-      const e = dom.get(domain) ?? { domain, tracks: 0, users: 0, subscribed: 0, lastActivity: null };
+      const e = dom.get(domain) ?? { domain, email, tracks: 0, users: 0, subscribed: 0, lastActivity: null };
       e.tracks += tracks;
       e.users++;
       if (r.properties.subscribed === "true") e.subscribed++;
+      if (tracks >= (topTracks.get(domain) ?? -1)) { topTracks.set(domain, tracks); e.email = email; } // representative = top-catalog contact
       const lm = r.properties.lastmodifieddate;
       if (lm && (!e.lastActivity || lm > e.lastActivity)) e.lastActivity = lm; // ISO strings sort chronologically
       dom.set(domain, e);
