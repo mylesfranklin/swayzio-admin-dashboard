@@ -7,9 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { CopyButton } from "@/components/ui/copy-button";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { Donut } from "@/components/charts/donut";
-import { AreaTrend } from "@/components/charts/area-trend";
 import { ReacquireCard } from "@/components/hubspot/reacquire-card";
+import { TracksUploadedCard } from "@/components/hubspot/tracks-uploaded-card";
 import { BarList } from "@/components/charts/bar-list";
+import type { MonthlyUploads } from "@/server/integrations/app-tracks";
 import { formatNumber } from "@/lib/utils";
 import type { HubspotDashboard } from "@/server/integrations/hubspot-dashboard";
 
@@ -17,10 +18,12 @@ export function HubspotClient({
   data,
   error,
   payingSubscribers,
+  tracksUploaded,
 }: {
   data: HubspotDashboard | null;
   error: string | null;
   payingSubscribers: number | null;
+  tracksUploaded: MonthlyUploads[] | null;
 }) {
   if (error || !data) {
     return (
@@ -87,19 +90,16 @@ export function HubspotClient({
         </Card>
       </div>
 
-      {/* PRO donut + contact growth */}
+      {/* PRO donut + tracks uploaded */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card className="p-5">
           <h3 className="mb-2 text-sm font-medium text-ink-muted">PRO Distribution</h3>
           <p className="mb-2 text-xs text-ink-faint">{formatNumber(data.hasPro)} contacts registered</p>
           <Donut data={data.proDistribution} centerLabel="Registered" />
         </Card>
-        <Card className="p-5 lg:col-span-2">
-          <h3 className="text-sm font-medium text-ink-muted">Contact Growth</h3>
-          <p className="mt-1 text-3xl font-bold tracking-tight text-ink">{formatNumber(data.totalContacts)}</p>
-          <p className="mb-4 text-xs text-ink-faint">new contacts per month · last 12 months</p>
-          <AreaTrend data={data.growthByMonth.map((m) => ({ label: m.month, value: m.contacts }))} label="New contacts" />
-        </Card>
+        <div className="lg:col-span-2">
+          <TracksUploadedCard data={tracksUploaded} />
+        </div>
       </div>
 
       {/* Power users */}
