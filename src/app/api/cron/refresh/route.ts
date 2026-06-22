@@ -12,7 +12,7 @@ import {
   getContactGrowth,
   getPowerUsers,
   getCatalogScan,
-  getUpsellTargets,
+  getReacquireCandidates,
   getEnumDistribution,
 } from "@/server/integrations/hubspot";
 
@@ -40,7 +40,7 @@ export async function GET(req: Request) {
     ["hubspot:growth", getContactGrowth, 6 * 60 * MIN],
     ["hubspot:power-users", () => getPowerUsers(50), 30 * MIN],
     ["hubspot:catalog", () => getCatalogScan(40), 60 * MIN],
-    ["hubspot:upsell", () => getUpsellTargets(200), 30 * MIN],
+    ["hubspot:reacquire", () => getReacquireCandidates(200), 30 * MIN],
     ["hubspot:acquisition", () => getEnumDistribution("acquisition_channel"), 60 * MIN],
     ["hubspot:roles", () => getEnumDistribution("role"), 60 * MIN],
     ["hubspot:company-types", () => getEnumDistribution("company_type"), 60 * MIN],

@@ -8,7 +8,7 @@ import { CopyButton } from "@/components/ui/copy-button";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { Donut } from "@/components/charts/donut";
 import { AreaTrend } from "@/components/charts/area-trend";
-import { ColumnChart } from "@/components/charts/column-chart";
+import { ReacquireChart } from "@/components/charts/reacquire-chart";
 import { BarList } from "@/components/charts/bar-list";
 import { formatNumber } from "@/lib/utils";
 import type { HubspotDashboard } from "@/server/integrations/hubspot-dashboard";
@@ -44,26 +44,26 @@ export function HubspotClient({ data, error }: { data: HubspotDashboard | null; 
         <KpiCard title="Total Tracks" value={formatNumber(data.totalTracks)} subtitle={`${formatNumber(data.taggedTracksTotal)} tagged · ${formatNumber(data.untaggedTracksTotal)} untagged`} icon={Music} accent="brand" animationDelay={225} />
       </div>
 
-      {/* Upsell targets — engaged artists who aren't subscribed */}
+      {/* Reacquire candidates — catalog-builders who aren't subscribed, by recency */}
       <Card className="p-5">
         <div className="mb-4 flex items-start justify-between gap-4">
           <div className="flex items-start gap-2">
             <Target className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
             <div>
-              <h3 className="text-sm font-medium text-ink-muted">Upsell Targets</h3>
-              <p className="mt-1 text-3xl font-bold tracking-tight text-ink">{formatNumber(data.upsell.totalTargets)}</p>
-              <p className="text-xs text-ink-faint">artists with catalog who aren&apos;t subscribed · by catalog size</p>
+              <h3 className="text-sm font-medium text-ink-muted">Reacquire Candidates</h3>
+              <p className="mt-1 text-3xl font-bold tracking-tight text-ink">{formatNumber(data.reacquire.totalTargets)}</p>
+              <p className="text-xs text-ink-faint">artists with catalog who aren&apos;t subscribed · by last-activity month</p>
             </div>
           </div>
-          {data.upsell.emails.length > 0 && (
+          {data.reacquire.emails.length > 0 && (
             <CopyButton
-              label={`Copy top ${data.upsell.emails.length} emails`}
-              value={data.upsell.emails.join(", ")}
-              title="Copy highest-catalog upsell-target emails"
+              label={`Copy top ${data.reacquire.emails.length} emails`}
+              value={data.reacquire.emails.join(", ")}
+              title="Copy highest-catalog reacquire-candidate emails"
             />
           )}
         </div>
-        <ColumnChart data={data.upsell.buckets} label="Targets" />
+        <ReacquireChart data={data.reacquire.byMonth} />
       </Card>
 
       {/* Audience & acquisition breakdowns — ranked bar lists */}

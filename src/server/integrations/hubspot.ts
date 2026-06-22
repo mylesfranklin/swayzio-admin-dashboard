@@ -147,33 +147,34 @@ export async function getEnumDistribution(propertyName: string): Promise<Array<{
     .sort((a, b) => b.value - a.value);
 }
 
-// ── Upsell targets: artists with catalog who are NOT subscribed ──────────────
-export interface UpsellTargets {
+// ── Reacquire candidates: catalog-builders who aren't subscribed, by recency ──
+export interface ReacquireCandidates {
   totalTargets: number;
-  buckets: Array<{ label: string; value: number }>;
-  emails: string[]; // top targets by catalog size, for outreach copy-all
+  emails: string[]; // top candidates by catalog size, for outreach copy-all
+  byMonth: Array<{ month: string; candidates: number; highValue: number }>; // by last-activity month
 }
 
 const NOT_SUBSCRIBED: Filter = { propertyName: "subscribed", operator: "NEQ", value: "true" };
-const TIERS: Array<{ label: string; gte: number; lt?: number }> = [
-  { label: "1–10", gte: 1, lt: 11 },
-  { label: "11–50", gte: 11, lt: 51 },
-  { label: "51–100", gte: 51, lt: 101 },
-  { label: "101–500", gte: 101, lt: 501 },
-  { label: "501–1k", gte: 501, lt: 1001 },
-  { label: "1k+", gte: 1001 },
-];
 
-export async function getUpsellTargets(emailLimit = 200): Promise<UpsellTargets> {
+export async function getReacquireCandidates(emailLimit = 200): Promise<ReacquireCandidates> {
   const c = client();
-  const tierFilters = (t: { gte: number; lt?: number }): Filter[] => [
-    { propertyName: "tagged_tracks", operator: "GTE", value: String(t.gte) },
-    ...(t.lt ? [{ propertyName: "tagged_tracks", operator: "LT", value: String(t.lt) } as Filter] : []),
+  const now = new Date();
+  const ranges: Array<{ label: string; gte: number; lt: number }> = [];
+  for (let i = 11; i >= 0; i--) {
+    const a = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const b = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+    ranges.push({ label: monthLabel(a), gte: a.getTime(), lt: b.getTime() });
+  }
+  // candidates whose LAST activity fell in month r (recency); highValue = 50+ tracks
+  const monthFilter = (r: { gte: number; lt: number }, highValue: boolean): Filter[] => [
+    { propertyName: "tagged_tracks", operator: highValue ? "GTE" : "GT", value: highValue ? "50" : "0" },
     NOT_SUBSCRIBED,
+    { propertyName: "lastmodifieddate", operator: "BETWEEN", value: String(r.gte), highValue: String(r.lt) },
   ];
-  const [totalTargets, bucketCounts, top] = await Promise.all([
+  const [totalTargets, candidates, highValue, top] = await Promise.all([
     searchCount(c, [{ propertyName: "tagged_tracks", operator: "GT", value: "0" }, NOT_SUBSCRIBED]),
-    Promise.all(TIERS.map((t) => searchCount(c, tierFilters(t)))),
+    Promise.all(ranges.map((r) => searchCount(c, monthFilter(r, false)))),
+    Promise.all(ranges.map((r) => searchCount(c, monthFilter(r, true)))),
     search(() =>
       c.crm.contacts.searchApi.doSearch({
         filterGroups: [{ filters: [{ propertyName: "tagged_tracks", operator: "GT", value: "0" }, NOT_SUBSCRIBED] as never }],
@@ -185,8 +186,8 @@ export async function getUpsellTargets(emailLimit = 200): Promise<UpsellTargets>
   ]);
   return {
     totalTargets,
-    buckets: TIERS.map((t, i) => ({ label: t.label, value: bucketCounts[i] })),
     emails: top.results.map((r) => r.properties.email || "").filter(Boolean),
+    byMonth: ranges.map((r, i) => ({ month: r.label, candidates: candidates[i], highValue: highValue[i] })),
   };
 }
 
