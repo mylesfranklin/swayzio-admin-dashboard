@@ -55,8 +55,13 @@ Handlers + Vercel Cron. See `DECISIONS.md`.
 - [x] `vercel.json` cron (every 6h) to keep caches warm.
 - [x] **De-Replit HubSpot auth** (Replit connector → `HUBSPOT_ACCESS_TOKEN` private-app token).
 - [x] **HubSpot integration built** — `/analytics/hubspot` (music-catalog/artist CRM): KPIs, PRO
-      donut, contact-growth, power-users + companies tables w/ email copy. Real data, SWR-cached,
-      cron-warmed. See `docs/INTEGRATIONS-HUBSPOT.md`.
+      donut, reacquire/tracks-uploaded charts, power-users + companies tables w/ email copy. Real
+      data, SWR-cached, cron-warmed. See `docs/INTEGRATIONS-HUBSPOT.md`.
+- [x] **App DB wired** (read-only) — Swayzio-Core Neon via `dashboard_ro` role / `SWAYZIO_APP_DATABASE_URL`;
+      powers real "Tracks Uploaded". See memory `app-db-access`.
+- [x] **Deployed to Vercel** (swayzio team) — https://swayzio-admin-dashboard.vercel.app; all env in
+      Production, cron green, founders signing in. See memory `deployment`.
+      ⚠️ Clerk still on dev keys — prod instance needs a custom domain (e.g. admin.swayzio.com).
 - [ ] Port Kit + Mercury; replace remaining fixtures (newsletter still sample data).
 - [ ] Add HubSpot tile(s) to the main dashboard overview.
 - [ ] Stripe webhook `/api/webhooks/stripe` (raw-body verify) — when we add write paths.
