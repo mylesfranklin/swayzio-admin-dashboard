@@ -9,6 +9,7 @@ import { CompanyLogo } from "@/components/ui/company-logo";
 import { Donut } from "@/components/charts/donut";
 import { AreaTrend } from "@/components/charts/area-trend";
 import { ColumnChart } from "@/components/charts/column-chart";
+import { BarList } from "@/components/charts/bar-list";
 import { formatNumber } from "@/lib/utils";
 import type { HubspotDashboard } from "@/server/integrations/hubspot-dashboard";
 
@@ -65,19 +66,19 @@ export function HubspotClient({ data, error }: { data: HubspotDashboard | null; 
         <ColumnChart data={data.upsell.buckets} label="Targets" />
       </Card>
 
-      {/* Audience & acquisition breakdowns */}
+      {/* Audience & acquisition breakdowns — ranked bar lists */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card className="p-5">
-          <h3 className="mb-2 text-sm font-medium text-ink-muted">Acquisition Channels</h3>
-          <Donut data={data.acquisitionChannels} centerLabel="Contacts" />
+          <h3 className="mb-4 text-sm font-medium text-ink-muted">Acquisition Channels</h3>
+          <BarList data={data.acquisitionChannels} />
         </Card>
         <Card className="p-5">
-          <h3 className="mb-2 text-sm font-medium text-ink-muted">Roles</h3>
-          <Donut data={data.roleDistribution} centerLabel="Contacts" />
+          <h3 className="mb-4 text-sm font-medium text-ink-muted">Roles</h3>
+          <BarList data={data.roleDistribution} />
         </Card>
         <Card className="p-5">
-          <h3 className="mb-2 text-sm font-medium text-ink-muted">Company Types</h3>
-          <Donut data={data.companyTypeDistribution} centerLabel="Contacts" />
+          <h3 className="mb-4 text-sm font-medium text-ink-muted">Company Types</h3>
+          <BarList data={data.companyTypeDistribution} />
         </Card>
       </div>
 
