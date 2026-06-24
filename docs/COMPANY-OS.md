@@ -156,7 +156,10 @@ over `core` / `metrics` / `memory`.
   if dim ≠ 1536). Verified: provenance gate rejects sourceless facts; lexical+recency recall ranks
   correctly now — semantic recall activates on first `os:embed` with a key. **Still pending:** the
   always-on `pg_cron` maintenance lane (embedding refresh, `raw` retention, MV refresh).
-- **Phase F — Agent.** eve.dev tools over the read-mostly surface.
+- **Phase F — Agent.** Detailed implementation plan written 2026-06-24: **`docs/PHASE-F-EVE.md`**
+  (researched across eve.dev docs/GitHub/blogs; founders' analytics agent under `src/agent/`, tools
+  wrapping `api.*` + `memory.recall` read-only, Clerk-bearer channel auth, Vercel co-deploy). Starts
+  with F0 spike to confirm eve's beta API before building. Not yet implemented.
 
 ## 9. Open questions
 
