@@ -15,7 +15,8 @@
     "os:migrate": "tsx scripts/os-migrate.ts",
     "os:migrate:status": "tsx scripts/os-migrate.ts --status",
     "os:sync": "tsx scripts/os-sync.ts",
-    "os:verify": "tsx scripts/os-verify.ts"
+    "os:verify": "tsx scripts/os-verify.ts",
+    "os:embed": "tsx scripts/os-embed.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.5.7",

@@ -146,8 +146,16 @@ over `core` / `metrics` / `memory`.
   **One manual toggle remains:** Console → swayzio-os → Data API → Settings → Exposed schemas → add
   `api` → Save (default is `public`; SQL GUC is Neon-locked). Until then, server-side agents query
   `api.*` directly via the connection string.
-- **Phase E — Memory + maintenance.** `memory.*` pgvector + hybrid recall; stand up the always-on
-  `pg_cron` lane for view/embedding refresh and `raw` retention.
+- **Phase E — Memory.** ✅ Done 2026-06-24 (`db/swayzio-os/migrations/0011`). `memory.document`
+  (chunked RAG text) + `memory.fact` (provenance-gated agent memory — every row must cite
+  `provenance.source`; supersede, never overwrite), both `halfvec(1536)` + `content_tsv`, HNSW + GIN.
+  `memory.recall(query_text, query_embedding, scope, k)` = hybrid 0.55 vector + 0.30 lexical + 0.15
+  recency in one call. Provider-agnostic embed feed `src/server/os/embed.ts` + `scripts/os-embed.ts`
+  (`npm run os:embed`): chunks the OS docs into `memory.document` (38 chunks ingested) and backfills
+  embeddings when `EMBED_API_KEY` is set (OpenAI text-embedding-3-small default; swap via env, re-migrate
+  if dim ≠ 1536). Verified: provenance gate rejects sourceless facts; lexical+recency recall ranks
+  correctly now — semantic recall activates on first `os:embed` with a key. **Still pending:** the
+  always-on `pg_cron` maintenance lane (embedding refresh, `raw` retention, MV refresh).
 - **Phase F — Agent.** eve.dev tools over the read-mostly surface.
 
 ## 9. Open questions
