@@ -41,3 +41,7 @@ vite.config.ts.*
 
 # E2E harness secrets/artifacts (swayzio-admin-e2e)
 .e2e/
+
+# eve agent build artifacts
+.eve/
+.output/

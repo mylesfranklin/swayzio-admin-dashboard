@@ -1,6 +1,19 @@
 # Phase F — The eve.dev Agent on Swayzio OS
 
-**Status: proposed**
+**Status: F0 (spike) + F1 (skeleton) done on branch `phase-f-eve`; F2–F6 pending.**
+
+> **F1 done (2026-06-24):** `src/agent/` scaffolded — `agent.ts` (model `anthropic/claude-opus-4.8`),
+> `instructions.md`, self-contained `lib/os.ts` (own neon client, no cross-root import — OQ #1 sidestepped),
+> the 9 read-only tools (`stripe/hubspot/app_snapshot`, `revenue_monthly`, `top_accounts`, `identity_360`,
+> `data_dictionary`, `freshness`, `recall_memory` — lexical), `channels/eve.ts` (localDev + fail-closed
+> Clerk-founder `AuthFn`), and the `data-dictionary` skill. `next.config.ts` wrapped with
+> `withEve(nextConfig, { eveRoot: "./src/agent" })`. `eve info` (from the agent root): compile ready,
+> **0 errors, 9/9 tools + 1 skill + instructions discovered**; repo `tsc` clean.
+> Learnings: the `eve` CLI resolves its agent root from **CWD**, so `agent:info/dev/build` scripts `cd src/agent`
+> (withEve's `eveRoot` only bridges Next). `verifyOidc` requires `audiences` (strict tsc caught it; eve's own
+> compile didn't) — the Clerk `AuthFn` is env-gated on `CLERK_JWT_ISSUER`+`CLERK_JWT_AUDIENCE` and skips
+> (stays fail-closed) until set. **Next: F2** (composed analytical tools + decide their api surface),
+> **F4** (web channel route + confirm Clerk token claims / live `eve link` + chat turn), **F5** (gated `trigger_sync`).
 
 This phase puts a durable, founders-only analytics agent on top of Swayzio OS. The agent is authored as files under `src/agent/`, runs on Vercel's [eve](https://eve.dev) framework (filesystem-first, durable via the Workflow SDK / Vercel Workflow), and is embedded as a chat panel inside the existing dashboard at `admin.swayzio.com`. Its entire knowledge surface is the **same curated `api.*` views and `memory.recall()` function** the dashboard reads — wrapped as thin, **read-only** eve tools that call our existing `src/server/os/db.ts` (`osSql()`) layer. Writes/actions (e.g. triggering a sync) are a separate, explicitly-approved tool set. Auth piggybacks on Clerk via a bearer-token verifier at the eve channel boundary, so the founders-only boundary holds for the chat exactly as it does for every other dashboard route. eve co-deploys inside the same Vercel project as the Next app — no second host — consistent with our hard rules.
 

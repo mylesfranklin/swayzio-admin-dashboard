@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withEve } from "eve/next";
 
 const nextConfig: NextConfig = {
   // Pin the workspace root to this repo (a stray lockfile in $HOME otherwise
@@ -11,4 +12,6 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["stripe", "@neondatabase/serverless", "drizzle-orm"],
 };
 
-export default nextConfig;
+// Co-deploy the eve agent (src/agent/) inside this same Vercel project; eve routes
+// (/eve/v1/*) are rewritten same-origin. See docs/PHASE-F-EVE.md.
+export default withEve(nextConfig, { eveRoot: "./src/agent" });
