@@ -1,0 +1,41 @@
+name: Swayzio OS sync
+
+# The ingestion heartbeat for the company brain (docs/COMPANY-OS.md §6). External scheduler =
+# GitHub Actions because the full sweep (~6 min: Stripe subs ~156s + revenue ~118s + HubSpot ~58s)
+# exceeds Vercel's 300s function limit. Writes normalized rows into the swayzio-os Neon project.
+#
+# INERT until: (1) this is on the default branch, and (2) the secrets below are set in the repo.
+# Tune the cadence per source later by splitting into multiple jobs/schedules.
+
+on:
+  schedule:
+    - cron: "0 */6 * * *" # every 6h, matching the dashboard cache-warm cadence
+  workflow_dispatch:
+    inputs:
+      feeds:
+        description: 'Feeds to sync (space-separated: stripe hubspot app), blank = all'
+        required: false
+        default: ""
+
+concurrency:
+  group: os-sync
+  cancel-in-progress: false # never overlap runs; a long Stripe pass shouldn't be interrupted
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Sync feeds
+        env:
+          SWAYZIO_OS_DATABASE_URL: ${{ secrets.SWAYZIO_OS_DATABASE_URL }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          HUBSPOT_ACCESS_TOKEN: ${{ secrets.HUBSPOT_ACCESS_TOKEN }}
+          SWAYZIO_APP_DATABASE_URL: ${{ secrets.SWAYZIO_APP_DATABASE_URL }}
+        run: npm run os:sync ${{ github.event.inputs.feeds }}

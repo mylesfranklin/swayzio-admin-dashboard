@@ -11,13 +11,17 @@
     "check": "tsc --noEmit",
     "design:lint": "designmd lint design/swayzio.DESIGN.md",
     "design:build": "tsx scripts/build-theme.ts",
-    "design:check": "tsx scripts/build-theme.ts --check"
+    "design:check": "tsx scripts/build-theme.ts --check",
+    "os:migrate": "tsx scripts/os-migrate.ts",
+    "os:migrate:status": "tsx scripts/os-migrate.ts --status",
+    "os:sync": "tsx scripts/os-sync.ts",
+    "os:verify": "tsx scripts/os-verify.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.5.7",
     "@clerk/themes": "^2.4.57",
     "@hubspot/api-client": "^12.0.1",
-    "@neondatabase/serverless": "^0.10.4",
+    "@neondatabase/serverless": "^1.1.0",
     "apexcharts": "5.10.4",
     "clsx": "^2.1.1",
     "lucide-react": "0.577.0",
@@ -28,7 +32,7 @@
     "react-icons": "^5.4.0",
     "stripe": "^20.0.0",
     "tailwind-merge": "^2.5.4",
-    "zod": "^3.23.8"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@google/design.md": "^0.3.0",

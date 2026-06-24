@@ -4,6 +4,33 @@ Short, dated records of architectural decisions and *why*. Newest first.
 
 ---
 
+## 2026-06-23 — Swayzio OS: one Neon Postgres as the agent-native company system of record
+**Decision:** Build a **new dedicated Neon project** (`swayzio-os`) as the company brain — a single
+Postgres holding normalized, cron-fed, append-only company data designed for agent retrieval. The
+admin dashboard becomes a *reader* of it; the app itself is **not** re-architected. Full spec in
+`docs/COMPANY-OS.md`.
+**Why:** Goal is "the whole company in one DB" that maximizes agent runtime (data is pre-joined and
+pre-embedded, so agents reason instead of fetch). Neon (Databricks co.) is purpose-built for this —
+Data API (PostgREST over HTTP), pgvector, copy-on-write branching/snapshots, MCP, scale-to-zero.
+Inverts our current model: crons stop warming a JSON cache and start materializing canonical rows
+(`raw`→`core`→`metrics`, plus `memory` + `ops`), unified by a `core.identity` spine across
+Stripe/HubSpot/app-DB.
+**Locked sub-decisions:** (1) new dedicated project, not the dashboard's project; (2)
+external-scheduler-first (Vercel Cron / GitHub Actions) — because **`pg_cron` is silently skipped
+under scale-to-zero**; `pg_cron` reserved for an always-on in-DB maintenance lane later; (3) agent/
+Data-API auth reuses **Clerk via external JWKS** + RLS, not a second identity system.
+**Status:** Phases A–C live (2026-06-23) — project `swayzio-os` (`sparkling-butterfly-49751147`, PG18,
+us-east-1, autoscale 0.25→2 + scale-to-zero). Schemas + ops control plane + identity spine (A); Stripe
+ELT feed (B); HubSpot + app-DB feeds (C). **Verified live:** `metrics.stripe_daily` == live
+`getSubscriptionMetrics()` field-by-field; identity spine = 11,332 identities, 5,417 spanning >1 source
+(5,480 subs · 9,088 contacts · 5,668 app customers). Feeds: `src/server/os/feeds/*` via
+`npm run os:sync`; scheduled writer `.github/workflows/os-sync.yml` (inert until committed + secrets).
+Phases D–F (Data API surface, memory/pgvector, eve.dev agent) pending. Greenfield deps:
+`@neondatabase/serverless`→1.x, `zod`→4 at root (was unused; no `zod/v4` subpath). Dashboard deps
+(TS6/Stripe22/lucide1) intentionally untouched.
+
+---
+
 ## 2026-06-20 — Drop Drizzle ORM; talk to Neon directly (supersedes "Keep Neon + Drizzle")
 **Decision:** Use the **Neon serverless driver** (`@neondatabase/serverless`) with plain SQL +
 a hand-written migration file. Remove `drizzle-orm`, `drizzle-kit`, `drizzle-zod`. Keep **Neon** as
