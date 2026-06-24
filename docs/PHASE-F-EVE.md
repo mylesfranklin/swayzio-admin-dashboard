@@ -24,6 +24,29 @@ eve framework facts are cited inline as **[research: <topic>]**.
 
 ---
 
+## 0.5 F0 spike findings — confirmed against `eve@0.13.3` (2026-06-24)
+
+Installed `eve@0.13.3` ("Filesystem-first framework for durable backend AI agents that run anywhere", github.com/vercel/eve) on branch `phase-f-eve` and read the bundled docs at `node_modules/eve/docs/*`. Results:
+
+**CONFIRMED (plan was right):**
+- `defineAgent({ model: "anthropic/claude-opus-4.8" })` from `eve` — gateway string is the documented form. `eve link` pulls Vercel **AI Gateway** credentials, so no separate Anthropic key is needed once linked.
+- `defineTool({ description, inputSchema: z.object(...), needsApproval?, async execute(input, ctx) })` from `eve/tools`. Tool name = filename (snake_case); no `name` field. `needsApproval: always()/once()/never()` (or a `({toolInput})=>boolean` predicate) from `eve/tools/approval`; omitted = `never()`. Replay-safety rationale documented (gate non-idempotent work behind `always()`). **Our entire tool/approval design holds.**
+- Channel auth lives on `eveChannel({ auth: [AuthFn...] })` (`eve/channels/eve`) as an **ordered walk**, fail-closed. Protected routes: `POST /eve/v1/session`, `POST /eve/v1/session/:id`, `GET /eve/v1/session/:id/stream`; `GET /eve/v1/health` is always public. `ctx.session.auth.current` carries the principal into tools.
+- Connections: `defineMcpClientConnection` / `defineOpenAPIConnection` (`eve/connections`); OAuth via `connect()` from `@vercel/connect/eve`.
+- `useEveAgent` from `eve/react`; `eve/next` is the bundler plugin (withEve); `evals/` is a sibling of `agent/`. `lib/` is **import-only, never mounted** into the sandbox (only `skills/` + `sandbox/workspace/**` reach it).
+- CLI: `init`, `link`, `deploy`, `build`, `start`, `dev`, `info`, `eval`.
+
+**CORRECTED:**
+- §5.2 — the auth helpers are `localDev / vercelOidc / none / httpBasic / jwtHmac / jwtEcdsa / oidc` (`eve/channels/auth`), with low-level verifiers `verifyOidc(token, {issuer, audiences, discoveryUrl})` etc. **Clerk = a custom `AuthFn`** in the walk: `extractBearerToken(req)` → `verifyOidc`/`oidc()` against the Clerk issuer → enforce the founder allowlist (`isFounder`) → `throw new ForbiddenError(...)` for non-founders, `return null` to skip, return a `SessionAuthContext` to accept. `eve init` scaffolds `placeholderAuth()` which **must** be replaced.
+- §1/§10 — `eve init src/agent` **fails** (treats the target as a project name; rejects `/`). Hand-create `src/agent/` (per §1) or run `eve init` at the app root. Note `eve init --channel-web-nextjs` scaffolds a Next.js Web Chat app — evaluate it for §5.
+
+**STILL TO VERIFY IN F1 (build-time):**
+- Cross-root import `src/agent/lib → ../../server/os/*.js` bundles into the Vercel output (use the `.js` NodeNext extension; watch issue #92). Fallback: physically local bridge importing `@neondatabase/serverless` under `src/agent/lib`.
+- Whether the default Clerk session token carries `email`/`role` or needs a JWT template; the exact Clerk OIDC `issuer`/`discoveryUrl` for `oidc()`.
+- `withEve({ eveRoot: "./src/agent" })` config shape + Next 16 Turbopack compatibility.
+
+---
+
 ## 1. Project layout: eve under `src/agent/` coexisting with the Next app
 
 eve is filesystem-first: a file's location is its identity, no registry **[research: core-architecture, github-and-examples]**. We adopt the **nested layout** with the agent root at `src/agent/`, and wrap `next.config.ts` with `withEve()` pointing `eveRoot` at it. `withEve` co-deploys the eve runtime inside the same Vercel project and rewrites `/eve/v1/*` to it same-origin, so the browser never crosses CORS **[research: channels-and-ui]**.
