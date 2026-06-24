@@ -135,8 +135,17 @@ over `core` / `metrics` / `memory`.
   **Live spine: 11,332 identities, 5,417 spanning >1 source.** Orchestrated by `scripts/os-sync.ts`
   (`npm run os:sync`); scheduled via `.github/workflows/os-sync.yml` (every 6h; inert until committed +
   secrets set — the full sweep is ~6 min, past Vercel's 300s limit, hence GitHub Actions).
-- **Phase D — Retrieval surface.** Enable Neon Data API with Clerk JWKS + RLS; ship allow-listed
-  agent views + `ops.data_dictionary`.
+- **Phase D — Retrieval surface.** ✅ Done 2026-06-24. Curated read-only `api` schema
+  (`db/swayzio-os/migrations/0009`): `identity_360` (one row/person unified across Stripe+HubSpot+app —
+  3,137 people in all three), `top_accounts`, `{stripe,hubspot,app}_snapshot`, `revenue_monthly`,
+  `data_dictionary`, `freshness`. **Neon Data API provisioned** on branch `br-red-bonus-ahrx5hez`,
+  URL `https://ep-falling-mud-ahxdrkqh.apirest.c-3.us-east-1.aws.neon.tech/neondb/rest/v1`, external
+  auth = **Clerk JWKS** (dev instance `immune-primate-92.clerk.accounts.dev`; swap to prod JWKS via
+  `POST /projects/{id}/jwks` when prod Clerk has a custom domain). Grants (`0010`): `authenticated`
+  has USAGE+SELECT on `api`; `anonymous` none. Verified live: endpoint rejects invalid JWTs.
+  **One manual toggle remains:** Console → swayzio-os → Data API → Settings → Exposed schemas → add
+  `api` → Save (default is `public`; SQL GUC is Neon-locked). Until then, server-side agents query
+  `api.*` directly via the connection string.
 - **Phase E — Memory + maintenance.** `memory.*` pgvector + hybrid recall; stand up the always-on
   `pg_cron` lane for view/embedding refresh and `raw` retention.
 - **Phase F — Agent.** eve.dev tools over the read-mostly surface.
