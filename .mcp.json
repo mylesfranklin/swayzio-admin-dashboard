@@ -6,6 +6,10 @@
       "env": {
         "STRIPE_SECRET_KEY": "${STRIPE_SECRET_KEY}"
       }
+    },
+    "supermemory": {
+      "type": "http",
+      "url": "https://mcp.supermemory.ai/mcp"
     }
   }
 }
