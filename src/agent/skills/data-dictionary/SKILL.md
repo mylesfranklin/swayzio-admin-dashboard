@@ -16,15 +16,20 @@ You read it through curated `api.*` views (exposed as tools). You never touch ra
 ## Tool → question map
 | Question | Tool |
 |---|---|
+| Revenue health, cash vs MRR, are we healthy | `revenue_health` |
 | MRR, active/paying subs, churn, collection rate | `stripe_snapshot` |
 | Contacts, artists, subscribed, catalog totals | `hubspot_snapshot` |
 | Billing customers, track owners, live tracks | `app_snapshot` |
-| Revenue over time | `revenue_monthly` (collected, 12mo) |
+| MRR / revenue trend over time | `mrr_trend` |
+| Collected revenue by month | `revenue_monthly` (12mo) |
 | Who is X / cohort of people | `identity_360` |
-| Biggest accounts | `top_accounts` |
+| Biggest accounts / people | `top_accounts` |
+| Biggest labels / distributors / companies | `company_catalog` |
 | A definition / architecture / past lesson | `recall_memory` |
 | What data exists / field meaning | `data_dictionary` |
 | Is the data current? | `freshness` |
+
+Every metric tool returns a `summary` (plain-English headline) — lead with it.
 
 ## Definitions (say it this way)
 - **MRR** — USD booked monthly run-rate from *active* subscriptions at list price. Not cash.

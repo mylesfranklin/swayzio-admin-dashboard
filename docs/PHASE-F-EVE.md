@@ -1,6 +1,17 @@
 # Phase F — The eve.dev Agent on Swayzio OS
 
-**Status: F0 (spike) + F1 (skeleton) done on branch `phase-f-eve`; F2–F6 pending.**
+**Status: F0–F2 done on branch `phase-f-eve`; F4–F6 pending.**
+
+> **F2 done (2026-06-24):** composed analytical tools + a readability layer. New views (migration 0012):
+> `api.stripe_trend` (daily MRR/subs/collection series) and `api.companies` (labels/distributors by catalog).
+> New tools: **`revenue_health`** (the flagship — booked MRR vs collected, collection rate, void-invoice gap,
+> at-risk MRR, in one sentence), **`mrr_trend`**, **`company_catalog`**. Readability: `src/agent/lib/format.ts`
+> (`usd/pct/int/num/coerceNumbers`) and every metric tool now returns a plain-English `summary` + coerced
+> numbers (the Neon driver returns numerics as strings). 12 tools total; `eve info` ready, repo `tsc` clean.
+> Smoke-tested live — e.g. revenue_health: *"Booked MRR $34,622/mo, but only $9,375 collected last full month
+> — collection rate 27.1%; 2,232 active subs carry void invoices."* **`churned_accounts` deferred:** the feed
+> only loads non-canceled subs, so churned accounts aren't in `core` yet — needs a data change (load canceled
+> subs or read Stripe events), tracked for a later phase. **Next: F4** (web channel route + Clerk + live turn), **F5** (gated `trigger_sync`).
 
 > **F1 done (2026-06-24):** `src/agent/` scaffolded — `agent.ts` (model `anthropic/claude-opus-4.8`),
 > `instructions.md`, self-contained `lib/os.ts` (own neon client, no cross-root import — OQ #1 sidestepped),
