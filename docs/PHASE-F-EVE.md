@@ -1,27 +1,26 @@
 # Phase F — The eve.dev Agent on Swayzio OS
 
-**Status: F0–F2 + F4 (UI) done on branch `phase-f-eve`; live smoke + F5–F6 pending.**
+**Status: F0–F2 + F4 done on branch `phase-f-eve`; live smoke (Myles) + F5–F6 pending.**
 
-> **F4 done (2026-06-24, UI):** embedded chat route. `src/app/(dashboard)/agent/page.tsx` +
+> **F4 done (2026-06-24):** embedded chat route. `src/app/(dashboard)/agent/page.tsx` +
 > `src/components/agent/agent-chat.tsx` (`useEveAgent` from `eve/react`, Clerk bearer via
 > `auth.bearer = getToken()`, themed to the Linear dark UI — message stream, tool-call chips, suggested
-> prompts, streaming/stop/error). "Ask the OS" added to the sidebar. eve routes mount same-origin via
-> `withEve`. Repo `tsc` clean.
+> prompts, streaming/stop/error). "Ask the OS" added to the sidebar. eve routes mount same-origin via `withEve`.
 >
-> **Live smoke BLOCKED — open item:** `eve link` (pull AI Gateway creds) reports *"No eve agent in this
-> directory"* from both the repo root and `src/agent`, even though `eve info` resolves the agent fine from
-> `src/agent`. The standalone `eve` CLI's project detection for `link`/`dev`/`deploy` expects a conventionally
-> **scaffolded** project (a `package.json` in the agent dir, which `eve init` creates) — our flat `src/agent`
-> (chosen for the nested-via-`eveRoot` layout) lacks it. **DECISION NEEDED:** either (a) add a minimal
-> `package.json` (name `swayzio-os-agent`, eve dep) under `src/agent` so the CLI recognizes it, or (b) relocate
-> the agent to a conventional location the CLI + `withEve` default agree on. Confirm before live-running, since
-> `eve link` provisions AI Gateway on the prod Vercel project and a turn bills tokens.
+> **Layout resolved — agent relocated `src/agent/` → `agent/` (repo root).** Root cause: eve's agent-scoped
+> CLI commands (`link`/`deploy`/`channels`) gate on `isEveProject(cwd)`, which stats **`<cwd>/agent/agent.ts`**
+> at a real project root (the dir with `package.json` + `.vercel`) — *not* a `package.json` marker as first
+> assumed, and `eve info`/`dev` use a looser check that accepted the flat `src/agent`. Only the repo root
+> qualifies, so the agent now lives at `agent/`. `next.config.ts` → `withEve(nextConfig)` (default `agent/`,
+> no `eveRoot`); `agent:info/dev/build` scripts run from the repo root; `tsconfig` includes `agent/**`.
+> Verified from the repo root: `eve info` → **nested layout, compile ready, 0 errors, 12 tools + skill +
+> instructions**; repo `tsc` clean; `agent/agent.ts` present so `eve link` detection passes.
 >
-> **Live-smoke recipe (run by Myles once the layout is settled):**
+> **Live-smoke recipe (run by Myles — `eve link` provisions AI Gateway on the prod Vercel project, a turn bills tokens):**
 > ```bash
-> cd src/agent && eve link        # links to Vercel + pulls AI Gateway creds (anthropic/claude-opus-4.8)
-> cd ../.. && npm run dev          # next dev + eve dev via withEve, same origin
-> # open http://localhost:3000/agent  → ask "How's our revenue health?"
+> eve link            # from the repo root — links to Vercel + pulls AI Gateway creds (anthropic/claude-opus-4.8)
+> npm run dev         # next dev + eve dev via withEve, same origin
+> # open http://localhost:3000/agent → ask "How's our revenue health?"
 > ```
 
 > **F2 done (2026-06-24):** composed analytical tools + a readability layer. New views (migration 0012):

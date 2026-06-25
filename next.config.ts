@@ -12,6 +12,6 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["stripe", "@neondatabase/serverless", "drizzle-orm"],
 };
 
-// Co-deploy the eve agent (src/agent/) inside this same Vercel project; eve routes
+// Co-deploy the eve agent (agent/) inside this same Vercel project; eve routes
 // (/eve/v1/*) are rewritten same-origin. See docs/PHASE-F-EVE.md.
-export default withEve(nextConfig, { eveRoot: "./src/agent" });
+export default withEve(nextConfig);
