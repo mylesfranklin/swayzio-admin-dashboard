@@ -1,6 +1,15 @@
 # Phase F — The eve.dev Agent on Swayzio OS
 
-**Status: F0–F2 + F4 done on branch `phase-f-eve`; live smoke (Myles) + F5–F6 pending.**
+**Status: F0–F2 + F4 + F5 done on branch `phase-f-eve`; live smoke (Myles) + F6 (deploy) pending.**
+
+> **F5 done (2026-06-24):** the one gated write tool. `agent/tools/trigger_sync.ts` —
+> `needsApproval: always()` (from `eve/tools/approval`); it does **not** touch the DB, it dispatches the
+> existing GitHub Actions sync workflow (`.github/workflows/os-sync.yml`) via the API, so the agent stays
+> read-only over data and the only side-effect is kicking the pipeline, behind human approval. Fail-closed
+> without `SYNC_DISPATCH_TOKEN` (GitHub `actions:write`). Approve/deny **HITL UI** added to the chat
+> (`agent-chat.tsx` reads `part.toolMetadata.eve.inputRequest`, answers via `send({ inputResponses })`).
+> `.env.example` documents the new agent envs (EMBED_API_KEY, CLERK_JWT_ISSUER/AUDIENCE, SYNC_DISPATCH_TOKEN/SYNC_REPO).
+> 13 tools; `eve info` ready, repo `tsc` clean.
 
 > **F4 done (2026-06-24):** embedded chat route. `src/app/(dashboard)/agent/page.tsx` +
 > `src/components/agent/agent-chat.tsx` (`useEveAgent` from `eve/react`, Clerk bearer via

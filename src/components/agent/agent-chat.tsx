@@ -12,10 +12,16 @@ const SUGGESTIONS = [
   "Is the data fresh right now?",
 ];
 
+interface InputRequest {
+  requestId: string;
+  prompt?: string;
+  options?: { optionId: string; label?: string }[];
+}
 interface MessagePart {
   type: string;
   text?: string;
   toolName?: string;
+  toolMetadata?: { eve?: { inputRequest?: InputRequest } };
 }
 interface Message {
   id: string;
@@ -32,6 +38,13 @@ export function AgentChat() {
 
   const messages = agent.data.messages as unknown as Message[];
   const isBusy = agent.status === "submitted" || agent.status === "streaming";
+
+  // Human-in-the-loop: a pending approval/question rides on the latest message.
+  const pending: InputRequest | undefined = (messages.at(-1)?.parts ?? [])
+    .map((p) => p.toolMetadata?.eve?.inputRequest)
+    .find(Boolean);
+  const answer = (optionId: string) =>
+    pending && void agent.send({ inputResponses: [{ requestId: pending.requestId, optionId }] });
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -116,6 +129,36 @@ export function AgentChat() {
           </div>
         )}
       </div>
+
+      {/* human-in-the-loop approval / question */}
+      {pending && (
+        <div className="border-t border-line bg-warning/5 p-3">
+          <p className="mb-2 text-xs text-ink-muted">
+            {pending.prompt ?? "The agent wants to take an action. Approve?"}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {(pending.options ?? [
+              { optionId: "approve", label: "Approve" },
+              { optionId: "deny", label: "Deny" },
+            ]).map((opt) => {
+              const isPositive = /approve|yes|allow|confirm/i.test(`${opt.optionId} ${opt.label ?? ""}`);
+              return (
+                <button
+                  key={opt.optionId}
+                  onClick={() => answer(opt.optionId)}
+                  className={
+                    isPositive
+                      ? "inline-flex h-8 items-center rounded-field bg-brand px-3 text-xs font-medium text-white hover:bg-brand-hover"
+                      : "inline-flex h-8 items-center rounded-field border border-line px-3 text-xs text-ink-muted hover:text-ink"
+                  }
+                >
+                  {opt.label ?? opt.optionId}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* composer */}
       <form

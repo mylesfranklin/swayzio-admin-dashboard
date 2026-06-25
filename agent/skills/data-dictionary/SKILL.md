@@ -28,6 +28,7 @@ You read it through curated `api.*` views (exposed as tools). You never touch ra
 | A definition / architecture / past lesson | `recall_memory` |
 | What data exists / field meaning | `data_dictionary` |
 | Is the data current? | `freshness` |
+| Refresh / re-sync the data (needs approval) | `trigger_sync` |
 
 Every metric tool returns a `summary` (plain-English headline) — lead with it.
 
