@@ -14,8 +14,16 @@ export default defineTool({
   }),
   async execute({ query, scope, k }) {
     // Hybrid recall: embed the query server-side (AI Gateway via OIDC, or an explicit key);
-    // falls back to lexical+recency (NULL embedding) when no credential is available.
-    const vec = hasEmbedKey() ? (await embed([query]))[0] : null;
+    // falls back to lexical+recency (NULL embedding) when no credential is available —
+    // or when embedding fails (e.g. expired local OIDC token): degrade, don't fail recall.
+    let vec: number[] | null = null;
+    if (hasEmbedKey()) {
+      try {
+        vec = (await embed([query]))[0] ?? null;
+      } catch {
+        vec = null;
+      }
+    }
     const rows = (await osSql()`
       SELECT kind, content, round(score::numeric, 3) AS score
       FROM memory.recall(${query}, ${vec ? toVectorLiteral(vec) : null}::halfvec(1536), ${scope ?? null}, ${k})

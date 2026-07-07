@@ -170,6 +170,7 @@ export function AgentChat() {
         className="flex items-center gap-2 border-t border-line p-3"
         onSubmit={(e) => {
           e.preventDefault();
+          if (isBusy) return; // Enter mid-stream: don't send AND don't clear what they typed
           const form = new FormData(e.currentTarget);
           ask(String(form.get("message") ?? ""));
           e.currentTarget.reset();
