@@ -54,6 +54,9 @@ export function AgentChat() {
   }, [messages, agent.status]);
 
   const ask = (message: string) => {
+    // Enter still submits the form while streaming (the button turns into Stop) — never
+    // send a second message into an active turn.
+    if (isBusy) return;
     if (message.trim()) void agent.send({ message: message.trim() });
   };
 

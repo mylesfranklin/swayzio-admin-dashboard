@@ -26,9 +26,17 @@ export default defineTool({
     }
 
     let revLine = "";
-    if (monthly.length >= 2) {
-      const lastFull = num(monthly[monthly.length - 2].revenue);
-      const prior = num(monthly[monthly.length - 3]?.revenue);
+    // Date-aware, not positional: the view currently ends with a partial current-month
+    // row, but don't assume it — drop the current month explicitly, then take the last two.
+    // month_start is a Date (driver parses `date` at local midnight) or a 'YYYY-MM-DD' string.
+    const ym = (v: unknown): string =>
+      v instanceof Date
+        ? `${v.getFullYear()}-${String(v.getMonth() + 1).padStart(2, "0")}`
+        : String(v).slice(0, 7);
+    const fullMonths = monthly.filter((m) => ym(m.month_start) !== ym(new Date()));
+    if (fullMonths.length >= 1) {
+      const lastFull = num(fullMonths[fullMonths.length - 1].revenue);
+      const prior = num(fullMonths[fullMonths.length - 2]?.revenue);
       revLine =
         prior != null
           ? ` Collected revenue last full month ${usd(lastFull)} vs ${usd(prior)} the month before.`

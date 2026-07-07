@@ -17,18 +17,21 @@ export default defineTool({
     "`freshness` shows it's stale. This is a WRITE/action: it requires approval and runs in the background " +
     "(~6 min); it does not block. After dispatching, tell the user to re-check in a few minutes.",
   inputSchema: z.object({
+    // Strict enum — this string reaches a GitHub Actions dispatch input, so it must never
+    // carry model-authored free text (Codex P1: the workflow shell would execute it).
     feeds: z
-      .string()
+      .array(z.enum(["stripe", "hubspot", "app"]))
       .optional()
-      .describe("space-separated feeds to sync: stripe, hubspot, app. Blank = all feeds."),
+      .describe("which feeds to sync; omit for all feeds."),
   }),
   approval: always(),
-  async execute({ feeds }) {
+  async execute({ feeds: feedList }) {
     const token = process.env.SYNC_DISPATCH_TOKEN ?? process.env.GITHUB_TOKEN;
     const repo = process.env.SYNC_REPO ?? "mylesfranklin/swayzio-admin-dashboard";
     if (!token) {
       return { error: "Sync dispatch is not configured (SYNC_DISPATCH_TOKEN missing). Ask an admin to set it." };
     }
+    const feeds = feedList?.length ? feedList.join(" ") : undefined;
 
     const res = await fetch(`https://api.github.com/repos/${repo}/actions/workflows/os-sync.yml/dispatches`, {
       method: "POST",

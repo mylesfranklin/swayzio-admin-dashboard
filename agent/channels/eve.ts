@@ -1,5 +1,12 @@
 import { eveChannel } from "eve/channels/eve";
-import { localDev, verifyOidc, extractBearerToken, ForbiddenError, type AuthFn } from "eve/channels/auth";
+import {
+  localDev,
+  verifyOidc,
+  extractBearerToken,
+  ForbiddenError,
+  UnauthenticatedError,
+  type AuthFn,
+} from "eve/channels/auth";
 
 /**
  * Route auth for the agent's HTTP channel — the security boundary (hard rule #5).
@@ -24,8 +31,16 @@ function clerkFounder(): AuthFn<Request> {
     .filter(Boolean);
 
   return async (request) => {
+    if (!issuer || !audience) {
+      // On a deployed host, missing Clerk config must fail CLOSED — skipping here would
+      // leave hostname-trusting localDev() as the only gate. Locally, skip so `eve dev` works.
+      if (process.env.VERCEL) {
+        throw new UnauthenticatedError({ message: "Agent auth is not configured (CLERK_JWT_ISSUER/AUDIENCE)." });
+      }
+      return null;
+    }
     const token = extractBearerToken(request.headers.get("authorization"));
-    if (!token || !issuer || !audience) return null; // not configured → skip (stays fail-closed)
+    if (!token) return null;
 
     // verifyOidc throws on malformed/unparseable tokens (not just {ok:false}) — treat
     // any verification failure as "not ours", never a 500.
