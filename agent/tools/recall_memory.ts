@@ -1,6 +1,6 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-import { osSql } from "../lib/os.js";
+import { osSql, embed, hasEmbedKey, toVectorLiteral } from "../lib/os.js";
 
 export default defineTool({
   description:
@@ -13,12 +13,13 @@ export default defineTool({
     k: z.number().int().min(1).max(20).default(8),
   }),
   async execute({ query, scope, k }) {
-    // Lexical + recency path (query_embedding = NULL). Semantic recall activates once the
-    // query is embedded server-side — a follow-up once EMBED_API_KEY is wired into the agent.
+    // Hybrid recall: embed the query server-side (AI Gateway via OIDC, or an explicit key);
+    // falls back to lexical+recency (NULL embedding) when no credential is available.
+    const vec = hasEmbedKey() ? (await embed([query]))[0] : null;
     const rows = (await osSql()`
       SELECT kind, content, round(score::numeric, 3) AS score
-      FROM memory.recall(${query}, NULL, ${scope ?? null}, ${k})
+      FROM memory.recall(${query}, ${vec ? toVectorLiteral(vec) : null}::halfvec(1536), ${scope ?? null}, ${k})
     `) as Record<string, unknown>[];
-    return { results: rows };
+    return { results: rows, semantic: vec !== null };
   },
 });

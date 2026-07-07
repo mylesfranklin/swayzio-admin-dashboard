@@ -12,7 +12,7 @@ try { process.loadEnvFile(".env.local"); } catch { /* ambient env */ }
 
 import { readFile } from "node:fs/promises";
 import { osSql } from "@/server/os/db";
-import { embed, hasEmbedKey, toVectorLiteral, EMBED_MODEL, EMBED_DIM } from "@/server/os/embed";
+import { embed, hasEmbedKey, toVectorLiteral, embedModel, EMBED_DIM } from "@/server/os/embed";
 
 const DOCS = ["docs/COMPANY-OS.md", "docs/DECISIONS.md", "docs/ARCHITECTURE.md", "db/swayzio-os/README.md"];
 const ingestDocs = !process.argv.includes("--no-docs");
@@ -60,7 +60,7 @@ if (!hasEmbedKey()) {
   process.exit(0);
 }
 
-console.log(`\nEmbedding ${pending} rows with ${EMBED_MODEL} (dim ${EMBED_DIM})…`);
+console.log(`\nEmbedding ${pending} rows with ${embedModel()} (dim ${EMBED_DIM})…`);
 
 async function embedRows(rows: { id: string; content: string }[], label: string,
   update: (id: string, lit: string) => Promise<unknown>) {
@@ -75,11 +75,11 @@ async function embedRows(rows: { id: string; content: string }[], label: string,
 await embedRows(
   (await sql`SELECT id, content FROM memory.document WHERE embedding IS NULL`) as { id: string; content: string }[],
   "document",
-  (id, lit) => sql`UPDATE memory.document SET embedding = ${lit}::halfvec(1536), model = ${EMBED_MODEL} WHERE id = ${id}`,
+  (id, lit) => sql`UPDATE memory.document SET embedding = ${lit}::halfvec(1536), model = ${embedModel()} WHERE id = ${id}`,
 );
 await embedRows(
   (await sql`SELECT id, content FROM memory.fact WHERE embedding IS NULL`) as { id: string; content: string }[],
   "fact",
-  (id, lit) => sql`UPDATE memory.fact SET embedding = ${lit}::halfvec(1536), model = ${EMBED_MODEL} WHERE id = ${id}`,
+  (id, lit) => sql`UPDATE memory.fact SET embedding = ${lit}::halfvec(1536), model = ${embedModel()} WHERE id = ${id}`,
 );
 console.log("✓ embeddings backfilled — semantic recall active.");
