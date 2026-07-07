@@ -1,9 +1,17 @@
 # Phase F — The eve.dev Agent on Swayzio OS
 
-**Status: F0–F2 + F4 + F5 done on branch `phase-f-eve`; live smoke (Myles) + F6 (deploy) pending.**
+**Status: F0–F2 + F4 + F5 done on branch `phase-f-eve`; F3 (os_agent_ro) + F6 (deploy) pending.**
+
+> **2026-07-07 update:** upgraded **eve 0.13.3 → 0.19.0** (pinned exact; `ai` bumped to stable 7). The one
+> breaking change that touched us: **0.14.0 removed `needsApproval`** — the field is now **`approval`**
+> (`trigger_sync.ts` updated; normative examples below renamed). Model switched **Opus 4.8 → `anthropic/claude-sonnet-5`**
+> (founder preference; also eve's scaffold default since 0.17.2). Auth walk reordered to `[clerkFounder(), localDev()]`
+> per 0.19 docs (custom providers first; localDev is the final fallback). `"/eve/v1(.*)"` added to `isPublicRoute`
+> in `src/proxy.ts` (the matcher was catching eve routes; the channel `AuthFn` is the single boundary).
+> This doc was also re-verified against the repo + live 0.19 docs — resolved open questions marked **RESOLVED** inline.
 
 > **F5 done (2026-06-24):** the one gated write tool. `agent/tools/trigger_sync.ts` —
-> `needsApproval: always()` (from `eve/tools/approval`); it does **not** touch the DB, it dispatches the
+> `approval: always()` (from `eve/tools/approval`); it does **not** touch the DB, it dispatches the
 > existing GitHub Actions sync workflow (`.github/workflows/os-sync.yml`) via the API, so the agent stays
 > read-only over data and the only side-effect is kicking the pipeline, behind human approval. Fail-closed
 > without `SYNC_DISPATCH_TOKEN` (GitHub `actions:write`). Approve/deny **HITL UI** added to the chat
@@ -27,7 +35,7 @@
 >
 > **Live-smoke recipe (run by Myles — `eve link` provisions AI Gateway on the prod Vercel project, a turn bills tokens):**
 > ```bash
-> eve link            # from the repo root — links to Vercel + pulls AI Gateway creds (anthropic/claude-opus-4.8)
+> eve link            # from the repo root — links to Vercel + pulls AI Gateway creds (anthropic/claude-sonnet-5)
 > npm run dev         # next dev + eve dev via withEve, same origin
 > # open http://localhost:3000/agent → ask "How's our revenue health?"
 > ```
@@ -58,7 +66,7 @@
 
 This phase puts a durable, founders-only analytics agent on top of Swayzio OS. The agent is authored as files under `src/agent/`, runs on Vercel's [eve](https://eve.dev) framework (filesystem-first, durable via the Workflow SDK / Vercel Workflow), and is embedded as a chat panel inside the existing dashboard at `admin.swayzio.com`. Its entire knowledge surface is the **same curated `api.*` views and `memory.recall()` function** the dashboard reads — wrapped as thin, **read-only** eve tools that call our existing `src/server/os/db.ts` (`osSql()`) layer. Writes/actions (e.g. triggering a sync) are a separate, explicitly-approved tool set. Auth piggybacks on Clerk via a bearer-token verifier at the eve channel boundary, so the founders-only boundary holds for the chat exactly as it does for every other dashboard route. eve co-deploys inside the same Vercel project as the Next app — no second host — consistent with our hard rules.
 
-> **Beta caveat.** eve is in public beta (launched 2026-06-17), sub-1.0, and changing daily (research saw `0.11.8` → `0.13.3` within days; `0.13.0` was a breaking change that removed the top-level `auth` field from `defineTool`). Pin a version, read the docs eve bundles at `node_modules/eve/docs`, and treat every API shape below as **verify-on-install**. Items the research could not confirm are marked **OPEN QUESTION** — confirm against the installed version before building, do not invent.
+> **Beta caveat.** eve is in public beta (launched 2026-06-17), sub-1.0, and changing daily (research saw `0.11.8` → `0.13.3` within days; `0.13.0` removed the top-level `auth` field from `defineTool`; `0.14.0` renamed `needsApproval` → **`approval`** with no adapter left; we're now pinned at `0.19.0`). Pin a version, read the docs eve bundles at `node_modules/eve/docs` (+ `node_modules/eve/CHANGELOG.md`), and treat every API shape below as **verify-on-install**. Items the research could not confirm are marked **OPEN QUESTION** — confirm against the installed version before building, do not invent.
 
 ---
 
@@ -84,7 +92,7 @@ Installed `eve@0.13.3` ("Filesystem-first framework for durable backend AI agent
 
 **CONFIRMED (plan was right):**
 - `defineAgent({ model: "anthropic/claude-opus-4.8" })` from `eve` — gateway string is the documented form. `eve link` pulls Vercel **AI Gateway** credentials, so no separate Anthropic key is needed once linked.
-- `defineTool({ description, inputSchema: z.object(...), needsApproval?, async execute(input, ctx) })` from `eve/tools`. Tool name = filename (snake_case); no `name` field. `needsApproval: always()/once()/never()` (or a `({toolInput})=>boolean` predicate) from `eve/tools/approval`; omitted = `never()`. Replay-safety rationale documented (gate non-idempotent work behind `always()`). **Our entire tool/approval design holds.**
+- `defineTool({ description, inputSchema: z.object(...), needsApproval?, async execute(input, ctx) })` from `eve/tools`. Tool name = filename (snake_case); no `name` field. `approval: always()/once()/never()` (or a `({toolInput})=>boolean` predicate) from `eve/tools/approval`; omitted = `never()`. Replay-safety rationale documented (gate non-idempotent work behind `always()`). **Our entire tool/approval design holds.** *(Historical: `0.14.0` renamed the field to `approval` — code updated 2026-07-07.)*
 - Channel auth lives on `eveChannel({ auth: [AuthFn...] })` (`eve/channels/eve`) as an **ordered walk**, fail-closed. Protected routes: `POST /eve/v1/session`, `POST /eve/v1/session/:id`, `GET /eve/v1/session/:id/stream`; `GET /eve/v1/health` is always public. `ctx.session.auth.current` carries the principal into tools.
 - Connections: `defineMcpClientConnection` / `defineOpenAPIConnection` (`eve/connections`); OAuth via `connect()` from `@vercel/connect/eve`.
 - `useEveAgent` from `eve/react`; `eve/next` is the bundler plugin (withEve); `evals/` is a sibling of `agent/`. `lib/` is **import-only, never mounted** into the sandbox (only `skills/` + `sandbox/workspace/**` reach it).
@@ -129,7 +137,7 @@ src/
 │   │   ├── recall_memory.ts
 │   │   ├── mrr_trend.ts         # composed analytical tool
 │   │   ├── churned_accounts.ts  # composed analytical tool
-│   │   └── trigger_sync.ts      # WRITE/action tool, needsApproval: always()
+│   │   └── trigger_sync.ts      # WRITE/action tool, approval: always()
 │   ├── skills/
 │   │   └── data-dictionary/SKILL.md   # how to read the OS, definitions of MRR/churn
 │   └── schedules/
@@ -174,7 +182,7 @@ import { z } from "zod";
 import { osSql } from "../lib/os.js";
 
 export default defineTool({
-  needsApproval: never(),
+  approval: never(),
   description:
     "Look up unified people from api.identity_360 (one row per person across Stripe+HubSpot+app: email, mrr, active_subs, tagged_tracks, pro, in_stripe/in_hubspot/in_app). Filter by email or paginate the top by MRR.",
   inputSchema: z.object({
@@ -211,6 +219,8 @@ The remaining view tools follow the identical shape; signatures (inputSchema →
 
 For `{}`-input tools, `inputSchema: z.object({})` is required (eve requires `inputSchema`; pass empty object for no input) **[research: tools-and-skills]**.
 
+Note on `revenue_monthly`: the view (`0009_api_views.sql`) is ordered **ascending** by `month_start` with no cap — the tool must apply its own `ORDER BY month_start DESC LIMIT ${months}` to deliver the "ordered desc, capped" contract above.
+
 `data_dictionary` and `freshness` are deliberately exposed as tools (not just skill text) so the agent can **ground its own answers in the live schema and caveat stale data** — directly serving the "answers grounded in REAL data" goal.
 
 ### 2.2 `memory.recall` tool
@@ -225,23 +235,27 @@ import { osSql } from "../lib/os.js";
 import { embed, toVectorLiteral } from "../lib/os.js";
 
 export default defineTool({
-  needsApproval: never(),
+  approval: never(),
   description:
     "Recall grounded company knowledge (docs + provenance-gated facts) via hybrid vector+lexical+recency search over Swayzio OS memory. Use for 'what do we know about…', context, past decisions, and definitions.",
   inputSchema: z.object({
     query: z.string().min(1),
-    scope: z.enum(["all", "document", "fact"]).default("all"),
+    // exact-match scope: fact.scope ('company', 'identity:<uuid>', …) or document.source
+    // ('docs/COMPANY-OS.md', …). Omit for everything — p_scope is NOT a kind filter.
+    scope: z.string().optional(),
     k: z.number().int().min(1).max(20).default(8),
   }),
   async execute({ query, scope, k }) {
-    const [vec] = await embed([query]);
+    // recall() is deliberately hybrid: NULL embedding → lexical+recency only. Don't fail
+    // the tool when no embed key is configured.
+    const vec = hasEmbedKey() ? (await embed([query]))[0] : null;
     const sql = osSql();
-    // memory.recall(query_text, query_embedding halfvec(1536), p_scope, k)
+    // memory.recall(query_text, query_embedding halfvec(1536) DEFAULT NULL, p_scope text DEFAULT NULL, k int DEFAULT 10)
     const rows = await sql`
       SELECT * FROM memory.recall(
         ${query},
-        ${toVectorLiteral(vec)}::halfvec(1536),
-        ${scope},
+        ${vec ? toVectorLiteral(vec) : null}::halfvec(1536),
+        ${scope ?? null},
         ${k}
       )`;
     return { results: rows };
@@ -249,7 +263,12 @@ export default defineTool({
 });
 ```
 
-> **OPEN QUESTION (recall signature):** Confirm `memory.recall`'s exact parameter order/names and the `p_scope` accepted values against the Phase E migration (`scripts/os-migrate.ts` output / `db/swayzio-os`). The brief states `recall(query_text, query_embedding halfvec(1536), p_scope, k)`; verify the halfvec cast literal works through the Neon HTTP driver (it does for the dashboard backfill in `os-embed.ts`).
+> **RESOLVED (recall signature — verified against `db/swayzio-os/migrations/0011_memory.sql`):**
+> `memory.recall(query_text text, query_embedding halfvec(1536) DEFAULT NULL, p_scope text DEFAULT NULL, k int DEFAULT 10)` — parameter order as briefed. Two corrections vs. the original draft of this example:
+> 1. **`p_scope` is not a kind filter.** It exact-matches `fact.scope` (e.g. `'company'`) for facts and `document.source` (e.g. `'docs/COMPANY-OS.md'`) for documents; an enum like `'all'|'document'|'fact'` matches nothing and returns **zero rows**. Kind filtering, if wanted, is client-side on the returned `kind` column.
+> 2. **No embed key must not break recall** — fall back to a `NULL` embedding (lexical+recency), which the function supports by design.
+>
+> The **implemented** `agent/tools/recall_memory.ts` already got both right (free-text `scope`, always-NULL embedding). The example above is the **semantic upgrade path**: once `EMBED_API_KEY` is wired into the agent env, add the `hasEmbedKey()`/`embed()` branch (exporting both from `agent/lib/os.ts`) and verify the `NULL::halfvec(1536)` cast through the Neon HTTP driver (the non-null literal path is proven by `scripts/os-embed.ts`).
 
 ### 2.3 Composed analytical tools
 
@@ -273,9 +292,9 @@ Two tools answer the headline founder questions directly so the model doesn't ha
   })
   // returns: { rows: [{ email, lastMrr, churnedAt, source }], truncated }
   ```
-  Joins churn events (events-based churn, per hard rule #2) against `api.identity_360` to rank by value. **OPEN QUESTION (data):** confirm whether a churn/event surface exists in `api.*` or whether this must read `core`/`metrics` directly — if it reads outside `api.*`, keep it read-only and document the exception.
+  Joins churn events (events-based churn, per hard rule #2) against `api.identity_360` to rank by value. **RESOLVED (data — verified against migrations + the F2 implementation):** no churn surface exists in `api.*`, and although `core.subscription` has the right columns (`status`, `canceled_at`, `identity_id` — `0005_core_stripe.sql`), **the Stripe feed only paginates non-canceled subs** (`feeds/stripe.ts`), so churned rows never land in `core` — which is why this tool was correctly **deferred** in F2. Unblocking is a two-step data change: (1) extend the Stripe feed to also load canceled subs (or ingest Stripe cancellation events) in a bounded window; (2) add migration **`0013`** (`0012` = `api_analytics`) creating `api.churned_accounts` (canceled subs joined to `identity_360`, ranked by `monthly_cents`, exposing `email, last_mrr, churned_at, source`) so the "agent reads only `api.*`" invariant holds with zero exceptions.
 
-All read/composed tools carry `needsApproval: never()` from `eve/tools/approval` **[research: tools-and-skills, github-and-examples]**.
+All read/composed tools carry `approval: never()` from `eve/tools/approval` **[research: tools-and-skills, github-and-examples]**.
 
 ### 2.4 The one write/action tool (separately authorized)
 
@@ -289,7 +308,7 @@ import { z } from "zod";
 export default defineTool({
   description: "Trigger an out-of-band data sync for one source (stripe|hubspot|app). Use only when the founder explicitly asks to refresh stale data.",
   inputSchema: z.object({ source: z.enum(["stripe", "hubspot", "app"]) }),
-  needsApproval: always(),          // human signs off every call
+  approval: always(),          // human signs off every call
   async execute({ source }) {
     // call the same internal sync entrypoint cron uses; do NOT run a 3rd-party API
     // synchronously here per hard rule #3 — enqueue / hit /api/cron-style trigger.
@@ -299,6 +318,8 @@ export default defineTool({
 ```
 
 `always()` parks the turn at `session.waiting` until a founder clicks approve, and makes the side effect replay-safe **[research: tools-and-skills, deploy-vercel]**. See §7.
+
+**As implemented (F5):** `agent/tools/trigger_sync.ts` takes a free-text `feeds` input and dispatches `.github/workflows/os-sync.yml` via `POST /repos/{owner}/{repo}/actions/workflows/os-sync.yml/dispatches` (the workflow already has `workflow_dispatch` with a `feeds` input), authed by **`SYNC_DISPATCH_TOKEN`** (GitHub token, `actions: write`; `SYNC_REPO` overrides the repo slug). Fail-closed without the token. Double-fire on step replay is tolerable — the sync is idempotent (`ON CONFLICT` natural keys) — and the `always()` gate means a replayed pre-approval turn re-asks rather than re-fires.
 
 ---
 
@@ -359,14 +380,14 @@ description: Use when the user asks what a metric means, how MRR/churn/revenue a
 import { defineAgent } from "eve";
 
 export default defineAgent({
-  model: "anthropic/claude-opus-4.8",   // gateway-routed string → AI Gateway via Vercel OIDC, no provider key to manage
+  model: "anthropic/claude-sonnet-5",   // gateway-routed string → AI Gateway via Vercel OIDC, no provider key to manage
   compaction: { thresholdPercent: 0.9 }, // default; tune down if turns get long
 });
 ```
 
 - A **string model id routes through Vercel AI Gateway**; on Vercel with a linked project it authenticates via **OIDC — no `ANTHROPIC_API_KEY` to set** **[research: model-mcp-state, deploy-vercel]**. This is the lowest-setup, Vercel-native choice and matches our "everything on Vercel" rule.
 - We deliberately use a **string id, not a direct `@ai-sdk/anthropic` provider object**, because issue #92 shows direct-provider models + `lib/` imports break under `eve dev` (gateway string fixes it) **[research: blogs-bestpractices]**.
-- Default if `agent.ts` omitted is `anthropic/claude-sonnet-4.6`; we set Opus explicitly for analytical reasoning quality. Reconsider Sonnet for cost on low-risk turns later **[research: blogs-bestpractices]**.
+- **Model = `anthropic/claude-sonnet-5`** (switched from Opus 4.8 on 2026-07-07, founder preference — cost + speed; it's also eve's scaffold default since 0.17.2, and available on AI Gateway since 2026-06-30). Escalate specific hard analytical turns back to Opus later if quality demands it.
 
 **MCP connections (`agent/connections/`) — recommendation: NONE in v1.**
 - **Do NOT connect the Neon MCP.** The Neon MCP is a database-admin/management surface (run SQL, create branches, manage projects). Exposing it to the agent would (a) break the read-only boundary — it can run arbitrary writes/DDL — and (b) bypass our curated `api.*` surface, which is the whole point of the boundary. Our `osSql()` tools against `api.*` views are strictly safer and sufficient **[research: model-mcp-state — eve has no built-in vector/DB layer; you reach "your own database" from inside a tool's execute]**.
@@ -445,14 +466,15 @@ export default eveChannel({
 - The scaffolded default (`placeholderAuth()` / `[localDev(), vercelOidc()]`) **rejects all production browser traffic** — we must replace it before any prod browser call **[research: channels-and-ui, blogs-bestpractices]**. Keeping only `clerkFounder()` + `localDev()` makes the chat exactly as founders-only as the rest of the dashboard.
 - This is the boundary; do **not** rely on hiding the route client-side (hard rule #5). The `principalId`/`attributes` flow forward as `ctx.session.auth` for any future per-user scoping **[research: channels-and-ui]**.
 
-> **OPEN QUESTIONS (auth):**
-> 1. Confirm `verifyOidc`'s exact config object (issuer/audiences/discoveryUrl/jwksUri) against the installed `eve/channels/auth`; the research could not read the full signature.
-> 2. Confirm what a Clerk session token's claims contain by default — does it carry `publicMetadata.role` and `email`, or do we need a custom Clerk JWT template? Likely a **custom JWT template** is required to put `role`/`email` in claims. Decide: custom template vs. a second hop that resolves the Clerk userId → founder via Clerk Backend API.
-> 3. Confirm `getToken()` (default Clerk session token) is accepted by `verifyOidc`, vs. needing `getToken({ template: "eve" })`.
+> **RESOLVED (verifyOidc config — confirmed against live 0.19.0 docs):** `VerifyOidcConfig` takes `issuer`, `audiences`, the signing material (`discoveryUrl` for JWKS discovery), and optional `subjects`/`claims` matchers; `extractBearerToken` and the `{ ok, sessionAuth }` result shape are as implemented. A higher-level `oidc(...)` strategy helper also exists if its claims matching proves expressive enough for the founder check. Docs confirm the ordering rule now applied in `channels/eve.ts`: custom providers **ahead of** catch-alls, `localDev()` last and never alone (it trusts the advertised hostname).
+>
+> **OPEN QUESTIONS (auth — Clerk side only now):**
+> 1. Confirm what a Clerk session token's claims contain by default — does it carry `publicMetadata.role` and `email`, or do we need a custom Clerk JWT template? Likely a **custom JWT template** is required. Decide: custom template vs. a second hop resolving the Clerk userId → founder via the Clerk Backend API.
+> 2. Confirm `getToken()` (default Clerk session token) is accepted by `verifyOidc`, vs. needing `getToken({ template: "eve" })`.
 
 ### 5.3 Existing middleware
 
-`src/proxy.ts` matches `/(api|trpc)(.*)` and most routes. eve routes live at `/eve/v1/*` (not `/api`). **OPEN QUESTION (middleware):** confirm whether the Clerk middleware matcher catches `/eve/v1/*`. If it does, either (a) add `/eve/v1(.*)` to `isPublicRoute` so eve's *own* `AuthFn` is the sole gate for those routes (preferred — single boundary, avoids double-auth/cookie-vs-bearer conflicts), or (b) exclude `/eve` from the matcher. The eve channel `AuthFn` remains the real boundary either way. `GET /eve/v1/health` must stay public.
+`src/proxy.ts` matches `/(api|trpc)(.*)` and most routes. eve routes live at `/eve/v1/*` (not `/api`). **RESOLVED & DONE (2026-07-07):** the catch-all matcher **does** catch `/eve/v1/*` (no exclusion existed), which would have 401'd bearer-only callers and the health probe in prod. Fixed via option (a): `"/eve/v1(.*)"` added to `isPublicRoute`, making the eve channel `AuthFn` the single boundary (no cookie-vs-bearer double-auth). The guarded eve routes are `POST /eve/v1/session`, `POST /eve/v1/session/:sessionId`, `GET /eve/v1/session/:sessionId/stream`; `GET|HEAD /eve/v1/health` is always public inside eve itself (it skips the auth walk). Verify post-deploy: prod health 200, tokenless session POST 401.
 
 ---
 
@@ -490,7 +512,7 @@ curl -X POST https://admin.swayzio.com/eve/v1/session  # WITHOUT a Clerk token �
 3. **Replay safety.** Read SELECTs are idempotent → safe under eve's step replay. Only `trigger_sync` is non-idempotent **[research: tools-and-skills]**.
 
 **Approval model for writes/actions [research: tools-and-skills, deploy-vercel]:**
-- `trigger_sync` (the only write in v1) uses `needsApproval: always()` from `eve/tools/approval`. The turn parks at `session.waiting` (durable, holds no compute) until a founder approves in the chat UI (`input.requested` event → render approve/deny → `agent.send(...)` the decision) **[research: channels-and-ui]**.
+- `trigger_sync` (the only write in v1) uses `approval: always()` from `eve/tools/approval`. The turn parks at `session.waiting` (durable, holds no compute) until a founder approves in the chat UI (`input.requested` event → render approve/deny → `agent.send(...)` the decision) **[research: channels-and-ui]**.
 - Any future write tool (Kit email, HubSpot mutation, Stripe action) is **opt-in, separate, and gated** the same way — never folded into a read tool. Threshold predicates (`needsApproval: ({toolInput}) => …`) for value-based gating where relevant.
 - `trigger_sync.execute` must **enqueue**, not call a third-party API synchronously (hard rule #3) — reuse the cron/`withSyncRun` path and make it idempotent so a replayed step can't double-fire.
 
@@ -500,7 +522,7 @@ curl -X POST https://admin.swayzio.com/eve/v1/session  # WITHOUT a Clerk token �
 
 ### F0 — Spike & confirm (do not skip; eve is fast-moving beta)
 - [ ] Install pinned `eve` in a branch; read `node_modules/eve/docs` for the **exact installed-version** API (tools, `eve/channels/auth`, `withEve`).
-- [ ] Resolve OPEN QUESTIONS: §1 cross-root import, §2.2 recall signature, §5.2 Clerk claims/`verifyOidc` config, §5.3 middleware matcher, §7 `os_agent_ro` role.
+- [ ] Resolve remaining OPEN QUESTIONS: §5.2 Clerk claims/JWT template, §7 `os_agent_ro` role. (§1 cross-root import sidestepped by the self-contained `agent/lib/os.ts`; §2.2 recall signature, §2.3 churn surface, and §5.3 middleware **RESOLVED** — 2026-07-07.)
 - [ ] Verify `withEve` + Next 16 Turbopack + Node dev works (issue #101 is Bun-only; confirm we're clear).
 - **Verify:** `npx eve@latest init src/agent` (or manual `npm i eve@<pin> ai zod`) scaffolds; `eve info` lists the discovered surface.
 
@@ -512,7 +534,7 @@ curl -X POST https://admin.swayzio.com/eve/v1/session  # WITHOUT a Clerk token �
 
 ### F2 — Full read tool set
 - [ ] Implement all §2.1 view tools + §2.2 `recall_memory` + §2.3 `mrr_trend`/`churned_accounts`.
-- [ ] All carry `needsApproval: never()`; all paginated/capped.
+- [ ] All carry `approval: never()`; all paginated/capped.
 - [ ] `data-dictionary` skill authored.
 - **Verify:** ask the two headline questions ("MRR trend vs last quarter"; "highest-value churned accounts") in `eve dev`; numbers match the dashboard's `analytics` page and `stripe-service` figures (cross-check MRR/churn per hard rule #2).
 
@@ -529,7 +551,7 @@ curl -X POST https://admin.swayzio.com/eve/v1/session  # WITHOUT a Clerk token �
 - **Verify:** signed-in founder can chat; signed-in **non-founder** gets 401 from the channel; unauthenticated `POST /eve/v1/session` → 401; `GET /eve/v1/health` → 200.
 
 ### F5 — Write/action tool + approvals
-- [ ] `trigger_sync.ts` with `needsApproval: always()`, idempotent enqueue via the existing sync path.
+- [ ] `trigger_sync.ts` with `approval: always()`, idempotent enqueue via the existing sync path.
 - [ ] Chat panel renders the `input.requested` approval prompt and sends the decision.
 - **Verify:** ask to refresh stripe → turn parks at `session.waiting`; approve → exactly one sync run appears in `ops.sync_runs`; deny → no run.
 
@@ -544,22 +566,22 @@ curl -X POST https://admin.swayzio.com/eve/v1/session  # WITHOUT a Clerk token �
 ## 9. Risks & open questions
 
 **Risks**
-- **Beta churn / breaking changes.** Sub-1.0, daily releases; `0.13.0` already removed `defineTool` top-level `auth`. *Mitigation:* pin a version, gate upgrades behind F0 re-read of bundled docs, keep tools thin so churn surface is small.
+- **Beta churn / breaking changes.** Sub-1.0, daily releases; `0.13.0` removed `defineTool` top-level `auth`, `0.14.0` removed `needsApproval` (now `approval`), `0.17.0` removed experimental code mode. The 0.13.3→0.19.0 upgrade (2026-07-07) cost exactly one field rename — thin tools kept the churn surface small, as designed. *Mitigation:* stay pinned (now `eve@0.19.0` exact), gate upgrades behind a re-read of `node_modules/eve/CHANGELOG.md`, keep tools thin.
 - **`lib/` import + NodeNext `.js` mapping bugs** (issues #92/#101). *Mitigation:* use gateway-string model (not direct provider), run dev under Node, keep `.js` extensions, fall back to physically-local bridge under `src/agent/lib`.
 - **Clerk claims not in default token.** Likely needs a custom Clerk JWT template for `role`/`email`. *Mitigation:* F0 spike; fallback to Clerk Backend API resolution of userId → founder.
 - **Double-auth conflict** between Clerk middleware (cookie) and the eve channel (bearer) on `/eve/v1/*`. *Mitigation:* make eve routes "public" to the Next middleware so the channel `AuthFn` is the single boundary.
 - **Cost.** Tokens + Workflow events + tool calls bill per use; long sessions raise Workflow data/replay. *Mitigation:* small result caps, concise tool outputs, push reference text into skills, consider Sonnet for low-risk turns, configure Spend Management **[research: blogs-bestpractices]**.
 - **Agent Runs gated per team** — observability may not appear until Vercel enables it for the swayzio team.
 
-**Open questions (consolidated — confirm in F0)**
-1. Cross-agent-root import (`src/agent` → `../../server/os/*`) bundles cleanly for Vercel output. (§1)
-2. Exact `memory.recall` signature + halfvec cast over HTTP driver. (§2.2)
-3. Whether `churned_accounts` can be served from `api.*` or must read `core`/`metrics`. (§2.3)
-4. `verifyOidc` config object shape for Clerk JWKS; whether default Clerk token carries `role`/`email` or needs a JWT template; whether `getToken()` vs `getToken({template})`. (§5.2)
-5. Clerk middleware matcher behavior for `/eve/v1/*` and the right exclusion. (§5.3)
-6. `os_agent_ro` role + grants on `swayzio-os`. (§7)
-7. `defineOpenAPIConnection` + per-request Clerk JWT for the Neon Data API (only if we ever route the agent through PostgREST). (§4)
-8. Whether the swayzio Vercel team has Agent Runs / Fluid Compute enabled. (§6)
+**Open questions (consolidated — status as of 2026-07-07)**
+1. ~~Cross-agent-root import~~ **RESOLVED** — sidestepped: `agent/lib/os.ts` is self-contained (own neon client on `SWAYZIO_OS_DATABASE_URL`), no import above the agent root. (§1)
+2. ~~`memory.recall` signature~~ **RESOLVED** — confirmed from `0011_memory.sql`; `p_scope` is a scope/source matcher, *not* a kind filter (implemented tool is correct). Verify-on-wire: `NULL::halfvec` cast when semantic recall lands. (§2.2)
+3. ~~Churn surface~~ **RESOLVED** — not in `api.*`, and canceled subs aren't loaded by the Stripe feed at all (tool rightly deferred). Unblock = feed change + `api.churned_accounts` in migration **0013**. (§2.3)
+4. **PARTIALLY RESOLVED** — `verifyOidc` config confirmed against 0.19.0 docs. Still open: default Clerk token claims (`role`/`email`) vs. JWT template; `getToken()` vs `getToken({template})`. (§5.2)
+5. ~~Middleware matcher~~ **RESOLVED & DONE** — `/eve/v1(.*)` added to `isPublicRoute` in `src/proxy.ts`. (§5.3)
+6. **OPEN** — `os_agent_ro` role + grants on `swayzio-os` (F3). (§7)
+7. **OPEN** — `defineOpenAPIConnection` + per-request Clerk JWT for the Neon Data API (only if we ever route the agent through PostgREST). (§4)
+8. **OPEN** — Whether the swayzio Vercel team has Agent Runs / Fluid Compute enabled. (§6)
 
 ---
 
@@ -568,7 +590,7 @@ curl -X POST https://admin.swayzio.com/eve/v1/session  # WITHOUT a Clerk token �
 ```bash
 # F0 — branch + install (pin a version; check npmjs.com/package/eve for current)
 git checkout -b phase-f-eve
-npm install eve@<pinned-version> ai zod          # zod already present; ai is new
+npm install eve@0.19.0 ai zod                    # pinned exact (0.19.0 as of 2026-07-07); ai = stable 7
 
 # Scaffold the agent into src/agent (adds agent.ts + instructions.md + a sample tool).
 # Run by a coding agent, bare `eve init` prints a guide — pass the path explicitly:

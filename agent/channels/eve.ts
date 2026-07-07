@@ -40,6 +40,8 @@ function clerkFounder(): AuthFn<Request> {
   };
 }
 
+// Custom providers ahead of catch-all fallbacks (0.19 docs: localDev() is the final
+// fallback, and must never ship alone — it trusts the advertised hostname).
 export default eveChannel({
-  auth: [localDev(), clerkFounder()],
+  auth: [clerkFounder(), localDev()],
 });

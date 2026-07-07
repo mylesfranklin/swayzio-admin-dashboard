@@ -6,7 +6,7 @@ import { z } from "zod";
  * The ONE write/action tool. It does not touch the database directly — it dispatches the existing
  * GitHub Actions sync workflow (.github/workflows/os-sync.yml) that re-pulls Stripe/HubSpot/app into
  * Swayzio OS. So the agent stays read-only over the data; the only side-effect is kicking the pipeline,
- * and it is gated behind human approval (needsApproval: always()). Non-blocking — the sync runs in CI.
+ * and it is gated behind human approval (approval: always()). Non-blocking — the sync runs in CI.
  *
  * Requires SYNC_DISPATCH_TOKEN (a GitHub token with `actions:write`); fail-closed without it.
  */
@@ -22,7 +22,7 @@ export default defineTool({
       .optional()
       .describe("space-separated feeds to sync: stripe, hubspot, app. Blank = all feeds."),
   }),
-  needsApproval: always(),
+  approval: always(),
   async execute({ feeds }) {
     const token = process.env.SYNC_DISPATCH_TOKEN ?? process.env.GITHUB_TOKEN;
     const repo = process.env.SYNC_REPO ?? "mylesfranklin/swayzio-admin-dashboard";

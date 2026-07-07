@@ -11,6 +11,7 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up(.*)",
   "/api/webhooks(.*)",
   "/api/cron(.*)", // secured by CRON_SECRET, not Clerk
+  "/eve/v1(.*)", // the eve channel's own AuthFn (Clerk bearer, founders-only) is the boundary; health must stay probe-able
 ]);
 
 // With keys → protect everything except public routes.
