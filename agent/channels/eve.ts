@@ -27,7 +27,14 @@ function clerkFounder(): AuthFn<Request> {
     const token = extractBearerToken(request.headers.get("authorization"));
     if (!token || !issuer || !audience) return null; // not configured → skip (stays fail-closed)
 
-    const result = await verifyOidc(token, { issuer, audiences: [audience] });
+    // verifyOidc throws on malformed/unparseable tokens (not just {ok:false}) — treat
+    // any verification failure as "not ours", never a 500.
+    let result: Awaited<ReturnType<typeof verifyOidc>>;
+    try {
+      result = await verifyOidc(token, { issuer, audiences: [audience] });
+    } catch {
+      return null;
+    }
     if (!result.ok) return null;
 
     const attrs = (result.sessionAuth?.attributes ?? {}) as Record<string, unknown>;

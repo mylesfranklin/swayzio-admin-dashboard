@@ -20,11 +20,19 @@ export const int = (n: unknown): string => {
   return v === null ? "—" : Math.round(v).toLocaleString("en-US");
 };
 
-/** Coerce any plain-number string in a row to an actual number (dates/emails are left alone). */
+/**
+ * Coerce a row to clean, JSON-serializable values: plain-number strings → numbers,
+ * Date → ISO string, and any other non-plain object (e.g. the driver's parsed
+ * `interval`) → its string form. eve 0.19 hard-rejects non-JSON tool outputs, and the
+ * Neon driver parses date/timestamptz/interval columns into objects.
+ */
 export function coerceNumbers<T extends Record<string, unknown>>(row: T): T {
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(row)) {
-    out[k] = typeof v === "string" && /^-?\d+(\.\d+)?$/.test(v) ? Number(v) : v;
+    if (typeof v === "string" && /^-?\d+(\.\d+)?$/.test(v)) out[k] = Number(v);
+    else if (v instanceof Date) out[k] = v.toISOString();
+    else if (v !== null && typeof v === "object" && !Array.isArray(v)) out[k] = String(v);
+    else out[k] = v;
   }
   return out as T;
 }

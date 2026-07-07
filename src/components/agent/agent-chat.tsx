@@ -33,7 +33,9 @@ export function AgentChat() {
   const { getToken } = useAuth();
   const agent = useEveAgent({
     // The channel boundary verifies this Clerk token (clerkFounder AuthFn); localDev opens it in dev.
-    auth: { bearer: async () => (await getToken()) ?? "" },
+    // The "eve" JWT template mints tokens with aud + email + role claims — the channel's
+    // clerkFounder() AuthFn verifies exactly those (default session tokens carry neither).
+    auth: { bearer: async () => (await getToken({ template: "eve" })) ?? "" },
   });
 
   const messages = agent.data.messages as unknown as Message[];

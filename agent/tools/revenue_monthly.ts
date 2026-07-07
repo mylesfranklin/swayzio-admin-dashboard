@@ -1,6 +1,7 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
 import { osSql } from "../lib/os.js";
+import { coerceNumbers } from "../lib/format.js";
 
 export default defineTool({
   description:
@@ -9,6 +10,6 @@ export default defineTool({
   inputSchema: z.object({}),
   async execute() {
     const rows = (await osSql()`SELECT * FROM api.revenue_monthly`) as Record<string, unknown>[];
-    return { months: rows };
+    return { months: rows.map(coerceNumbers) };
   },
 });
