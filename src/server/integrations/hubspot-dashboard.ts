@@ -1,4 +1,5 @@
 import { getOrCompute } from "@/server/cache";
+import { getOsHubspotDashboard } from "@/server/os/dashboard";
 import {
   getContactCounts,
   getActiveSubscribers,
@@ -41,6 +42,9 @@ export interface HubspotDashboard {
 }
 
 export async function getHubspotDashboard(): Promise<HubspotDashboard> {
+  const os = await getOsHubspotDashboard();
+  if (os) return os;
+
   const [counts, activeSubs, pro, growth, power, catalog, reacquire, acquisition, roles, companyTypes] = await Promise.all([
     getOrCompute("hubspot:counts", getContactCounts, 15 * MIN),
     getOrCompute("hubspot:active-subs", getActiveSubscribers, 30 * MIN),

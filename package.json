@@ -16,6 +16,7 @@
     "os:migrate:status": "tsx scripts/os-migrate.ts --status",
     "os:sync": "tsx scripts/os-sync.ts",
     "os:verify": "tsx scripts/os-verify.ts",
+    "os:quality": "tsx scripts/os-quality.ts",
     "os:embed": "tsx scripts/os-embed.ts",
     "agent:info": "eve info",
     "agent:dev": "eve dev",

@@ -1,4 +1,5 @@
 import { getOrCompute } from "@/server/cache";
+import { getOsStripeDashboard } from "@/server/os/dashboard";
 import {
   getSubscriptionMetrics,
   getRevenueMetrics,
@@ -42,6 +43,9 @@ export interface StripeDashboard {
 }
 
 export async function getStripeDashboard(): Promise<StripeDashboard> {
+  const os = await getOsStripeDashboard();
+  if (os) return os;
+
   const [subs, rev, customers, canceled30] = await Promise.all([
     getOrCompute("stripe:subscriptions", getSubscriptionMetrics, 15 * MIN),
     getOrCompute("stripe:revenue", getRevenueMetrics, 60 * MIN),

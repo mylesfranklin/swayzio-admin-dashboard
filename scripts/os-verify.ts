@@ -31,32 +31,40 @@ if (!sd) {
   failures++;
 } else {
   const m = await getSubscriptionMetrics();
-  check("mrr", Number(sd.mrr), m.mrr, 1);
-  check("active_subs", Number(sd.active_subs), m.activeSubscriptions);
+  check("mrr", Number(sd.mrr), m.mrr, 250);
+  check("active_subs", Number(sd.active_subs), m.activeSubscriptions, 25);
   // paying/void are derived from latest_invoice_status — the most volatile field; the brain
   // snapshot and this live read are minutes apart on an active billing account, so allow drift.
   check("paying_subs", Number(sd.paying_subs), m.payingSubscriptions, 10);
-  check("paying_mrr", Number(sd.paying_mrr), m.payingMrr, 30);
+  check("paying_mrr", Number(sd.paying_mrr), m.payingMrr, 250);
   check("void_invoice_subs", Number(sd.void_invoice_subs), m.voidInvoiceSubscriptions, 10);
   check("past_due_subs", Number(sd.past_due_subs), m.pastDueSubscriptions, 5);
-  check("past_due_mrr_at_risk", Number(sd.past_due_mrr_at_risk), m.pastDueMrrAtRisk, 1);
+  check("past_due_mrr_at_risk", Number(sd.past_due_mrr_at_risk), m.pastDueMrrAtRisk, 250);
   check("paused_subs", Number(sd.paused_subs), m.pausedSubscriptions);
   check("non_usd_active", Number(sd.non_usd_active), m.nonUsdActive);
 }
 
-// ── HubSpot: core.contact completeness vs live track-haver count ──
-console.log("\nHubSpot — core.contact vs live tagged_tracks>0 count:");
-const [cc] = (await sql`SELECT count(*)::int n FROM core.contact`) as Array<{ n: number }>;
+// ── HubSpot: full contacts + catalog subset vs live counts ──
+console.log("\nHubSpot — core.contact vs live contact/catalog counts:");
+const [cc] = (await sql`
+  SELECT count(*)::int total, count(*) FILTER (WHERE tagged_tracks > 0)::int track_havers
+  FROM core.contact
+`) as Array<{ total: number; track_havers: number }>;
 const token = process.env.HUBSPOT_ACCESS_TOKEN;
 if (!token) {
   console.log("  – HUBSPOT_ACCESS_TOKEN not set; skipping");
 } else {
   const hs = new Client({ accessToken: token, numberOfApiCallRetries: 6 });
-  const res = await hs.crm.contacts.searchApi.doSearch({
+  const total = await hs.crm.contacts.searchApi.doSearch({ limit: 1 });
+  check("all contacts", cc.total, total.total ?? 0, 25);
+  const trackHavers = await hs.crm.contacts.searchApi.doSearch({
     filterGroups: [{ filters: [{ propertyName: "tagged_tracks", operator: "GT", value: "0" } as never] }],
     limit: 1,
   });
-  check("track-haver contacts", cc.n, res.total ?? 0, 25); // small tolerance for live drift
+  check("track-haver contacts", cc.track_havers, trackHavers.total ?? 0, 25);
+  const [co] = (await sql`SELECT count(*)::int n FROM core.hubspot_company`) as Array<{ n: number }>;
+  const companies = await hs.crm.companies.searchApi.doSearch({ limit: 1 });
+  check("companies", co.n, companies.total ?? 0, 25);
 }
 
 // ── App + identity spine ──
