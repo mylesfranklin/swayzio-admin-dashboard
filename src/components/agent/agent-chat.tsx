@@ -2,6 +2,7 @@
 
 import { useEveAgent } from "eve/react";
 import { useAuth } from "@clerk/nextjs";
+import { isClerkConfigured } from "@/lib/auth";
 import { useRef, useEffect } from "react";
 import { Send, Sparkles, Square } from "lucide-react";
 
@@ -30,13 +31,22 @@ interface Message {
 }
 
 export function AgentChat() {
+  // Same keyless-dev pattern as sidebar-user/greeting: never call Clerk hooks without
+  // ClerkProvider (layout.tsx skips it when keys are unset). Keyless dev sends no bearer
+  // and relies on the eve channel's localDev() loopback auth.
+  return isClerkConfigured ? <ClerkAgentChat /> : <AgentChatInner bearer={async () => ""} />;
+}
+
+function ClerkAgentChat() {
   const { getToken } = useAuth();
-  const agent = useEveAgent({
-    // The channel boundary verifies this Clerk token (clerkFounder AuthFn); localDev opens it in dev.
-    // The "eve" JWT template mints tokens with aud + email + role claims — the channel's
-    // clerkFounder() AuthFn verifies exactly those (default session tokens carry neither).
-    auth: { bearer: async () => (await getToken({ template: "eve" })) ?? "" },
-  });
+  // The "eve" JWT template mints tokens with aud + email + role claims — the channel's
+  // clerkFounder() AuthFn verifies exactly those (default session tokens carry neither).
+  return <AgentChatInner bearer={async () => (await getToken({ template: "eve" })) ?? ""} />;
+}
+
+function AgentChatInner({ bearer }: { bearer: () => Promise<string> }) {
+  // The channel boundary verifies this Clerk token (clerkFounder AuthFn); localDev opens it in dev.
+  const agent = useEveAgent({ auth: { bearer } });
 
   const messages = agent.data.messages as unknown as Message[];
   const isBusy = agent.status === "submitted" || agent.status === "streaming";
