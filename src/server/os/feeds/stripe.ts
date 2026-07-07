@@ -12,11 +12,13 @@ import { withSyncRun } from "../sync";
 import { chunk, resolveIdentities, landRaw } from "../load";
 import { getRevenueMetrics, getCustomerCount, getCanceledLast30Days } from "@/server/integrations/stripe";
 
+const STRIPE_API_VERSION = "2025-11-17.clover";
+
 // Identical client config to stripe.ts (same SDK-pinned API version, retries, timeout).
 function client(): Stripe {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) throw new Error("STRIPE_SECRET_KEY is not set");
-  return new Stripe(key, { maxNetworkRetries: 4, timeout: 30000 });
+  return new Stripe(key, { apiVersion: STRIPE_API_VERSION, maxNetworkRetries: 4, timeout: 30000 });
 }
 
 async function mapWithConcurrency<T, R>(items: T[], concurrency: number, fn: (item: T) => Promise<R>): Promise<R[]> {
@@ -113,9 +115,25 @@ async function stripeRest<T>(path: string, params: Record<string, string | numbe
   for (const [name, value] of Object.entries(params)) {
     if (value != null) url.searchParams.set(name, String(value));
   }
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${key}` } });
-  if (!res.ok) throw new Error(`Stripe REST ${path} failed ${res.status}: ${await res.text()}`);
-  return (await res.json()) as T;
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${key}`, "Stripe-Version": STRIPE_API_VERSION },
+        signal: AbortSignal.timeout(30000),
+      });
+      if (res.ok) return (await res.json()) as T;
+      const body = await res.text();
+      if (res.status < 500 && res.status !== 429) {
+        throw new Error(`Stripe REST ${path} failed ${res.status}: ${body}`);
+      }
+      lastError = new Error(`Stripe REST ${path} failed ${res.status}: ${body}`);
+    } catch (err) {
+      lastError = err;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500 * 2 ** attempt));
+  }
+  throw lastError instanceof Error ? lastError : new Error(`Stripe REST ${path} failed`);
 }
 
 function mapSub(sub: Stripe.Subscription): SubRow {

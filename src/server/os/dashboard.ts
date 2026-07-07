@@ -175,14 +175,31 @@ export async function getOsHubspotDashboard(): Promise<HubspotDashboard | null> 
     `) as Array<{ email: string }>;
 
     const distribution = async (column: "acquisition_channel" | "role" | "company_type") => {
-      const rows = (await sql.query(
-        `SELECT ${column} AS label, count(*)::int AS value
-         FROM core.contact
-         WHERE ${column} IS NOT NULL AND ${column} <> ''
-         GROUP BY ${column}
-         ORDER BY value DESC`,
-      )) as Array<{ label: string; value: number }>;
-      return rows;
+      if (column === "acquisition_channel") {
+        return (await sql`
+          SELECT acquisition_channel AS label, count(*)::int AS value
+          FROM core.contact
+          WHERE acquisition_channel IS NOT NULL AND acquisition_channel <> ''
+          GROUP BY acquisition_channel
+          ORDER BY value DESC
+        `) as Array<{ label: string; value: number }>;
+      }
+      if (column === "role") {
+        return (await sql`
+          SELECT role AS label, count(*)::int AS value
+          FROM core.contact
+          WHERE role IS NOT NULL AND role <> ''
+          GROUP BY role
+          ORDER BY value DESC
+        `) as Array<{ label: string; value: number }>;
+      }
+      return (await sql`
+        SELECT company_type AS label, count(*)::int AS value
+        FROM core.contact
+        WHERE company_type IS NOT NULL AND company_type <> ''
+        GROUP BY company_type
+        ORDER BY value DESC
+      `) as Array<{ label: string; value: number }>;
     };
 
     const totalTracks = num(snapshot.tagged_tracks_total) + num(snapshot.untagged_tracks_total);

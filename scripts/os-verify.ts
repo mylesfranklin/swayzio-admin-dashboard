@@ -31,15 +31,15 @@ if (!sd) {
   failures++;
 } else {
   const m = await getSubscriptionMetrics();
-  check("mrr", Number(sd.mrr), m.mrr, 250);
-  check("active_subs", Number(sd.active_subs), m.activeSubscriptions, 25);
+  check("mrr", Number(sd.mrr), m.mrr, 100);
+  check("active_subs", Number(sd.active_subs), m.activeSubscriptions, 10);
   // paying/void are derived from latest_invoice_status — the most volatile field; the brain
   // snapshot and this live read are minutes apart on an active billing account, so allow drift.
   check("paying_subs", Number(sd.paying_subs), m.payingSubscriptions, 10);
-  check("paying_mrr", Number(sd.paying_mrr), m.payingMrr, 250);
+  check("paying_mrr", Number(sd.paying_mrr), m.payingMrr, 100);
   check("void_invoice_subs", Number(sd.void_invoice_subs), m.voidInvoiceSubscriptions, 10);
   check("past_due_subs", Number(sd.past_due_subs), m.pastDueSubscriptions, 5);
-  check("past_due_mrr_at_risk", Number(sd.past_due_mrr_at_risk), m.pastDueMrrAtRisk, 250);
+  check("past_due_mrr_at_risk", Number(sd.past_due_mrr_at_risk), m.pastDueMrrAtRisk, 100);
   check("paused_subs", Number(sd.paused_subs), m.pausedSubscriptions);
   check("non_usd_active", Number(sd.non_usd_active), m.nonUsdActive);
 }

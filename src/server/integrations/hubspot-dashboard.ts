@@ -42,8 +42,20 @@ export interface HubspotDashboard {
 }
 
 export async function getHubspotDashboard(): Promise<HubspotDashboard> {
-  const os = await getOsHubspotDashboard();
-  if (os) return os;
+  try {
+    const os = await getOrCompute(
+      "os:hubspot-dashboard",
+      async () => {
+        const data = await getOsHubspotDashboard();
+        if (!data) throw new Error("Swayzio OS HubSpot dashboard is unavailable");
+        return data;
+      },
+      30 * MIN,
+    );
+    return { ...os.data, stale: os.data.stale || os.meta.stale };
+  } catch (err) {
+    console.error("[hubspot-dashboard] OS cache read failed, falling back:", (err as Error).message);
+  }
 
   const [counts, activeSubs, pro, growth, power, catalog, reacquire, acquisition, roles, companyTypes] = await Promise.all([
     getOrCompute("hubspot:counts", getContactCounts, 15 * MIN),
