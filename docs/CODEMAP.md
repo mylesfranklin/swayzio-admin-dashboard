@@ -19,6 +19,7 @@
 - `src/app/(dashboard)/analytics/stripe/page.tsx` — Stripe analytics.
 - `src/app/(dashboard)/analytics/hubspot/page.tsx` — HubSpot analytics.
 - `src/app/(dashboard)/database/page.tsx` — Swayzio-Core app DB analytics.
+- `src/app/(dashboard)/sync-status/page.tsx` — OS sync freshness and quality checks.
 - `src/app/(dashboard)/design-system/page.tsx` — design system browser.
 
 ## Implemented API Routes
@@ -37,6 +38,7 @@
 - `src/components/stripe/` — Stripe analytics client surface.
 - `src/components/hubspot/` — HubSpot analytics client surface.
 - `src/components/database/` — database analytics client surface.
+- `src/components/sync-status/` — OS sync health and data-quality surface.
 - `src/components/agent/agent-chat.tsx` — Eve chat UI.
 - `src/components/design-system/` — token/component gallery UI.
 
@@ -51,6 +53,7 @@
 - `src/server/integrations/hubspot-dashboard.ts` — cached HubSpot aggregate for UI/API.
 - `src/server/integrations/app-tracks.ts` — app DB upload trend.
 - `src/server/integrations/app-db-stats.ts` — app DB introspection.
+- `src/server/os/dashboard.ts` — OS-backed dashboard readers and sync-status queries.
 
 ## Auth Helpers
 
@@ -63,10 +66,10 @@
 - `src/server/os/sync.ts` — `withSyncRun` run ledger wrapper.
 - `src/server/os/load.ts` — raw landing and identity resolution helpers.
 - `src/server/os/embed.ts` — embedding helper for memory rows.
-- `src/server/os/feeds/stripe.ts` — Stripe raw/core/metrics feed.
-- `src/server/os/feeds/hubspot.ts` — HubSpot raw/core/metrics feed.
+- `src/server/os/feeds/stripe.ts` — Stripe customers, subscriptions, catalog, invoices, charges, refunds, balance transactions, and metrics feed.
+- `src/server/os/feeds/hubspot.ts` — HubSpot contacts and companies feed; deals intentionally excluded.
 - `src/server/os/feeds/app.ts` — Swayzio-Core app raw/core/metrics feed.
-- `db/swayzio-os/migrations/` — migrations `0001` through `0013`.
+- `db/swayzio-os/migrations/` — migrations `0001` through `0015`.
 
 ## Eve Agent
 
@@ -84,6 +87,7 @@
 - `scripts/os-migrate.ts` — Swayzio OS migration runner.
 - `scripts/os-sync.ts` — Swayzio OS feed orchestrator.
 - `scripts/os-verify.ts` — live source vs OS verification.
+- `scripts/os-quality.ts` — OS freshness/data-quality gate.
 - `scripts/os-embed.ts` — memory doc ingest and embedding backfill.
 - `scripts/refresh-stripe.ts`, `scripts/verify-stripe.ts` — Stripe cache probes.
 - `scripts/refresh-hubspot.ts`, `scripts/verify-hubspot.ts` — HubSpot cache probes.
@@ -107,5 +111,4 @@ These links exist in `src/components/layout/nav-config.tsx` but do not currently
 - `/socials/tiktok`
 - `/socials/youtube`
 - `/analytics/kit`
-- `/sync-status`
 - `/settings`

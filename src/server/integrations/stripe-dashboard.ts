@@ -1,4 +1,5 @@
 import { getOrCompute } from "@/server/cache";
+import { getOsStripeDashboard } from "@/server/os/dashboard";
 import {
   getSubscriptionMetrics,
   getRevenueMetrics,
@@ -42,6 +43,21 @@ export interface StripeDashboard {
 }
 
 export async function getStripeDashboard(): Promise<StripeDashboard> {
+  try {
+    const os = await getOrCompute(
+      "os:stripe-dashboard",
+      async () => {
+        const data = await getOsStripeDashboard();
+        if (!data) throw new Error("Swayzio OS Stripe dashboard is unavailable");
+        return data;
+      },
+      15 * MIN,
+    );
+    return { ...os.data, stale: os.data.stale || os.meta.stale };
+  } catch (err) {
+    console.error("[stripe-dashboard] OS cache read failed, falling back:", (err as Error).message);
+  }
+
   const [subs, rev, customers, canceled30] = await Promise.all([
     getOrCompute("stripe:subscriptions", getSubscriptionMetrics, 15 * MIN),
     getOrCompute("stripe:revenue", getRevenueMetrics, 60 * MIN),

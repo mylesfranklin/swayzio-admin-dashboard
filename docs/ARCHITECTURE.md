@@ -82,14 +82,15 @@ Those routes do not currently exist unless added later.
 - `src/components/` is UI. Client components own chart rendering and interactivity.
 - `src/components/ui/` contains the shared `Button`, `Badge`, and `Card` vocabulary that maps to
   `design/swayzio.DESIGN.md`.
-- `src/server/integrations/` owns live dashboard-facing service logic for Stripe, HubSpot, and app DB
-  analytics. These modules know nothing about HTTP.
+- `src/server/integrations/` owns dashboard-facing service logic for Stripe, HubSpot, and app DB
+  analytics. Stripe/HubSpot aggregators now prefer Swayzio OS `api.*` views and fall back to the
+  cache plane when OS is unavailable.
 - `src/server/cache.ts` owns two-tier SWR cache behavior: L1 memory plus L2 Neon `integration_cache`.
 - `src/server/db/` contains dashboard and app-DB Neon clients.
 - `src/server/os/` contains Swayzio OS ELT clients, feeds, embedding helpers, and sync wrappers.
 - `agent/` contains the eve agent. It is intentionally at repo root because eve CLI commands resolve
   `agent/agent.ts` from the project root.
-- `db/swayzio-os/migrations/` contains immutable Swayzio OS SQL migrations, currently through `0013`.
+- `db/swayzio-os/migrations/` contains immutable Swayzio OS SQL migrations, currently through `0015`.
 - `scripts/` contains migration, sync, embedding, refresh, and verification utilities.
 
 ## Data Flow
@@ -116,6 +117,10 @@ User-facing surfaces should call cached aggregators such as `getStripeDashboard(
 3. `metrics.*` stores daily/monthly rollups.
 4. `ops.sync_runs` and `ops.sync_state` track run ledger and cursors.
 5. `memory.*` stores docs/facts plus embeddings for hybrid recall.
+
+Current OS feeds include full HubSpot contacts and companies (deals intentionally excluded), Stripe
+customers/subscriptions/catalog/invoices/charges/refunds/balance transactions, and Swayzio-Core app
+customers. `/sync-status` reads `api.sync_health` and `api.data_quality`.
 
 The agent reads only curated `api.*` views and `memory.recall()` through the `os_agent_ro` role when
 `SWAYZIO_OS_AGENT_RO_URL` is configured.

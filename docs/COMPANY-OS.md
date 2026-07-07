@@ -164,6 +164,12 @@ over `core` / `metrics` / `memory`.
   at the eve channel; `/eve/v1/*` excluded from Next middleware. Migrations 0012 (api.stripe_trend,
   api.companies) + 0013 (collectible_mrr — `docs/STRIPE-MRR-INVESTIGATION.md`). Build log:
   `docs/PHASE-F-EVE.md`; open threads: `docs/HANDOFF.md`.
+- **Phase G — OS-first dashboard + source depth.** ✅ Done 2026-07-07. Dashboard Stripe/HubSpot
+  aggregators now prefer OS `api.*` views and fall back to cache-plane readers. HubSpot sync expands
+  from catalog-only to all contacts plus companies; deals remain intentionally excluded. Stripe sync
+  expands to full customers plus products/prices/coupons and a rolling ledger window for invoices,
+  charges, refunds, and balance transactions (`STRIPE_FINANCE_LOOKBACK_DAYS`, scheduled default 30).
+  New `api.sync_health` + `api.data_quality` power `/sync-status` and `npm run os:quality`.
 
 ## 9. Open questions
 
