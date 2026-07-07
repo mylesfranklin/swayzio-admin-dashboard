@@ -14,7 +14,7 @@ import { readFile } from "node:fs/promises";
 import { osSql } from "@/server/os/db";
 import { embed, hasEmbedKey, toVectorLiteral, embedModel, EMBED_DIM } from "@/server/os/embed";
 
-const DOCS = ["docs/COMPANY-OS.md", "docs/DECISIONS.md", "docs/ARCHITECTURE.md", "db/swayzio-os/README.md"];
+const DOCS = ["docs/COMPANY-OS.md", "docs/DECISIONS.md", "docs/ARCHITECTURE.md", "docs/HANDOFF.md", "docs/STRIPE-MRR-INVESTIGATION.md", "db/swayzio-os/README.md"];
 const ingestDocs = !process.argv.includes("--no-docs");
 const sql = osSql();
 
