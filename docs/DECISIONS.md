@@ -92,3 +92,21 @@ skill; dynamic-import with `ssr:false`.
 ## 2026-06-20 — Keep Neon + Drizzle (no D1)
 **Decision:** Stay on Neon Postgres with Drizzle.
 **Why:** Already built and accurate; native Vercel integration; D1 buys nothing for this workload.
+
+## 2026-07-07 — eve pinned exact + Sonnet 5 via AI Gateway string
+eve is a fast-moving beta (0.13.0 removed defineTool `auth`; 0.14.0 removed `needsApproval`), so the
+dependency is pinned exactly (`"eve": "0.19.0"`) and upgrades are gated on reading
+`node_modules/eve/CHANGELOG.md`. Model is the gateway id `anthropic/claude-sonnet-5` (founder
+preference; cost/speed) — a string id routes through the Vercel AI Gateway via OIDC, so no provider
+key exists anywhere.
+
+## 2026-07-07 — Embeddings ride the AI Gateway via OIDC (no provider key)
+`embed.ts` defaults to the gateway's OpenAI-compatible `/embeddings` authed by `VERCEL_OIDC_TOKEN`
+(auto-provided on Vercel, `vercel env pull` locally). Zero new secrets, billing consolidated in the
+gateway. An explicit `EMBED_API_KEY`/`OPENAI_API_KEY` overrides for direct-provider use.
+
+## 2026-07-07 — Stripe metrics lead with the reconciled triple, booked demoted
+Collected (cash) → collectible (≈ the Stripe app's MRR: paying + past-due-in-dunning) → booked (list
+price) — everywhere: dashboard KPI rows, `metrics.stripe_daily.collectible_mrr` in the OS, and Eve's
+`revenue_health`. A single headline "MRR" was hiding the pause_collection base
+(docs/STRIPE-MRR-INVESTIGATION.md); no service math changed, only additive fields + presentation.

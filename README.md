@@ -3,7 +3,9 @@
 The internal **brain and analytics engine** for Swayzio — a founders-only dashboard unifying
 Stripe, HubSpot, and the Swayzio-Core app database, with clean ApexCharts visualizations.
 
-**Live:** https://admin.swayzio.com (founders only, Google SSO via Clerk)
+**Live:** https://admin.swayzio.com (founders only, Google SSO via Clerk) — including **Eve**, the
+built-in analytics agent at `/agent`, grounded in **Swayzio OS** (a dedicated Neon "company brain";
+see `docs/COMPANY-OS.md`). Status + open threads: `docs/HANDOFF.md`.
 
 ## Stack
 Next.js 16 (App Router, Turbopack) · React 19 · Tailwind CSS 4 + daisyUI 5 · ApexCharts · Clerk

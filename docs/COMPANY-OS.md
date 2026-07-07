@@ -1,8 +1,8 @@
 # Swayzio OS — The Agent-Native Company Brain (one Postgres for the whole business)
 
-> **Status:** Phase A **live** (2026-06-23). Neon project `swayzio-os` (`sparkling-butterfly-49751147`),
-> PG 18.4, region `aws-us-east-1`, compute autoscale 0.25→2 CU + scale-to-zero. Schemas + ops control
-> plane + identity spine applied and verified. Phases B–F pending (see §8).
+> **Status:** Phases A–F **ALL LIVE** (2026-07-07). Neon project `swayzio-os` (`sparkling-butterfly-49751147`),
+> PG 18.4, `aws-us-east-1`, autoscale 0.25→2 CU + scale-to-zero. ELT every 6h (GitHub Actions), migrations
+> applied through **0013**, semantic recall active, and the eve agent is live in production (see §8 + `docs/HANDOFF.md`).
 > **One-line:** Make a single Neon Postgres the **system of record** for the entire company —
 > normalized, cron-fed, and built so an agent can retrieve and reason over everything in one query.
 > **Scope note:** This does **not** re-architect the admin dashboard app. The dashboard becomes one
@@ -156,10 +156,14 @@ over `core` / `metrics` / `memory`.
   if dim ≠ 1536). Verified: provenance gate rejects sourceless facts; lexical+recency recall ranks
   correctly now — semantic recall activates on first `os:embed` with a key. **Still pending:** the
   always-on `pg_cron` maintenance lane (embedding refresh, `raw` retention, MV refresh).
-- **Phase F — Agent.** Detailed implementation plan written 2026-06-24: **`docs/PHASE-F-EVE.md`**
-  (researched across eve.dev docs/GitHub/blogs; founders' analytics agent under `src/agent/`, tools
-  wrapping `api.*` + `memory.recall` read-only, Clerk-bearer channel auth, Vercel co-deploy). Starts
-  with F0 spike to confirm eve's beta API before building. Not yet implemented.
+- **Phase F — Agent.** ✅ **LIVE in production 2026-07-07** (admin.swayzio.com/agent, PR #1). eve 0.19.0
+  (pinned) + Sonnet 5 via AI Gateway; agent at `agent/` (repo root — eve CLI requirement); 13 read-only
+  tools over `api.*` through the **`os_agent_ro`** role (SELECT on api + EXECUTE memory.recall only) +
+  `recall_memory` (hybrid semantic — embeddings via AI Gateway OIDC, no key) + approval-gated
+  `trigger_sync` (GitHub workflow_dispatch). Auth: Clerk **"eve" JWT template** (aud+email+role) verified
+  at the eve channel; `/eve/v1/*` excluded from Next middleware. Migrations 0012 (api.stripe_trend,
+  api.companies) + 0013 (collectible_mrr — `docs/STRIPE-MRR-INVESTIGATION.md`). Build log:
+  `docs/PHASE-F-EVE.md`; open threads: `docs/HANDOFF.md`.
 
 ## 9. Open questions
 

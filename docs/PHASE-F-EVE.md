@@ -1,6 +1,6 @@
 # Phase F — The eve.dev Agent on Swayzio OS
 
-**Status: F0–F2 + F4 + F5 done on branch `phase-f-eve`; F3 (os_agent_ro) + F6 (deploy) pending.**
+**Status: ✅ COMPLETE — merged to main (PR #1) and LIVE at admin.swayzio.com/agent on 2026-07-07.** All phases done incl. F3 (`os_agent_ro` role) and F6 (deploy + prod boundary verification: health 200, tokenless 401). This doc is now the historical build log; current state lives in `docs/HANDOFF.md`. Remaining nice-to-haves (evals, monday-digest, churned_accounts) are tracked there.
 
 > **2026-07-07 update:** upgraded **eve 0.13.3 → 0.19.0** (pinned exact; `ai` bumped to stable 7). The one
 > breaking change that touched us: **0.14.0 removed `needsApproval`** — the field is now **`approval`**

@@ -1,7 +1,7 @@
 # AGENTS.md — Swayzio Admin Dashboard
 
-Guidance for any AI agent working in this repo (Claude Code, the future **eve.dev**
-agent, etc.). Claude Code users: `CLAUDE.md` is the primary file; this one is the
+Guidance for any AI agent working in this repo (Claude Code, the **eve** agent that now lives at
+`agent/`, etc.). Claude Code users: `CLAUDE.md` is the primary file; this one is the
 cross-agent + design-system entry point.
 
 ## The product

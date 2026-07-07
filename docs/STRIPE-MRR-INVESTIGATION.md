@@ -126,3 +126,15 @@ No changes needed to the metrics themselves — the dashboard already leads with
 ---
 
 *Prepared 2026-07-07 during the Eve agent launch. The investigation started as a metrics-discrepancy question and ended as a quantified revenue-recovery plan; the numbers above are the source of truth for the remediation pilot.*
+
+## 10. Implementation status (appended 2026-07-07, same day)
+
+- **Dashboard now shows the accurate view** (commit `fed6b14`): overview leads with Collected MRR;
+  the Stripe page KPI row is Collected → Collectible → Booked → Collection Rate plus a "Billing
+  reality" strip. `collectibleMrr` is computed from two additive service fields
+  (`pastDueOpenSubscriptions/Mrr`) — live-verified against this report's sweeps before shipping.
+- **Mirrored into Swayzio OS** (migration `0013_stripe_collectible.sql` + feed): `metrics.stripe_daily`
+  now carries `past_due_open_subs/mrr` + `collectible_mrr`; `api.stripe_snapshot` recreated; Eve's
+  `revenue_health` quotes collectible. Verified via the `os_agent_ro` role: $18,227 vs Stripe's $17.9K.
+- **Still open**: the §6 recovery pilot (awaiting founder go — touches live billing) and the
+  swayzio-core `pause_collection` trickle hunt. Tracked in `docs/HANDOFF.md`.

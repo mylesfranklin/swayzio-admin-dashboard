@@ -3,23 +3,39 @@
 The internal **brain and analytics engine** for Swayzio. Founders-only dashboard unifying Stripe,
 HubSpot, Kit, Mercury, and social data, with a built-in AI agent. Fast, beautiful, Vercel-native.
 
-**Read these first:** `docs/ARCHITECTURE.md` (the spec), `docs/MIGRATION.md` (where we are),
-`docs/DECISIONS.md` (why things are the way they are).
+**Read these first:** `docs/HANDOFF.md` (current status + open threads), `docs/ARCHITECTURE.md`
+(the spec), `docs/DECISIONS.md` (why things are the way they are), `docs/COMPANY-OS.md` (the
+Swayzio OS brain the agent reads).
 
 ---
 
-## Current state (2026-06)
-Migration complete and **live in production**: Next.js app (`src/`) deployed to Vercel (swayzio team)
-at **admin.swayzio.com** — Clerk production auth (founders-only, Google SSO), Stripe + HubSpot + the
-Swayzio-Core app DB (read-only) all wired through the cache, cron warming every 6h. The legacy
-Replit export (Vite/Wouter `client/` + Express `server/` + Drizzle `shared/`) has been **removed** —
-this is a clean Next-only repo. See memory `deployment` + `docs/MIGRATION.md`.
+## Current state (2026-07)
+Everything below is **live in production** at **admin.swayzio.com** (Vercel, swayzio team; push to
+`main` auto-deploys):
+- **Dashboard**: Next.js app (`src/`), Clerk production auth (founders-only), Stripe + HubSpot +
+  Swayzio-Core app DB wired through the cache, cron warming every 6h. The legacy Replit export is
+  long gone — clean Next-only repo.
+- **Swayzio OS** (docs/COMPANY-OS.md): dedicated Neon project `swayzio-os` — raw→core→metrics ELT
+  fed every 6h by GitHub Actions (`os-sync.yml`), identity spine, `api.*` read views, `memory.*`
+  with **semantic recall live** (embeddings via Vercel AI Gateway OIDC — no provider key).
+  Migrations `db/swayzio-os/migrations/` via `npm run os:migrate` (through 0013).
+- **Eve agent** (`agent/` at repo root, eve **0.19.0 pinned**, model `anthropic/claude-sonnet-5`):
+  founders-only chat at `/agent` ("Ask the OS"), 13 read-only tools over `api.*` +
+  `recall_memory` (hybrid), one approval-gated write (`trigger_sync`). Auth = Clerk "eve" JWT
+  template verified at the eve channel (`agent/channels/eve.ts`); reads via the `os_agent_ro`
+  Postgres role (`SWAYZIO_OS_AGENT_RO_URL`) so tools physically cannot write.
+- **Stripe metrics are the reconciled triple** (docs/STRIPE-MRR-INVESTIGATION.md): collected
+  (~$7.4K cash) → collectible (~$18.2K ≈ the Stripe app's MRR) → booked (~$34.5K list price).
+  Dashboard, OS (`metrics.stripe_daily.collectible_mrr`), Eve, and the Stripe app all agree.
+
+See `docs/HANDOFF.md` for open threads and memory `deployment`/`swayzio-os`/`stripe-data-findings`.
 
 ## Target stack
 Next.js 16 (App Router, **Turbopack**) · React 19 · Tailwind CSS 4 + **daisyUI 5** (CSS-first config)
 · **ApexCharts** (via the `daisyui-charts` skill) · TanStack Query · Clerk (founders-only) · **Neon**
 Postgres via the **serverless driver + plain SQL** (no Drizzle — see DECISIONS.md) · Zod for
-validation · **Vercel** (hosting + Cron + Fluid Compute) · **eve.dev** agent (later phase).
+validation · **Vercel** (hosting + Cron + Fluid Compute) · **eve** agent (live — pinned exact, it's a
+fast-moving beta: read `node_modules/eve/CHANGELOG.md` before any upgrade).
 
 DB: dedicated Neon project `swayzio-admin-dashboard`; `DATABASE_URL` in `.env.local`. Stripe coding
 skills installed under `.agents/skills` (`npx skills add https://docs.stripe.com`); Stripe MCP in
@@ -60,10 +76,13 @@ skills installed under `.agents/skills` (`npx skills add https://docs.stripe.com
 - **Match the surrounding code.** Mirror existing naming, structure, and comment density.
 
 ## Commands
-- `npm run dev` — Next.js (Turbopack) on :3000
+- `npm run dev` — Next.js (Turbopack) on :3000 (also boots the eve dev server via `withEve`)
 - `npm run build` / `npm run start` — production build / serve
 - `npm run check` — tsc · `npm run lint` — next lint
 - `npm run design:lint|build|check` — DESIGN.md theme pipeline
+- `npm run agent:info|dev|build` — eve CLI (run from the **repo root**; the CLI resolves the agent
+  from CWD and requires the `agent/` layout)
+- `npm run os:migrate|sync|verify|embed` — Swayzio OS migrations / ELT / verification / embeddings
 - Dev/data utilities in `scripts/` (run with `npx tsx scripts/<name>.ts`): cache warmers + probes.
 
 ## Data reality (live vs mock)

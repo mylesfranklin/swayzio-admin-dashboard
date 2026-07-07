@@ -1,5 +1,9 @@
 # Migration Plan — Replit/Vite/Express → Next.js 16 on Vercel
 
+> **HISTORICAL (2026-07):** the migration completed and shipped; this plan is kept as a record.
+> Current state: `docs/HANDOFF.md` + `CLAUDE.md`.
+
+
 > **Strategy:** Migrate **in-place** in this repo (git history preserved). Pivot the shell to
 > Next.js early so the daisyUI/UI work is done **once**, then port pages and services into it.
 > The app stays runnable throughout — we don't break it for a week.
