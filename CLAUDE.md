@@ -61,7 +61,8 @@ skills installed under `.agents/skills` (`npx skills add https://docs.stripe.com
 5. **Auth is the boundary, not decoration.** Clerk middleware guards `(dashboard)` + `/api/*`
    (except webhooks + Clerk routes). Founders allowlist + `publicMetadata.role === "founder"`. Never
    rely on a client-side route guard as the security boundary.
-6. **Env prefixes:** client-exposed vars use `NEXT_PUBLIC_` (not `VITE_`). See ARCHITECTURE §11.
+6. **Env prefixes:** client-exposed vars use `NEXT_PUBLIC_` (not `VITE_`). See
+   `docs/ARCHITECTURE.md` → Environment.
 7. **Keep Replit out.** HubSpot auth has already been de-Replit'd to `HUBSPOT_ACCESS_TOKEN`
    (private-app token). Strip any remaining Replit-only assumptions if old reference code appears.
 
