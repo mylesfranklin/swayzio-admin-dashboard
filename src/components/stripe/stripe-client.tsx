@@ -1,6 +1,6 @@
 "use client";
 
-import { Wallet, CreditCard, Users, DollarSign } from "lucide-react";
+import { Wallet, CreditCard, DollarSign, Percent } from "lucide-react";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { RevenueAreaChart } from "@/components/charts/revenue-area-chart";
 import { StatusDonut } from "@/components/charts/status-donut";
@@ -26,12 +26,76 @@ export function StripeClient({ stripe, error }: { stripe: StripeDashboard | null
         </p>
       </div>
 
-      {/* KPIs */}
+      {/* KPIs — the honest money story: collected → collectible → booked (see docs/STRIPE-MRR-INVESTIGATION.md) */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard title="Monthly Revenue (MRR)" value={formatCurrency(stripe.mrr)} icon={Wallet} accent="brand" />
-        <KpiCard title="Active Subscriptions" value={formatNumber(stripe.activeSubscriptions)} icon={CreditCard} accent="brand" animationDelay={75} />
-        <KpiCard title="Stripe Customers" value={formatNumber(stripe.customers)} icon={Users} accent="brand" animationDelay={150} />
-        <KpiCard title="Total Revenue" value={formatCurrency(stripe.revenue12mo)} icon={DollarSign} accent="success" animationDelay={225} />
+        <KpiCard
+          title="Collected Last Month"
+          value={formatCurrency(stripe.collectedLastFullMonth)}
+          icon={DollarSign}
+          accent="success"
+          hint="Real cash collected in the last full month (succeeded charges net of refunds). The ground truth."
+        />
+        <KpiCard
+          title="Collectible MRR"
+          value={stripe.collectibleMrr != null ? formatCurrency(stripe.collectibleMrr) : "—"}
+          icon={Wallet}
+          accent="brand"
+          animationDelay={75}
+          hint="Subscriptions whose billing is still live: paying subs plus past-due subs in active dunning. This is ≈ the MRR the Stripe app shows."
+        />
+        <KpiCard
+          title="Booked MRR"
+          value={formatCurrency(stripe.mrr)}
+          icon={CreditCard}
+          accent="info"
+          animationDelay={150}
+          hint="List price of every active-status subscription — includes the paused-collection base whose invoices void every cycle and never collect."
+        />
+        <KpiCard
+          title="Collection Rate"
+          value={`${stripe.collectionRatePct}%`}
+          icon={Percent}
+          accent="warning"
+          animationDelay={225}
+          subtitle="collected ÷ booked"
+        />
+      </div>
+
+      {/* Billing reality */}
+      <div className="rounded-box border border-line bg-base-200 p-4">
+        <p className="mb-3 text-[0.6875rem] font-medium uppercase tracking-wider text-ink-faint">Billing reality</p>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <RealityTile
+            label="Actually paying"
+            value={`${formatNumber(stripe.payingSubscriptions)} subs`}
+            detail={`${stripe.payingRatePct}% of ${formatNumber(stripe.activeSubscriptions)} active · ${formatCurrency(stripe.payingMrr)}/mo`}
+            tone="success"
+          />
+          <RealityTile
+            label="Broken billing"
+            value={`${formatNumber(stripe.voidInvoiceSubscriptions)} subs`}
+            detail="active, latest invoice voided (paused collection)"
+            tone="error"
+          />
+          <RealityTile
+            label="Past-due at risk"
+            value={`${formatCurrency(stripe.pastDueMrrAtRisk)}/mo`}
+            detail={`${formatNumber(stripe.pastDueSubscriptions)} subs in/after dunning`}
+            tone="warning"
+          />
+          <RealityTile
+            label="Churn (30d)"
+            value={`${stripe.churnRatePct}%`}
+            detail={`${formatNumber(stripe.canceledLast30Days)} canceled`}
+            tone="neutral"
+          />
+          <RealityTile
+            label="Customers"
+            value={formatNumber(stripe.customers)}
+            detail={`${formatCurrency(stripe.revenue12mo)} collected · 12mo`}
+            tone="neutral"
+          />
+        </div>
       </div>
 
       {/* Revenue + subscription mix */}
@@ -78,6 +142,36 @@ export function StripeClient({ stripe, error }: { stripe: StripeDashboard | null
           </table>
         </div>
       </div>
+    </div>
+  );
+}
+
+const realityTones = {
+  success: "bg-success",
+  warning: "bg-warning",
+  error: "bg-error",
+  neutral: "bg-ink-faint",
+} as const;
+
+function RealityTile({
+  label,
+  value,
+  detail,
+  tone,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  tone: keyof typeof realityTones;
+}) {
+  return (
+    <div className="rounded-lg border border-line bg-base-300/40 p-3">
+      <div className="flex items-center gap-1.5">
+        <span className={`h-1.5 w-1.5 rounded-full ${realityTones[tone]}`} />
+        <p className="text-[0.6875rem] font-medium uppercase tracking-wider text-ink-faint">{label}</p>
+      </div>
+      <p className="mt-1.5 text-lg font-bold leading-none tracking-tight text-ink">{value}</p>
+      <p className="mt-1 text-xs text-ink-muted">{detail}</p>
     </div>
   );
 }

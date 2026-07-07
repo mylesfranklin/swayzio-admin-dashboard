@@ -69,6 +69,8 @@ export interface SubscriptionMetrics {
   pastDueSubscriptions: number;
   pausedSubscriptions: number;
   pastDueMrrAtRisk: number;    // $/mo of past_due subs (USD)
+  pastDueOpenSubscriptions: number; // past_due with an OPEN latest invoice — dunning still live
+  pastDueOpenMrr: number;      // $/mo of that slice; payingMrr + this ≈ Stripe's own MRR tile
   byStatus: Record<string, number>;
   byInterval: { monthly: number; annual: number; other: number };
   nonUsdActive: number;
@@ -176,6 +178,7 @@ export async function getSubscriptionMetrics(): Promise<SubscriptionMetrics> {
   const byStatus: Record<string, number> = {};
   let mrrCents = 0, pastDueCents = 0, activeCount = 0, pastDue = 0, paused = 0, nonUsdActive = 0;
   let payingCount = 0, payingCents = 0, voidInvoiceCount = 0;
+  let pastDueOpen = 0, pastDueOpenCents = 0;
   const byInterval = { monthly: 0, annual: 0, other: 0 };
 
   for (const sub of subs) {
@@ -195,6 +198,9 @@ export async function getSubscriptionMetrics(): Promise<SubscriptionMetrics> {
     } else if (sub.status === "past_due") {
       pastDue++;
       pastDueCents += sub.monthly;
+      // OPEN latest invoice = dunning still live; Stripe's analytics MRR keeps counting these,
+      // while voided-invoice subs are analytically churned (see docs/STRIPE-MRR-INVESTIGATION.md).
+      if (sub.latestInvoiceStatus === "open") { pastDueOpen++; pastDueOpenCents += sub.monthly; }
     } else if (sub.status === "paused") {
       paused++;
     }
@@ -224,6 +230,8 @@ export async function getSubscriptionMetrics(): Promise<SubscriptionMetrics> {
     pastDueSubscriptions: pastDue,
     pausedSubscriptions: paused,
     pastDueMrrAtRisk: Math.round(pastDueCents / 100),
+    pastDueOpenSubscriptions: pastDueOpen,
+    pastDueOpenMrr: Math.round(pastDueOpenCents / 100),
     byStatus,
     byInterval,
     nonUsdActive,

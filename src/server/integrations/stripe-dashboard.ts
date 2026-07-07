@@ -21,6 +21,8 @@ export interface StripeDashboard {
   payingMrr: number;             // booked $/mo for paying subs only
   payingRatePct: number;         // payingSubscriptions / activeSubscriptions * 100
   voidInvoiceSubscriptions: number; // active w/ VOID latest invoice (broken billing)
+  collectibleMrr: number | null; // payingMrr + past-due-in-dunning ≈ Stripe's own MRR tile
+                                 // (null until the metrics cache refreshes with the new fields)
   collectedLastFullMonth: number;
   collectionRatePct: number;     // collectedLastFullMonth / mrr * 100
   revenue12mo: number;
@@ -76,6 +78,8 @@ export async function getStripeDashboard(): Promise<StripeDashboard> {
     payingMrr: s.payingMrr,
     payingRatePct,
     voidInvoiceSubscriptions: s.voidInvoiceSubscriptions,
+    // Guard: a cached metrics blob written before this field existed lacks pastDueOpenMrr.
+    collectibleMrr: typeof s.pastDueOpenMrr === "number" ? s.payingMrr + s.pastDueOpenMrr : null,
     collectedLastFullMonth: r.lastFullMonth,
     collectionRatePct,
     revenue12mo: r.total12mo,

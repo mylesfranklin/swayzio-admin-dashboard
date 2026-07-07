@@ -78,7 +78,16 @@ export function DashboardClient({ stripe, error }: { stripe: StripeDashboard | n
 
       {/* KPI grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard title="Monthly Revenue (MRR)" value={stripe ? formatCurrency(stripe.mrr) : "—"} icon={Wallet} accent="brand" animationDelay={0} isLoading={loading} />
+        <KpiCard
+          title="Collected MRR"
+          value={stripe ? formatCurrency(stripe.collectedLastFullMonth) : "—"}
+          subtitle="cash · last full month"
+          icon={Wallet}
+          accent="brand"
+          animationDelay={0}
+          isLoading={loading}
+          hint="Real cash collected last full month. Booked (list-price) MRR is higher — most of the gap is the paused-collection base that never bills. Full picture on the Stripe tab."
+        />
         <KpiCard title="Active Subscriptions" value={stripe ? formatNumber(stripe.activeSubscriptions) : "—"} icon={CreditCard} accent="brand" animationDelay={75} isLoading={loading} />
         <KpiCard title="Stripe Customers" value={stripe ? formatNumber(stripe.customers) : "—"} icon={Users} accent="brand" animationDelay={150} isLoading={loading} />
         <KpiCard title="Total Revenue" value={stripe ? formatCurrency(stripe.revenue12mo) : "—"} subtitle="trailing 12 months" icon={DollarSign} accent="success" animationDelay={225} isLoading={loading} />
@@ -128,7 +137,7 @@ export function DashboardClient({ stripe, error }: { stripe: StripeDashboard | n
               )}
               <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <SummaryTile icon={<DollarSign className="h-3.5 w-3.5 text-ink-faint" />} label="Total Revenue" value={stripe ? formatCurrency(stripe.revenue12mo) : "—"} loading={loading} />
-                <SummaryTile icon={<span className="h-1.5 w-1.5 rounded-full bg-brand" />} label="MRR" value={stripe ? formatCurrency(stripe.mrr) : "—"} loading={loading} />
+                <SummaryTile icon={<span className="h-1.5 w-1.5 rounded-full bg-brand" />} label="Booked MRR" value={stripe ? formatCurrency(stripe.mrr) : "—"} loading={loading} />
                 <SummaryTile icon={<TrendingUp className="h-3.5 w-3.5 text-success" />} label="Active Subscriptions" value={stripe ? formatNumber(stripe.activeSubscriptions) : "—"} loading={loading} />
               </div>
             </div>
