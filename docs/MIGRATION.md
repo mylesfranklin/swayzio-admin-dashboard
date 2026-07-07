@@ -1,99 +1,108 @@
-# Migration Plan — Replit/Vite/Express → Next.js 16 on Vercel
+# Migration Record — Replit/Vite/Express to Next.js/Vercel
 
-> **HISTORICAL (2026-07):** the migration completed and shipped; this plan is kept as a record.
-> Current state: `docs/HANDOFF.md` + `CLAUDE.md`.
+> **Status:** Historical record. The migration is complete. Active state and open work live in
+> `docs/HANDOFF.md`; current architecture lives in `docs/ARCHITECTURE.md`.
 
+This file keeps the migration history so future agents understand why the repository looks the way it
+does. It is not the active roadmap.
 
-> **Strategy:** Migrate **in-place** in this repo (git history preserved). Pivot the shell to
-> Next.js early so the daisyUI/UI work is done **once**, then port pages and services into it.
-> The app stays runnable throughout — we don't break it for a week.
+## Completed Outcome
 
-**Decisions locked (2026-06-20):** Go Next.js now · migrate in-place · port backend to Next Route
-Handlers + Vercel Cron. See `DECISIONS.md`.
+- The legacy Replit/Vite/Express app was replaced with a clean Next.js 16 App Router app.
+- The app deploys on Vercel at `admin.swayzio.com`.
+- Clerk production auth gates founders-only access.
+- Stripe, HubSpot, and Swayzio-Core app DB analytics are wired through a Neon-backed
+  stale-while-revalidate cache.
+- The visual system was moved to Tailwind 4 + daisyUI 5 with `design/swayzio.DESIGN.md` as source of
+  truth.
+- The `swayzio-os` Neon project became the company brain: raw/core/metrics/memory/ops schemas, feeds
+  through migration `0013`, and curated `api.*` views.
+- Eve is live at `/agent` from the root `agent/` directory, with read-only tools over Swayzio OS plus
+  one approval-gated `trigger_sync` action.
 
----
+## Historical Phases
 
-## Phase 0 — Foundation & cleanup  ✅ done
-- [x] Architecture spec, CLAUDE.md, decision log written.
-- [x] Repo cleanup: removed Replit cruft, folded `replit.md` into docs, archived `attached_assets`
-      reference docs into `docs/reference/`, updated `.gitignore` (+ `.env` now ignored, `.env.example` added).
-- [x] Vendored the `daisyui-charts` skill into `skills/`.
-- [ ] Inventory the live-vs-mock data per page (punch list for Phase 4).  ← still TODO
+### Phase 0 — Foundation
 
-## Phase 1 — Next.js shell + theme (the UI win)  ◄ in progress
-- [x] Scaffolded Next.js 16 (App Router, Turbopack, React 19, TS) **in this repo**; legacy
-      `client/`+`server/` left in place (excluded from build) for porting reference.
-- [x] Tailwind 4 + daisyUI 5 via `globals.css` (CSS-first, no JS theme config). Legacy
-      `tailwind.config.ts`/`theme.json`/`postcss.config.js` removed (superseded).
-- [x] Authored the **`swayzio` daisyUI theme** — exact Linear dark surfaces + **orange** accent
-      (`#f97316`, was purple `#5e6ad2`), 13px type scale, ported glow/animation utilities.
-- [x] Built the app shell: root layout (Inter), sidebar (collapsible sections), header
-      (breadcrumbs/quick-actions), mobile nav — matched to current UI.
-- [x] Converted the **Dashboard** page end-to-end: KPI cards, ApexCharts dual-axis MRR/subscriber
-      chart, newsletter analytics, tabs. Builds clean; dev server returns 200 with correct content.
-- [ ] **Eyeball check with Myles: confirm the look is preserved** before mass-porting other pages.
-- [ ] (Deferred to Phase 3) wire real cached data — currently uses `src/lib/fixtures/dashboard.ts`.
+- Architecture, handoff, and decision docs started.
+- Replit cruft and legacy reference material were moved out of the active app path.
+- `skills/daisyui-charts/` was vendored for chart generation guidance.
 
-## Phase 2 — Auth (Clerk, founders-only)  ✅ code done (needs Clerk keys to go live)
-- [x] Added Clerk (`@clerk/nextjs` 7.5.7 + `@clerk/themes`), `<ClerkProvider>` (dark theme,
-      brand `#3b5bdb`) wrapped in root layout — only when keys present.
-- [x] `src/proxy.ts` (Next 16's renamed middleware) guards everything except `/sign-in` +
-      `/api/webhooks`. **Fails closed in production** without keys; open in keyless local dev.
-- [x] Founder gate in `(dashboard)/layout.tsx` via `currentUser()` → `isFounder(email, role)`:
-      `FOUNDER_EMAILS` allowlist OR `publicMetadata.role === "founder"`; else → `/not-authorized`.
-- [x] `(auth)/sign-in/[[...sign-in]]` route + `/not-authorized` page; sidebar user wired to
-      Clerk `<UserButton>`/`useUser` (static "Dev Mode" fallback when keyless).
-- [x] `src/lib/auth.ts` centralizes config flags + the fail-closed assertion.
-- [ ] **Manual (Myles):** create Clerk app, add keys + `FOUNDER_EMAILS` to `.env` and Vercel,
-      set sign-up to "restricted"/off in Clerk dashboard. Then auth activates automatically.
+### Phase 1 — Next.js Shell And Theme
 
-## Phase 3 — Backend + first real screen (Stripe)  ◄ Stripe done
-- [x] Neon-direct data layer: `src/server/db` (neon driver) + `src/server/cache.ts`
-      (two-tier SWR cache, `integration_cache` table created in Neon). No Drizzle.
-- [x] **Rebuilt Stripe service** `src/server/integrations/stripe.ts` for accuracy —
-      reads item-level period (API clover moved it), real collected revenue, collection
-      rate, past_due at-risk, churn. Verified against live data (see DECISIONS / memory).
-- [x] Route handlers: `/api/stripe/metrics` + `/api/cron/refresh` (CRON_SECRET, `maxDuration`).
-- [x] Dashboard + `/analytics/stripe` wired to REAL Stripe data; daisyUI ApexCharts
-      (collected-revenue area, status donut, collection radial), top-subs table.
-- [x] `vercel.json` cron (every 6h) to keep caches warm.
-- [x] **De-Replit HubSpot auth** (Replit connector → `HUBSPOT_ACCESS_TOKEN` private-app token).
-- [x] **HubSpot integration built** — `/analytics/hubspot` (music-catalog/artist CRM): KPIs, PRO
-      donut, reacquire/tracks-uploaded charts, power-users + companies tables w/ email copy. Real
-      data, SWR-cached, cron-warmed. See `docs/INTEGRATIONS-HUBSPOT.md`.
-- [x] **App DB wired** (read-only) — Swayzio-Core Neon via `dashboard_ro` role / `SWAYZIO_APP_DATABASE_URL`;
-      powers real "Tracks Uploaded". See memory `app-db-access`.
-- [x] **Deployed to Vercel** (swayzio team) — https://swayzio-admin-dashboard.vercel.app; all env in
-      Production, cron green, founders signing in. See memory `deployment`.
-      ⚠️ Clerk still on dev keys — prod instance needs a custom domain (e.g. admin.swayzio.com).
-- [ ] Port Kit + Mercury; replace remaining fixtures (newsletter still sample data).
-- [ ] Add HubSpot tile(s) to the main dashboard overview.
-- [ ] Stripe webhook `/api/webhooks/stripe` (raw-body verify) — when we add write paths.
+- Next.js 16, React 19, Tailwind 4, daisyUI 5, and Turbopack were adopted.
+- The Linear-inspired dark UI was preserved with a deep-blue accent.
+- `design/swayzio.DESIGN.md` became the design source of truth.
+- App shell, sidebar, header, mobile nav, and dashboard components were ported.
 
-## Phase 4 — Port remaining pages + kill mocks
-- [ ] Port all pages: Stripe, HubSpot, Customers (+detail), Mercury, SEO, Socials, Settings, Sync.
-- [ ] Replace `MemStorage` mock data with real Drizzle queries / real APIs per the Phase 0 punch list.
-- [ ] Add XState only where state is genuinely complex (sync status, multi-tab, checkout).
-- [ ] Zod-validated search params for filters/timeframe/page.
+### Phase 2 — Auth
 
-## Phase 5 — Cut over & deploy ✅
-- [x] **Deleted the legacy Vite client + Express server** (and `shared/` Drizzle schema, Replit
-      artifacts, unused deps: drizzle*, date-fns, @tanstack/react-query, ws). Clean Next-only repo.
-- [x] Wired Vercel project: all env vars in Production, cron schedules, custom domain admin.swayzio.com.
-- [x] Production deploy live with Clerk production auth (founders-only). Stripe numbers verified.
+- Clerk was added through `@clerk/nextjs`.
+- `src/proxy.ts` became the Next 16 middleware entrypoint.
+- Founder access is enforced by `FOUNDER_EMAILS` or `publicMetadata.role === "founder"`.
+- Keyless local dev remains open; production fails closed without Clerk keys.
 
-## Phase 6 — AI agent (eve.dev)
-- [ ] Scaffold eve agent in `src/agent/`; tools wrap the read-only cached services.
-- [ ] Embed web channel as a dashboard panel; auth via Clerk.
-- [ ] Iterate on instructions/skills; add MCP connections as needed.
+### Phase 3 — Backend And Real Analytics
 
----
+- The dashboard data layer moved to the Neon serverless driver and plain SQL.
+- Drizzle was removed.
+- `src/server/cache.ts` implemented two-tier stale-while-revalidate caching.
+- Stripe was rebuilt around accurate collected/collectible/booked revenue definitions.
+- HubSpot was de-Replit'd to `HUBSPOT_ACCESS_TOKEN`.
+- Swayzio-Core app DB reads were added through the read-only `SWAYZIO_APP_DATABASE_URL`.
+- Vercel Cron warms dashboard cache keys through `/api/cron/refresh`.
 
-## Risk register
-| Risk | Mitigation |
-|---|---|
-| Long Stripe job exceeds serverless limit | Already <75s; Fluid `maxDuration`; escalate to Queue if needed. |
-| HubSpot auth breaks off-Replit | Phase 3 swaps to private-app token (blocker until done). |
-| UI drift from current look | Phase 1 converts one page first as a pixel-match gate before mass porting. |
-| eve.dev is beta | Agent is a later, isolated phase; dashboard ships without it. |
-| Doing UI work twice | Avoided by pivoting to Next.js shell *before* daisyUI conversion. |
+### Phase 4 — Remaining Dashboard Surface
+
+Partially complete. Real current pages are:
+
+- `/`
+- `/analytics/stripe`
+- `/analytics/hubspot`
+- `/database`
+- `/design-system`
+- `/agent`
+
+Still planned or represented only in nav/docs unless implemented later:
+
+- Kit newsletter
+- Mercury
+- SEO
+- Socials
+- GitHub analytics
+- Sync status
+- Settings
+- Customer list/detail
+
+### Phase 5 — Cutover
+
+- Legacy Vite client, Express server, `shared/` schema, Replit artifacts, and unused migration-era
+  dependencies were removed.
+- Vercel production deployment and custom domain were wired.
+- Stripe numbers were verified against live data and Swayzio OS.
+
+### Phase 6 — Eve Agent
+
+- Eve was implemented under root `agent/` because the eve CLI requires `agent/agent.ts` at the repo
+  root.
+- `next.config.ts` wraps the app with `withEve(nextConfig)`.
+- Agent tools read curated Swayzio OS views through `SWAYZIO_OS_AGENT_RO_URL` where available.
+- The chat UI lives at `/agent`.
+- Open follow-ups are tracked in `docs/HANDOFF.md`.
+
+## Remaining Product Work
+
+Use `docs/HANDOFF.md` as the authoritative list. As of this record, notable open product/data work is:
+
+- Pause-collection recovery pilot, pending explicit founder approval.
+- `churned_accounts` tool, requiring canceled-sub ingestion and a new `api.churned_accounts` view.
+- Eve evals.
+- Fine-grained `SYNC_DISPATCH_TOKEN` rotation.
+- Planned dashboard routes for non-Stripe/HubSpot surfaces.
+
+## Rules Preserved From The Migration
+
+- Keep business logic framework-agnostic under `src/server/*`.
+- Keep third-party calls out of user-facing request paths by using cache aggregators.
+- Do not reintroduce Drizzle, Recharts, Replit connector assumptions, or raw color drift.
+- Verify Stripe metric changes before and after with live/source-aligned checks.

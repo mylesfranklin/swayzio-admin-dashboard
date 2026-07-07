@@ -1,7 +1,8 @@
 # CLAUDE.md — Swayzio Admin Dashboard
 
-The internal **brain and analytics engine** for Swayzio. Founders-only dashboard unifying Stripe,
-HubSpot, Kit, Mercury, and social data, with a built-in AI agent. Fast, beautiful, Vercel-native.
+The internal **brain and analytics engine** for Swayzio. Founders-only dashboard currently unifying
+Stripe, HubSpot, and Swayzio-Core app data, with a built-in AI agent. Kit, Mercury, socials, and
+other surfaces are planned. Fast, beautiful, Vercel-native.
 
 **Read these first:** `docs/HANDOFF.md` (current status + open threads), `docs/ARCHITECTURE.md`
 (the spec), `docs/DECISIONS.md` (why things are the way they are), `docs/COMPANY-OS.md` (the
@@ -32,10 +33,10 @@ See `docs/HANDOFF.md` for open threads and memory `deployment`/`swayzio-os`/`str
 
 ## Target stack
 Next.js 16 (App Router, **Turbopack**) · React 19 · Tailwind CSS 4 + **daisyUI 5** (CSS-first config)
-· **ApexCharts** (via the `daisyui-charts` skill) · TanStack Query · Clerk (founders-only) · **Neon**
-Postgres via the **serverless driver + plain SQL** (no Drizzle — see DECISIONS.md) · Zod for
-validation · **Vercel** (hosting + Cron + Fluid Compute) · **eve** agent (live — pinned exact, it's a
-fast-moving beta: read `node_modules/eve/CHANGELOG.md` before any upgrade).
+· **ApexCharts** (via the `daisyui-charts` skill) · Clerk (founders-only) · **Neon** Postgres via the
+**serverless driver + plain SQL** (no Drizzle — see DECISIONS.md) · Zod for validation · **Vercel**
+(hosting + Cron + Fluid Compute) · **eve** agent (live — pinned exact, it's a fast-moving beta: read
+`node_modules/eve/CHANGELOG.md` before any upgrade).
 
 DB: dedicated Neon project `swayzio-admin-dashboard`; `DATABASE_URL` in `.env.local`. Stripe coding
 skills installed under `.agents/skills` (`npx skills add https://docs.stripe.com`); Stripe MCP in
@@ -45,10 +46,10 @@ skills installed under `.agents/skills` (`npx skills add https://docs.stripe.com
 1. **Preserve the look.** The Linear dark aesthetic is liked and stays. Implement it as the
    `swayzio` daisyUI theme in `globals.css` (OKLCH tokens). **No hand-maintained `tailwind.config`
    theme object** — that burden is exactly what we're removing.
-2. **Don't break the Stripe logic.** `stripe-service.ts` is battle-tested: MRR is USD-only, churn is
-   events-based, revenue history is **decoupled** from core stats so the slow charge pagination never
-   blocks subscription metrics. Port it verbatim; if you must change it, verify the numbers still
-   match (MRR, active subs, churn %, total revenue) before/after.
+2. **Don't break the Stripe logic.** `src/server/integrations/stripe.ts` is battle-tested: MRR is
+   USD-only, churn is events-based, and revenue history is **decoupled** from core stats so the slow
+   charge pagination never blocks subscription metrics. If you must change it, verify the numbers
+   still match (MRR, active subs, churn %, total revenue) before/after.
 3. **Cache-first, never block the request path.** All integrations go through the stale-while-
    revalidate cache manager. User-facing routes return cached data instantly; refreshes are
    background (Vercel Cron). Never call a third-party API synchronously in a page/handler the user
@@ -60,10 +61,10 @@ skills installed under `.agents/skills` (`npx skills add https://docs.stripe.com
 5. **Auth is the boundary, not decoration.** Clerk middleware guards `(dashboard)` + `/api/*`
    (except webhooks + Clerk routes). Founders allowlist + `publicMetadata.role === "founder"`. Never
    rely on a client-side route guard as the security boundary.
-6. **Env prefixes:** client-exposed vars use `NEXT_PUBLIC_` (not `VITE_`). See ARCHITECTURE §11.
-7. **De-Replit anything you touch.** HubSpot auth currently uses Replit connectors
-   (`REPLIT_CONNECTORS_HOSTNAME`/`REPL_IDENTITY`) — replace with `HUBSPOT_ACCESS_TOKEN` (private-app
-   token). Strip other Replit-only assumptions as you port code.
+6. **Env prefixes:** client-exposed vars use `NEXT_PUBLIC_` (not `VITE_`). See
+   `docs/ARCHITECTURE.md` → Environment.
+7. **Keep Replit out.** HubSpot auth has already been de-Replit'd to `HUBSPOT_ACCESS_TOKEN`
+   (private-app token). Strip any remaining Replit-only assumptions if old reference code appears.
 
 ## Conventions
 - **Business logic is framework-agnostic.** Integration services live in `src/server/integrations/`
@@ -71,8 +72,8 @@ skills installed under `.agents/skills` (`npx skills add https://docs.stripe.com
   return JSON.
 - **URL is the contract.** Filters/timeframe/page live in Zod-validated search params, not ad-hoc
   local state.
-- **XState only where it earns it** (sync status, multi-tab dashboards, checkout). Don't machine-ify
-  simple pages.
+- Add client state machinery only where it earns its keep. Simple dashboards should stay as local
+  React state plus server-derived props.
 - **Match the surrounding code.** Mirror existing naming, structure, and comment density.
 
 ## Commands
@@ -85,10 +86,12 @@ skills installed under `.agents/skills` (`npx skills add https://docs.stripe.com
 - `npm run os:migrate|sync|verify|embed` — Swayzio OS migrations / ELT / verification / embeddings
 - Dev/data utilities in `scripts/` (run with `npx tsx scripts/<name>.ts`): cache warmers + probes.
 
-## Data reality (live vs mock)
-Live (real API → cache): **Stripe, HubSpot, Kit, Mercury.** Mock (in-memory `MemStorage` sample
-data, to be replaced): **customers list/detail, socials, SEO, GitHub, Vercel.** When a page shows
-suspiciously round/static numbers, check whether it's still on mock data.
+## Data reality (live vs planned)
+Live (real API/DB → cache): **Stripe, HubSpot, Swayzio-Core app DB**. The main dashboard still has
+sample newsletter/Kit content. Mercury, SEO, socials, GitHub, sync status, settings, and customer
+detail routes are planned/nav-visible surfaces unless implemented later. When a page shows
+suspiciously round/static numbers, trace it to `src/lib/fixtures` or the server integration before
+trusting it.
 
 ## Don't
 - Don't migrate to Cloudflare/D1, SolidJS, or Rspack (see DECISIONS.md — these were considered and rejected).

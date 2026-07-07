@@ -19,15 +19,9 @@ Stripe/HubSpot/app-DB.
 external-scheduler-first (Vercel Cron / GitHub Actions) — because **`pg_cron` is silently skipped
 under scale-to-zero**; `pg_cron` reserved for an always-on in-DB maintenance lane later; (3) agent/
 Data-API auth reuses **Clerk via external JWKS** + RLS, not a second identity system.
-**Status:** Phases A–C live (2026-06-23) — project `swayzio-os` (`sparkling-butterfly-49751147`, PG18,
-us-east-1, autoscale 0.25→2 + scale-to-zero). Schemas + ops control plane + identity spine (A); Stripe
-ELT feed (B); HubSpot + app-DB feeds (C). **Verified live:** `metrics.stripe_daily` == live
-`getSubscriptionMetrics()` field-by-field; identity spine = 11,332 identities, 5,417 spanning >1 source
-(5,480 subs · 9,088 contacts · 5,668 app customers). Feeds: `src/server/os/feeds/*` via
-`npm run os:sync`; scheduled writer `.github/workflows/os-sync.yml` (inert until committed + secrets).
-Phases D–F (Data API surface, memory/pgvector, eve.dev agent) pending. Greenfield deps:
-`@neondatabase/serverless`→1.x, `zod`→4 at root (was unused; no `zod/v4` subpath). Dashboard deps
-(TS6/Stripe22/lucide1) intentionally untouched.
+**Status update (2026-07-07):** Phases A–F are live. Migrations are applied through `0013`; curated
+`api.*` views, `memory.recall`, semantic recall, the root `agent/` Eve agent, and `trigger_sync` are
+in production. Current state and open threads live in `docs/HANDOFF.md`.
 
 ---
 
@@ -57,7 +51,7 @@ Turbopack, an eve.dev agent chat, daisyUI (drop hand-maintained Tailwind), and t
 Vercel." Bought a daisyUI charts pack that is itself a Next.js 16 / React 19 / Tailwind 4 / daisyUI 5
 app.
 **Decision:** Migrate to **Next.js 16 (App Router, Turbopack) + React 19 + Tailwind 4 + daisyUI 5 +
-ApexCharts + Clerk + Drizzle/Neon + eve.dev, all on Vercel.**
+ApexCharts + Clerk + Neon + eve.dev, all on Vercel.**
 **Why:** Every stated requirement converges on Next.js — Turbopack has no standalone package (ships
 with Next), eve.dev is Vercel-native, the charts pack is already Next, Clerk is first-class in Next,
 and Vercel is the chosen host. The expensive business logic is portable TS, so the cost is shell
@@ -89,9 +83,11 @@ complaint. daisyUI moves theming into CSS variables.
 skill; dynamic-import with `ssr:false`.
 **Why:** It's the pack we own, pre-styled to daisyUI tokens, and auto-re-themes via `var(--color-*)`.
 
-## 2026-06-20 — Keep Neon + Drizzle (no D1)
+## 2026-06-20 — Keep Neon + Drizzle (no D1) — superseded
 **Decision:** Stay on Neon Postgres with Drizzle.
 **Why:** Already built and accurate; native Vercel integration; D1 buys nothing for this workload.
+**Superseded by:** `2026-06-20 — Drop Drizzle ORM; talk to Neon directly`. The current code uses the
+Neon serverless driver with plain SQL and has no Drizzle dependency.
 
 ## 2026-07-07 — eve pinned exact + Sonnet 5 via AI Gateway string
 eve is a fast-moving beta (0.13.0 removed defineTool `auth`; 0.14.0 removed `needsApproval`), so the

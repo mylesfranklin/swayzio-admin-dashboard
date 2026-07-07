@@ -133,8 +133,8 @@ over `core` / `metrics` / `memory`.
   `feeds/app.ts` (5,668 `billing_customers` → `core.app_customer` + `metrics.app_daily`). Identity
   resolved by email across all three sources via set-based `resolveIdentities` (`src/server/os/load.ts`).
   **Live spine: 11,332 identities, 5,417 spanning >1 source.** Orchestrated by `scripts/os-sync.ts`
-  (`npm run os:sync`); scheduled via `.github/workflows/os-sync.yml` (every 6h; inert until committed +
-  secrets set — the full sweep is ~6 min, past Vercel's 300s limit, hence GitHub Actions).
+  (`npm run os:sync`); scheduled via `.github/workflows/os-sync.yml` every 6h. The full sweep is
+  ~6 min, past Vercel's 300s limit, hence GitHub Actions.
 - **Phase D — Retrieval surface.** ✅ Done 2026-06-24. Curated read-only `api` schema
   (`db/swayzio-os/migrations/0009`): `identity_360` (one row/person unified across Stripe+HubSpot+app —
   3,137 people in all three), `top_accounts`, `{stripe,hubspot,app}_snapshot`, `revenue_monthly`,
