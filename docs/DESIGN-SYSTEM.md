@@ -128,8 +128,9 @@ src/app/globals.css             # tailwind + daisyui + theme.generated.css + bes
 - Edit tokens/prose in `design/swayzio.DESIGN.md` → `npm run design:build` → commit the regenerated
   `theme.generated.css` (HMR picks it up locally).
 - `npm run design:lint` before commit (contrast + refs) — gate on **errors** (warnings are advisory).
-- CI runs `design:lint` + `design:check` (artifact fresh) alongside `tsc`/`next build`; the GitHub workflow
-  also runs a `designmd diff` on PRs to catch a token pair dropping below AA.
+- CI runs `design:lint` + `design:check` (artifact fresh) alongside `tsc`; the GitHub workflow also
+  runs a `designmd diff` on PRs to catch a token pair dropping below AA. `next build` is intentionally
+  omitted from CI until a build job has the required production-like env/secrets.
 - Update `design/components.html` when adding a component so the visual gallery stays complete.
 
 ## 8. Status — fully rolled out

@@ -39,5 +39,11 @@ Secrets live in `.env.local` (gitignored) locally and in Vercel project env in p
 `FOUNDER_EMAILS`, `CRON_SECRET`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`
 (+ the `NEXT_PUBLIC_CLERK_*` URL config). See `.env.example`.
 
+Swayzio OS / Eve envs: `SWAYZIO_OS_DATABASE_URL`, `SWAYZIO_OS_AGENT_RO_URL`,
+`CLERK_JWT_ISSUER`, `CLERK_JWT_AUDIENCE`, `SYNC_DISPATCH_TOKEN`, `SYNC_REPO`
+(plus Vercel-provided `VERCEL_OIDC_TOKEN` for AI Gateway). See `.env.example`.
+
 ## Docs
-`docs/ARCHITECTURE.md` · `docs/MIGRATION.md` · `docs/DECISIONS.md` · `docs/INTEGRATIONS-HUBSPOT.md`
+Start with `docs/HANDOFF.md`. Then use `docs/ARCHITECTURE.md`, `docs/CODEMAP.md`,
+`docs/DECISIONS.md`, `docs/COMPANY-OS.md`, and `docs/DESIGN-SYSTEM.md`.
+`docs/MIGRATION.md` and `docs/PHASE-F-EVE.md` are historical records.

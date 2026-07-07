@@ -5,11 +5,12 @@ Guidance for any AI agent working in this repo (Claude Code, the **eve** agent t
 cross-agent + design-system entry point.
 
 ## The product
-Internal founders-only "brain" dashboard unifying Stripe, HubSpot, Kit, Mercury and
-social data. Stack: **Next.js 16 (App Router, Turbopack) · React 19 · Tailwind 4 +
+Internal founders-only "brain" dashboard unifying live Stripe, HubSpot, and Swayzio-Core app data,
+with Kit, Mercury, socials, and other surfaces planned. Stack: **Next.js 16 (App Router, Turbopack) · React 19 · Tailwind 4 +
 daisyUI 5 · Clerk (founders-only) · Neon Postgres (serverless driver, no ORM) ·
-Vercel**. Architecture: `docs/ARCHITECTURE.md`. Status/roadmap: `docs/MIGRATION.md`.
-Decisions: `docs/DECISIONS.md`.
+Vercel**. Current architecture: `docs/ARCHITECTURE.md`. Active status/open work:
+`docs/HANDOFF.md`. Code paths: `docs/CODEMAP.md`. Historical migration record:
+`docs/MIGRATION.md`. Decisions: `docs/DECISIONS.md`.
 
 ## Visual identity — READ BEFORE BUILDING ANY UI
 The brand/visual system is a single source of truth:
