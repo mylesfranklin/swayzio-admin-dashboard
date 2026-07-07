@@ -250,6 +250,8 @@ export async function refreshStripeDaily() {
       count(*) filter (where status='active' and latest_invoice_status='void')                             AS void_invoice_subs,
       count(*) filter (where status='past_due')                                                            AS past_due_subs,
       round(coalesce(sum(monthly_cents) filter (where status='past_due'),0)/100)                           AS past_due_mrr_at_risk,
+      count(*) filter (where status='past_due' and latest_invoice_status='open')                           AS past_due_open_subs,
+      round(coalesce(sum(monthly_cents) filter (where status='past_due' and latest_invoice_status='open'),0)/100) AS past_due_open_mrr,
       count(*) filter (where status='paused')                                                              AS paused_subs,
       count(*) filter (where status='active' and currency<>'usd')                                          AS non_usd_active
     FROM core.subscription
@@ -269,23 +271,29 @@ export async function refreshStripeDaily() {
   const lastFull = Number(rev.collected_last_full_month) || 0;
   const paying_rate_pct = active > 0 ? Math.round((Number(agg.paying_subs) / active) * 1000) / 10 : 0;
   const collection_rate_pct = mrr > 0 ? Math.round((lastFull / mrr) * 1000) / 10 : 0;
+  // ≈ Stripe's own MRR tile: billing still live (docs/STRIPE-MRR-INVESTIGATION.md)
+  const collectible_mrr = Number(agg.paying_mrr) + Number(agg.past_due_open_mrr);
   const churn_rate_pct = active + canceled30 > 0 ? Math.round((canceled30 / (active + canceled30)) * 1000) / 10 : 0;
 
   await sql`
     INSERT INTO metrics.stripe_daily (
       day, mrr, mrr_annualized, active_subs, paying_subs, paying_mrr, paying_rate_pct,
-      void_invoice_subs, past_due_subs, past_due_mrr_at_risk, paused_subs, non_usd_active,
+      void_invoice_subs, past_due_subs, past_due_mrr_at_risk, past_due_open_subs, past_due_open_mrr,
+      collectible_mrr, paused_subs, non_usd_active,
       customers, collected_last_full_month, collection_rate_pct, revenue_12mo, canceled_30d, churn_rate_pct
     ) VALUES (
       current_date, ${mrr}, ${mrr * 12}, ${active}, ${Number(agg.paying_subs)}, ${Number(agg.paying_mrr)}, ${paying_rate_pct},
-      ${Number(agg.void_invoice_subs)}, ${Number(agg.past_due_subs)}, ${Number(agg.past_due_mrr_at_risk)}, ${Number(agg.paused_subs)}, ${Number(agg.non_usd_active)},
+      ${Number(agg.void_invoice_subs)}, ${Number(agg.past_due_subs)}, ${Number(agg.past_due_mrr_at_risk)}, ${Number(agg.past_due_open_subs)}, ${Number(agg.past_due_open_mrr)},
+      ${collectible_mrr}, ${Number(agg.paused_subs)}, ${Number(agg.non_usd_active)},
       ${customers}, ${lastFull}, ${collection_rate_pct}, ${Number(rev.revenue_12mo)}, ${canceled30}, ${churn_rate_pct}
     )
     ON CONFLICT (day) DO UPDATE SET
       mrr=EXCLUDED.mrr, mrr_annualized=EXCLUDED.mrr_annualized, active_subs=EXCLUDED.active_subs,
       paying_subs=EXCLUDED.paying_subs, paying_mrr=EXCLUDED.paying_mrr, paying_rate_pct=EXCLUDED.paying_rate_pct,
       void_invoice_subs=EXCLUDED.void_invoice_subs, past_due_subs=EXCLUDED.past_due_subs,
-      past_due_mrr_at_risk=EXCLUDED.past_due_mrr_at_risk, paused_subs=EXCLUDED.paused_subs,
+      past_due_mrr_at_risk=EXCLUDED.past_due_mrr_at_risk, past_due_open_subs=EXCLUDED.past_due_open_subs,
+      past_due_open_mrr=EXCLUDED.past_due_open_mrr, collectible_mrr=EXCLUDED.collectible_mrr,
+      paused_subs=EXCLUDED.paused_subs,
       non_usd_active=EXCLUDED.non_usd_active, customers=EXCLUDED.customers,
       collected_last_full_month=EXCLUDED.collected_last_full_month, collection_rate_pct=EXCLUDED.collection_rate_pct,
       revenue_12mo=EXCLUDED.revenue_12mo, canceled_30d=EXCLUDED.canceled_30d, churn_rate_pct=EXCLUDED.churn_rate_pct,

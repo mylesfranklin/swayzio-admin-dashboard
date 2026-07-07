@@ -14,6 +14,7 @@ export default defineTool({
     if (!s) return { summary: "No Stripe data yet — the feed hasn't run." };
 
     const mrr = num(s.mrr);
+    const collectible = num(s.collectible_mrr); // ≈ Stripe's own MRR tile; null until the first post-0013 snapshot
     const collected = num(s.collected_last_full_month);
     const rate = num(s.collection_rate_pct);
     const active = num(s.active_subs);
@@ -24,7 +25,9 @@ export default defineTool({
     const rev12 = num(s.revenue_12mo);
 
     const summary =
-      `Booked MRR is ${usd(mrr)}/mo, but only ${usd(collected)} was collected last full month — ` +
+      `Booked MRR is ${usd(mrr)}/mo` +
+      (collectible != null ? ` (collectible — billing still live, ≈ the Stripe app's MRR — is ${usd(collectible)}/mo)` : "") +
+      `, but only ${usd(collected)} was collected last full month — ` +
       `collection rate ${pct(rate)}. Of ${int(active)} active subscriptions, ${int(paying)} actually pay; ` +
       `${int(voidSubs)} carry void invoices (broken billing). ${int(pastDue)} are past-due (${usd(atRisk)}/mo at risk). ` +
       `Trailing 12-month collected revenue: ${usd(rev12)}.`;
@@ -32,6 +35,7 @@ export default defineTool({
     return {
       summary,
       booked_mrr_usd: mrr,
+      collectible_mrr_usd: collectible,
       collected_last_full_month_usd: collected,
       collection_rate_pct: rate,
       active_subs: active,
