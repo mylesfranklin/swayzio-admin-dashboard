@@ -85,57 +85,6 @@ function financeCreatedFilter(): { gte: number } {
   return { gte: Math.floor(Date.now() / 1000) - Math.max(days, 1) * 86_400 };
 }
 
-interface StripeSearchPage<T> {
-  data: T[];
-  has_more: boolean;
-  next_page?: string | null;
-}
-
-interface InvoiceLike {
-  id: string;
-  customer?: unknown;
-  subscription?: unknown;
-  parent?: { subscription_details?: { subscription?: unknown } };
-  status?: string | null;
-  currency?: string | null;
-  amount_due?: number | null;
-  amount_paid?: number | null;
-  amount_remaining?: number | null;
-  total?: number | null;
-  subtotal?: number | null;
-  created?: number | null;
-  status_transitions?: { finalized_at?: number | null; paid_at?: number | null };
-  hosted_invoice_url?: string | null;
-}
-
-async function stripeRest<T>(path: string, params: Record<string, string | number | undefined>): Promise<T> {
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) throw new Error("STRIPE_SECRET_KEY is not set");
-  const url = new URL(`https://api.stripe.com/v1/${path}`);
-  for (const [name, value] of Object.entries(params)) {
-    if (value != null) url.searchParams.set(name, String(value));
-  }
-  let lastError: unknown;
-  for (let attempt = 0; attempt < 5; attempt++) {
-    try {
-      const res = await fetch(url, {
-        headers: { Authorization: `Bearer ${key}`, "Stripe-Version": STRIPE_API_VERSION },
-        signal: AbortSignal.timeout(30000),
-      });
-      if (res.ok) return (await res.json()) as T;
-      const body = await res.text();
-      if (res.status < 500 && res.status !== 429) {
-        throw new Error(`Stripe REST ${path} failed ${res.status}: ${body}`);
-      }
-      lastError = new Error(`Stripe REST ${path} failed ${res.status}: ${body}`);
-    } catch (err) {
-      lastError = err;
-    }
-    await new Promise((resolve) => setTimeout(resolve, 500 * 2 ** attempt));
-  }
-  throw lastError instanceof Error ? lastError : new Error(`Stripe REST ${path} failed`);
-}
-
 function mapSub(sub: Stripe.Subscription): SubRow {
   const items = sub.items?.data ?? [];
   let cents = 0;
@@ -440,13 +389,14 @@ export async function syncStripeCoupons() {
 export async function syncStripeInvoices() {
   return withSyncRun("stripe", "invoice", async (ctx) => {
     const sql = osSql();
+    const s = client();
     const { gte } = financeCreatedFilter();
     let pageToken: string | undefined;
     do {
-      const page = await stripeRest<StripeSearchPage<InvoiceLike>>("invoices/search", {
+      const page = await s.invoices.search({
         query: `created>=${gte}`,
         limit: 100,
-        page: pageToken,
+        ...(pageToken ? { page: pageToken } : {}),
       });
       ctx.read(page.data.length);
       for (const batch of chunk(page.data, 300)) {
