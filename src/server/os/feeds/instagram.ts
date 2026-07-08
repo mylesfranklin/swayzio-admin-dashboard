@@ -389,7 +389,7 @@ export async function syncInstagramAccountInsights() {
           rows.push(...insightRows("instagram_account_id", account.id, metricRows));
         } catch (err) {
           if (isOptionalPermissionError(err)) {
-            console.warn(`[instagram] account insights skipped; token likely lacks instagram_manage_insights: ${err instanceof Error ? err.message : String(err)}`);
+            console.warn(`[instagram] account insights skipped; token likely lacks instagram_business_manage_insights: ${err instanceof Error ? err.message : String(err)}`);
             ctx.read(0);
             ctx.wrote(0);
             ctx.setCursor(new Date().toISOString());
@@ -441,7 +441,7 @@ export async function syncInstagramMediaInsights() {
           rows.push(...insightRows("media_id", item.id, metricRows, item.instagram_account_id));
         } catch (err) {
           if (isOptionalPermissionError(err)) {
-            console.warn(`[instagram] media insights skipped; token likely lacks instagram_manage_insights: ${err instanceof Error ? err.message : String(err)}`);
+            console.warn(`[instagram] media insights skipped; token likely lacks instagram_business_manage_insights: ${err instanceof Error ? err.message : String(err)}`);
             ctx.read(0);
             ctx.wrote(0);
             ctx.setCursor(new Date().toISOString());

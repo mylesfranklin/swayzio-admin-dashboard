@@ -90,7 +90,7 @@ Those routes do not currently exist unless added later.
 - `src/server/os/` contains Swayzio OS ELT clients, feeds, embedding helpers, and sync wrappers.
 - `agent/` contains the eve agent. It is intentionally at repo root because eve CLI commands resolve
   `agent/agent.ts` from the project root.
-- `db/swayzio-os/migrations/` contains immutable Swayzio OS SQL migrations, currently through `0020`.
+- `db/swayzio-os/migrations/` contains immutable Swayzio OS SQL migrations, currently through `0021`.
 - `scripts/` contains migration, sync, embedding, refresh, and verification utilities.
 
 ## Data Flow

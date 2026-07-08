@@ -2,7 +2,7 @@
 
 > **Status:** Phases A–F **ALL LIVE** (2026-07-07). Neon project `swayzio-os` (`sparkling-butterfly-49751147`),
 > PG 18.4, `aws-us-east-1`, autoscale 0.25→2 CU + scale-to-zero. ELT every 6h (GitHub Actions), migrations
-> applied through **0020**, semantic recall active, and the eve agent is live in production (see §8 + `docs/HANDOFF.md`).
+> applied through **0021**, semantic recall active, and the eve agent is live in production (see §8 + `docs/HANDOFF.md`).
 > **One-line:** Make a single Neon Postgres the **system of record** for the entire company —
 > normalized, cron-fed, and built so an agent can retrieve and reason over everything in one query.
 > **Scope note:** This does **not** re-architect the admin dashboard app. The dashboard becomes one
@@ -182,7 +182,7 @@ over `core` / `metrics` / `memory`.
   payloads.
 - **Phase J — Instagram social layer.** ✅ First pass 2026-07-08. Instagram API with Facebook Login
   sync lands connected professional accounts and media, plus account/media insights when
-  `instagram_manage_insights` is granted. Eve reads curated `api.instagram_*` views and Instagram tools
+  `instagram_business_manage_insights` is granted. Eve reads curated `api.instagram_*` views and Instagram tools
   for profile snapshot, media performance, and entity-level inspection with sanitized raw payloads.
 
 ## 9. Open questions
