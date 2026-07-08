@@ -2,7 +2,7 @@
 
 > **Status:** Phases A–F **ALL LIVE** (2026-07-07). Neon project `swayzio-os` (`sparkling-butterfly-49751147`),
 > PG 18.4, `aws-us-east-1`, autoscale 0.25→2 CU + scale-to-zero. ELT every 6h (GitHub Actions), migrations
-> applied through **0018**, semantic recall active, and the eve agent is live in production (see §8 + `docs/HANDOFF.md`).
+> applied through **0019**, semantic recall active, and the eve agent is live in production (see §8 + `docs/HANDOFF.md`).
 > **One-line:** Make a single Neon Postgres the **system of record** for the entire company —
 > normalized, cron-fed, and built so an agent can retrieve and reason over everything in one query.
 > **Scope note:** This does **not** re-architect the admin dashboard app. The dashboard becomes one
@@ -175,6 +175,11 @@ over `core` / `metrics` / `memory`.
   webhooks, and credit/treasury surfaces when present. Eve reads curated `api.mercury_*` views and
   Mercury tools for cash snapshot, transactions, cashflow, spend, runway inputs, and entity-level
   inspection with optional raw payloads.
+- **Phase I — Facebook social layer.** ✅ First pass 2026-07-08. Meta Graph API sync lands Facebook
+  Pages, posts, Page/post insights, ad accounts, campaigns, and campaign-level Ads Insights when the
+  token has the required permissions. Eve reads curated `api.facebook_*` views and Facebook tools for
+  organic snapshot, post performance, ads performance, and entity-level inspection with sanitized raw
+  payloads.
 
 ## 9. Open questions
 

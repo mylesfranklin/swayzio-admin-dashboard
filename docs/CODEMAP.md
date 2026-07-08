@@ -70,7 +70,8 @@
 - `src/server/os/feeds/hubspot.ts` — HubSpot contacts and companies feed; deals intentionally excluded.
 - `src/server/os/feeds/app.ts` — Swayzio-Core app raw/core/metrics feed.
 - `src/server/os/feeds/mercury.ts` — Mercury accounts, transactions, recipients, categories, cards, statements, organization, users, events, webhooks, and credit/treasury feed.
-- `db/swayzio-os/migrations/` — migrations `0001` through `0018`.
+- `src/server/os/feeds/facebook.ts` — Facebook/Meta Pages, posts, organic insights, ad accounts, campaigns, and Ads Insights feed.
+- `db/swayzio-os/migrations/` — migrations `0001` through `0019`.
 
 ## Eve Agent
 
