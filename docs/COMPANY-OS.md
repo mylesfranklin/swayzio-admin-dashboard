@@ -2,7 +2,7 @@
 
 > **Status:** Phases A–F **ALL LIVE** (2026-07-07). Neon project `swayzio-os` (`sparkling-butterfly-49751147`),
 > PG 18.4, `aws-us-east-1`, autoscale 0.25→2 CU + scale-to-zero. ELT every 6h (GitHub Actions), migrations
-> applied through **0013**, semantic recall active, and the eve agent is live in production (see §8 + `docs/HANDOFF.md`).
+> applied through **0018**, semantic recall active, and the eve agent is live in production (see §8 + `docs/HANDOFF.md`).
 > **One-line:** Make a single Neon Postgres the **system of record** for the entire company —
 > normalized, cron-fed, and built so an agent can retrieve and reason over everything in one query.
 > **Scope note:** This does **not** re-architect the admin dashboard app. The dashboard becomes one
@@ -170,6 +170,11 @@ over `core` / `metrics` / `memory`.
   expands to full customers plus products/prices/coupons and a rolling ledger window for invoices,
   charges, refunds, and balance transactions (`STRIPE_FINANCE_LOOKBACK_DAYS`, scheduled default 30).
   New `api.sync_health` + `api.data_quality` power `/sync-status` and `npm run os:quality`.
+- **Phase H — Mercury cash layer.** ✅ Done 2026-07-07. Mercury read-only API sync lands
+  organization, accounts, transactions, recipients, categories, cards, statements, users, events,
+  webhooks, and credit/treasury surfaces when present. Eve reads curated `api.mercury_*` views and
+  Mercury tools for cash snapshot, transactions, cashflow, spend, runway inputs, and entity-level
+  inspection with optional raw payloads.
 
 ## 9. Open questions
 

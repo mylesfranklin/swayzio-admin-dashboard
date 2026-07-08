@@ -90,7 +90,7 @@ Those routes do not currently exist unless added later.
 - `src/server/os/` contains Swayzio OS ELT clients, feeds, embedding helpers, and sync wrappers.
 - `agent/` contains the eve agent. It is intentionally at repo root because eve CLI commands resolve
   `agent/agent.ts` from the project root.
-- `db/swayzio-os/migrations/` contains immutable Swayzio OS SQL migrations, currently through `0015`.
+- `db/swayzio-os/migrations/` contains immutable Swayzio OS SQL migrations, currently through `0018`.
 - `scripts/` contains migration, sync, embedding, refresh, and verification utilities.
 
 ## Data Flow
@@ -119,8 +119,10 @@ User-facing surfaces should call cached aggregators such as `getStripeDashboard(
 5. `memory.*` stores docs/facts plus embeddings for hybrid recall.
 
 Current OS feeds include full HubSpot contacts and companies (deals intentionally excluded), Stripe
-customers/subscriptions/catalog/invoices/charges/refunds/balance transactions, and Swayzio-Core app
-customers. `/sync-status` reads `api.sync_health` and `api.data_quality`.
+customers/subscriptions/catalog/invoices/charges/refunds/balance transactions, Mercury
+accounts/transactions/recipients/categories/cards/statements/organization/users/events/webhooks plus
+credit/treasury surfaces when present, and Swayzio-Core app customers. `/sync-status` reads
+`api.sync_health` and `api.data_quality`.
 
 The agent reads only curated `api.*` views and `memory.recall()` through the `os_agent_ro` role when
 `SWAYZIO_OS_AGENT_RO_URL` is configured.
@@ -155,6 +157,7 @@ Core dashboard:
 - `SWAYZIO_APP_DATABASE_URL`
 - `STRIPE_SECRET_KEY`
 - `HUBSPOT_ACCESS_TOKEN`
+- `MERCURY_API_TOKEN`
 - `FOUNDER_EMAILS`
 - `CRON_SECRET`
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`

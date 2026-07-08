@@ -69,7 +69,8 @@
 - `src/server/os/feeds/stripe.ts` — Stripe customers, subscriptions, catalog, invoices, charges, refunds, balance transactions, and metrics feed.
 - `src/server/os/feeds/hubspot.ts` — HubSpot contacts and companies feed; deals intentionally excluded.
 - `src/server/os/feeds/app.ts` — Swayzio-Core app raw/core/metrics feed.
-- `db/swayzio-os/migrations/` — migrations `0001` through `0015`.
+- `src/server/os/feeds/mercury.ts` — Mercury accounts, transactions, recipients, categories, cards, statements, organization, users, events, webhooks, and credit/treasury feed.
+- `db/swayzio-os/migrations/` — migrations `0001` through `0018`.
 
 ## Eve Agent
 
