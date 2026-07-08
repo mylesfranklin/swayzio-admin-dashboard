@@ -32,7 +32,7 @@ export function AgentChat() {
   return isClerkConfigured ? (
     <ClerkAgentChat />
   ) : (
-    <AgentChatInner bearer={NOOP_BEARER} persistenceKey={LOCAL_DEV_AGENT_PERSISTENCE_KEY} />
+    <AgentChatInner bearer={NOOP_BEARER} firstName="Myles" persistenceKey={LOCAL_DEV_AGENT_PERSISTENCE_KEY} />
   );
 }
 
@@ -44,14 +44,17 @@ function ClerkAgentChat() {
   if (!isLoaded) return <div className="min-h-[calc(100vh-4rem)] bg-base-100" />;
 
   const founderKey = user?.id ?? user?.primaryEmailAddress?.emailAddress ?? "unknown-founder";
-  return <AgentChatInner bearer={bearer} persistenceKey={agentPersistenceKey(founderKey)} />;
+  const firstName = user?.firstName ?? user?.fullName?.split(/\s+/)[0] ?? null;
+  return <AgentChatInner bearer={bearer} firstName={firstName} persistenceKey={agentPersistenceKey(founderKey)} />;
 }
 
 function AgentChatInner({
   bearer,
+  firstName,
   persistenceKey,
 }: {
   bearer: () => Promise<string>;
+  firstName?: string | null;
   persistenceKey: string;
 }) {
   const [mounted, setMounted] = useState(false);
@@ -62,14 +65,16 @@ function AgentChatInner({
 
   if (!mounted) return <div className="min-h-[calc(100vh-4rem)] bg-base-100" />;
 
-  return <AgentChatWorkspace bearer={bearer} persistenceBaseKey={persistenceKey} />;
+  return <AgentChatWorkspace bearer={bearer} firstName={firstName} persistenceBaseKey={persistenceKey} />;
 }
 
 function AgentChatWorkspace({
   bearer,
+  firstName,
   persistenceBaseKey,
 }: {
   bearer: () => Promise<string>;
+  firstName?: string | null;
   persistenceBaseKey: string;
 }) {
   const history = useAgentChatHistory(persistenceBaseKey);
@@ -92,6 +97,7 @@ function AgentChatWorkspace({
       activeConversationId={history.activeConversationId}
       bearer={bearer}
       conversations={history.conversations}
+      firstName={firstName}
       onNewChat={history.newConversation}
       onSelectConversation={history.selectConversation}
       onTouchConversation={history.touchConversation}
@@ -104,6 +110,7 @@ function AgentChatSession({
   activeConversationId,
   bearer,
   conversations,
+  firstName,
   onNewChat,
   onSelectConversation,
   onTouchConversation,
@@ -112,6 +119,7 @@ function AgentChatSession({
   activeConversationId: string;
   bearer: () => Promise<string>;
   conversations: readonly { id: string; title: string; updatedAt: number }[];
+  firstName?: string | null;
   onNewChat: () => void;
   onSelectConversation: (id: string) => void;
   onTouchConversation: (message: string) => void;
@@ -122,25 +130,34 @@ function AgentChatSession({
   const agentRef = useRef<UseEveAgentSnapshot<EveMessageData> | undefined>(undefined);
 
   const options = useMemo<UseEveAgentOptions<EveMessageData>>(
-    () => ({
-      auth: { bearer },
-      initialEvents: persistence.initialEvents,
-      initialSession: persistence.initialSession,
-      maxReconnectAttempts: 3,
-      onEvent: () => persistence.persistFromSnapshot(agentRef.current),
-      onFinish: (snapshot) => persistence.persistFromSnapshot(snapshot),
-      onSessionChange: () => persistence.persistFromSnapshot(agentRef.current),
-      prepareSend: (input) => ({
-        ...input,
-        clientContext: {
-          surface: "swayzio-admin-agent",
-          route: "/agent",
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          localTime: new Date().toISOString(),
-        },
-      }),
-    }),
-    [bearer, persistence]
+    () => {
+      const recentChats = conversations.slice(0, 5).map((conversation) => ({
+        title: conversation.title,
+        updatedAt: new Date(conversation.updatedAt).toISOString(),
+      }));
+
+      return {
+        auth: { bearer },
+        initialEvents: persistence.initialEvents,
+        initialSession: persistence.initialSession,
+        maxReconnectAttempts: 3,
+        onEvent: () => persistence.persistFromSnapshot(agentRef.current),
+        onFinish: (snapshot) => persistence.persistFromSnapshot(snapshot),
+        onSessionChange: () => persistence.persistFromSnapshot(agentRef.current),
+        prepareSend: (input) => ({
+          ...input,
+          clientContext: {
+            surface: "swayzio-admin-agent",
+            route: "/agent",
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            localTime: new Date().toISOString(),
+            ...(firstName ? { founderFirstName: firstName } : {}),
+            recentChats,
+          },
+        }),
+      };
+    },
+    [bearer, conversations, firstName, persistence]
   );
 
   const agent = useEveAgent(options);
@@ -219,6 +236,7 @@ function AgentChatSession({
               />
             </>
           }
+          firstName={firstName}
           historyMenu={historyMenu}
         />
       )}
