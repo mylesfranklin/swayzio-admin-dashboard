@@ -5,7 +5,7 @@ import { Streamdown, type Components } from "streamdown";
 import { cn } from "@/lib/utils";
 
 const codePlugin = createCodePlugin({
-  themes: ["github-light", "github-dark"],
+  themes: ["github-dark", "github-dark"],
 });
 
 const components: Components = {

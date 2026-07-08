@@ -1,13 +1,13 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 import {
   useEveAgent,
   type EveMessageData,
   type UseEveAgentOptions,
   type UseEveAgentSnapshot,
 } from "eve/react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AgentHome } from "@/components/agent/agent-home";
 import { ChatComposer } from "@/components/agent/chat-composer";
 import { ChatConversation } from "@/components/agent/chat-conversation";
@@ -24,20 +24,37 @@ const SUGGESTIONS = [
   "Is every OS data source fresh right now?",
   "Who are the top accounts across Stripe, HubSpot, and app data?",
 ];
+const LOCAL_DEV_PERSISTENCE_KEY = "swayzio:eve-agent:session:v1:local-dev";
+const NOOP_BEARER = async () => "";
 
 export function AgentChat() {
   // Same keyless-dev pattern as sidebar-user/greeting: never call Clerk hooks without
   // ClerkProvider. Keyless dev sends no bearer and relies on localDev loopback auth.
-  return isClerkConfigured ? <ClerkAgentChat /> : <AgentChatInner bearer={async () => ""} />;
+  return isClerkConfigured ? (
+    <ClerkAgentChat />
+  ) : (
+    <AgentChatInner bearer={NOOP_BEARER} persistenceKey={LOCAL_DEV_PERSISTENCE_KEY} />
+  );
 }
 
 function ClerkAgentChat() {
   const { getToken } = useAuth();
+  const { isLoaded, user } = useUser();
+  const bearer = useCallback(async () => (await getToken({ template: "eve" })) ?? "", [getToken]);
 
-  return <AgentChatInner bearer={async () => (await getToken({ template: "eve" })) ?? ""} />;
+  if (!isLoaded) return <div className="min-h-[calc(100vh-4rem)] bg-base-100" />;
+
+  const founderKey = user?.id ?? user?.primaryEmailAddress?.emailAddress ?? "unknown-founder";
+  return <AgentChatInner bearer={bearer} persistenceKey={`swayzio:eve-agent:session:v1:${founderKey}`} />;
 }
 
-function AgentChatInner({ bearer }: { bearer: () => Promise<string> }) {
+function AgentChatInner({
+  bearer,
+  persistenceKey,
+}: {
+  bearer: () => Promise<string>;
+  persistenceKey: string;
+}) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -46,12 +63,19 @@ function AgentChatInner({ bearer }: { bearer: () => Promise<string> }) {
 
   if (!mounted) return <div className="min-h-[calc(100vh-4rem)] bg-base-100" />;
 
-  return <AgentChatSession bearer={bearer} />;
+  return <AgentChatSession bearer={bearer} persistenceKey={persistenceKey} />;
 }
 
-function AgentChatSession({ bearer }: { bearer: () => Promise<string> }) {
-  const persistence = useAgentSessionPersistence("swayzio:eve-agent:session:v1");
+function AgentChatSession({
+  bearer,
+  persistenceKey,
+}: {
+  bearer: () => Promise<string>;
+  persistenceKey: string;
+}) {
+  const persistence = useAgentSessionPersistence(persistenceKey);
   const [draft, setDraft] = useState(() => persistence.loadDraft());
+  const agentRef = useRef<UseEveAgentSnapshot<EveMessageData> | undefined>(undefined);
 
   const options = useMemo<UseEveAgentOptions<EveMessageData>>(
     () => ({
@@ -76,7 +100,7 @@ function AgentChatSession({ bearer }: { bearer: () => Promise<string> }) {
   );
 
   const agent = useEveAgent(options);
-  const agentRef = useLatestAgentSnapshot(agent);
+  agentRef.current = agent;
 
   const messages = agent.data.messages;
   const isBusy = agent.status === "submitted" || agent.status === "streaming";
@@ -146,10 +170,4 @@ function AgentChatSession({ bearer }: { bearer: () => Promise<string> }) {
       </div>
     </div>
   );
-}
-
-function useLatestAgentSnapshot(snapshot: UseEveAgentSnapshot<EveMessageData>) {
-  const [ref] = useState<{ current: UseEveAgentSnapshot<EveMessageData> }>(() => ({ current: snapshot }));
-  ref.current = snapshot;
-  return ref;
 }
