@@ -21,18 +21,32 @@ export const int = (n: unknown): string => {
 };
 
 /**
- * Coerce a row to clean, JSON-serializable values: plain-number strings → numbers,
- * Date → ISO string, and any other non-plain object (e.g. the driver's parsed
- * `interval`) → its string form. eve 0.19 hard-rejects non-JSON tool outputs, and the
- * Neon driver parses date/timestamptz/interval columns into objects.
+ * Coerce a row to clean, JSON-serializable values: plain-number strings -> numbers,
+ * Date -> ISO string, arrays/plain JSON objects recursively preserved, and any other
+ * non-plain object -> its string form. eve 0.19 hard-rejects non-JSON tool outputs,
+ * while Neon JSONB columns arrive as plain objects that must remain inspectable.
  */
+function isPlainObject(value: object): boolean {
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
+}
+
+function coerceValue(value: unknown): unknown {
+  if (typeof value === "string" && /^-?\d+(\.\d+)?$/.test(value)) return Number(value);
+  if (typeof value === "bigint") return Number(value);
+  if (value instanceof Date) return value.toISOString();
+  if (Array.isArray(value)) return value.map(coerceValue);
+  if (value !== null && typeof value === "object") {
+    if (!isPlainObject(value)) return String(value);
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, coerceValue(v)]));
+  }
+  return value;
+}
+
 export function coerceNumbers<T extends Record<string, unknown>>(row: T): T {
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(row)) {
-    if (typeof v === "string" && /^-?\d+(\.\d+)?$/.test(v)) out[k] = Number(v);
-    else if (v instanceof Date) out[k] = v.toISOString();
-    else if (v !== null && typeof v === "object" && !Array.isArray(v)) out[k] = String(v);
-    else out[k] = v;
+    out[k] = coerceValue(v);
   }
   return out as T;
 }

@@ -110,10 +110,6 @@ async function upsertJson(sql: Sql, query: ReturnType<Sql>, rows: JsonRecord[]):
   await query;
 }
 
-function rawPairs(rows: JsonRecord[], idKey = "id"): { sourceId: string; payload: JsonRecord }[] {
-  return rows.map((row, index) => ({ sourceId: String(row[idKey] ?? index), payload: row }));
-}
-
 async function syncRows(
   sql: Sql,
   sourceEntity: string,
@@ -124,7 +120,10 @@ async function syncRows(
 ): Promise<number> {
   let written = 0;
   for (const batch of chunk(rows, 500)) {
-    await landRaw(sql, "mercury", sourceEntity, runId, batch.map((row, i) => ({ sourceId: sourceId(row, written + i), payload: row })));
+    await landRaw(sql, "mercury", sourceEntity, runId, batch.map((row, i) => ({
+      sourceId: sourceId(row, written + i),
+      payload: row.raw && typeof row.raw === "object" ? row.raw : row,
+    })));
     await upsert(batch);
     written += batch.length;
   }
@@ -670,17 +669,32 @@ export async function syncMercuryWebhooks() {
 }
 
 export async function syncMercury() {
-  await syncMercuryOrganization();
-  await syncMercuryAccounts();
-  await syncMercuryCategories();
-  await syncMercuryRecipients();
-  await syncMercuryTransactions();
-  await syncMercuryCards();
-  await syncMercuryStatements();
-  await syncMercuryCredit();
-  await syncMercuryTreasury();
-  await syncMercuryTreasuryTransactions();
-  await syncMercuryUsers();
-  await syncMercuryEvents();
-  await syncMercuryWebhooks();
+  const feeds: Array<[string, () => Promise<unknown>]> = [
+    ["organization", syncMercuryOrganization],
+    ["account", syncMercuryAccounts],
+    ["category", syncMercuryCategories],
+    ["recipient", syncMercuryRecipients],
+    ["transaction", syncMercuryTransactions],
+    ["card", syncMercuryCards],
+    ["statement", syncMercuryStatements],
+    ["credit", syncMercuryCredit],
+    ["treasury", syncMercuryTreasury],
+    ["treasury_transaction", syncMercuryTreasuryTransactions],
+    ["user", syncMercuryUsers],
+    ["event", syncMercuryEvents],
+    ["webhook", syncMercuryWebhooks],
+  ];
+  const failures: string[] = [];
+  for (const [name, fn] of feeds) {
+    try {
+      await fn();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      failures.push(`${name}: ${message}`);
+      console.error(`[mercury] ${name} sync failed; continuing with remaining Mercury feeds: ${message}`);
+    }
+  }
+  if (failures.length) {
+    throw new Error(`Mercury sync completed with ${failures.length} failed sub-feed(s): ${failures.join("; ")}`);
+  }
 }
