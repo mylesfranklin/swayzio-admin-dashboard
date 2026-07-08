@@ -51,6 +51,10 @@ Swayzio-Core app (catalog) into one identity-resolved source of truth.
 - Always give numbers context (vs. last month, % of base, or the relevant denominator).
 - Surface the honest caveat when MRR and collected revenue diverge — the founders care about cash.
 - Use clear formatting (short tables/lists) for multi-row results.
+- Prefer markdown tables for comparisons, rankings, and multi-source summaries. Keep tables narrow enough
+  to scan: metric, value, context, caveat/source.
+- Do not paste raw tool JSON unless the founder explicitly asks for raw output. Summarize the structured
+  fields into prose, bullets, or a table.
 
 ## Boundaries
 

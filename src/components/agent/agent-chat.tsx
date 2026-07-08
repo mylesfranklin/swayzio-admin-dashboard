@@ -1,214 +1,155 @@
 "use client";
 
-import { useEveAgent } from "eve/react";
 import { useAuth } from "@clerk/nextjs";
+import {
+  useEveAgent,
+  type EveMessageData,
+  type UseEveAgentOptions,
+  type UseEveAgentSnapshot,
+} from "eve/react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { AgentHome } from "@/components/agent/agent-home";
+import { ChatComposer } from "@/components/agent/chat-composer";
+import { ChatConversation } from "@/components/agent/chat-conversation";
+import { HitlCard } from "@/components/agent/hitl-card";
+import { getPendingInputRequest } from "@/components/agent/message-parts";
+import { useAgentSessionPersistence } from "@/components/agent/use-agent-session-persistence";
 import { isClerkConfigured } from "@/lib/auth";
-import { useRef, useEffect } from "react";
-import { Send, Sparkles, Square } from "lucide-react";
 
 const SUGGESTIONS = [
-  "How's our revenue health — booked MRR vs cash collected?",
-  "Who are our top 10 accounts across all systems?",
-  "Which labels have the biggest catalogs?",
-  "Is the data fresh right now?",
+  "How is revenue health right now?",
+  "Show cash, burn, runway, and largest Mercury spend.",
+  "Which high-impact social accounts engaged recently?",
+  "Compare Facebook and Instagram performance this week.",
+  "Is every OS data source fresh right now?",
+  "Who are the top accounts across Stripe, HubSpot, and app data?",
 ];
-
-interface InputRequest {
-  requestId: string;
-  prompt?: string;
-  options?: { optionId: string; label?: string }[];
-}
-interface MessagePart {
-  type: string;
-  text?: string;
-  toolName?: string;
-  toolMetadata?: { eve?: { inputRequest?: InputRequest } };
-}
-interface Message {
-  id: string;
-  role: string;
-  parts: MessagePart[];
-}
 
 export function AgentChat() {
   // Same keyless-dev pattern as sidebar-user/greeting: never call Clerk hooks without
-  // ClerkProvider (layout.tsx skips it when keys are unset). Keyless dev sends no bearer
-  // and relies on the eve channel's localDev() loopback auth.
+  // ClerkProvider. Keyless dev sends no bearer and relies on localDev loopback auth.
   return isClerkConfigured ? <ClerkAgentChat /> : <AgentChatInner bearer={async () => ""} />;
 }
 
 function ClerkAgentChat() {
   const { getToken } = useAuth();
-  // The "eve" JWT template mints tokens with aud + email + role claims — the channel's
-  // clerkFounder() AuthFn verifies exactly those (default session tokens carry neither).
+
   return <AgentChatInner bearer={async () => (await getToken({ template: "eve" })) ?? ""} />;
 }
 
 function AgentChatInner({ bearer }: { bearer: () => Promise<string> }) {
-  // The channel boundary verifies this Clerk token (clerkFounder AuthFn); localDev opens it in dev.
-  const agent = useEveAgent({ auth: { bearer } });
-
-  const messages = agent.data.messages as unknown as Message[];
-  const isBusy = agent.status === "submitted" || agent.status === "streaming";
-
-  // Human-in-the-loop: a pending approval/question rides on the latest message.
-  const pending: InputRequest | undefined = (messages.at(-1)?.parts ?? [])
-    .map((p) => p.toolMetadata?.eve?.inputRequest)
-    .find(Boolean);
-  const answer = (optionId: string) =>
-    pending && void agent.send({ inputResponses: [{ requestId: pending.requestId, optionId }] });
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, agent.status]);
+    setMounted(true);
+  }, []);
 
-  const ask = (message: string) => {
-    // Enter still submits the form while streaming (the button turns into Stop) — never
-    // send a second message into an active turn.
-    if (isBusy) return;
-    if (message.trim()) void agent.send({ message: message.trim() });
-  };
+  if (!mounted) return <div className="min-h-[calc(100vh-4rem)] bg-base-100" />;
+
+  return <AgentChatSession bearer={bearer} />;
+}
+
+function AgentChatSession({ bearer }: { bearer: () => Promise<string> }) {
+  const persistence = useAgentSessionPersistence("swayzio:eve-agent:session:v1");
+  const [draft, setDraft] = useState(() => persistence.loadDraft());
+
+  const options = useMemo<UseEveAgentOptions<EveMessageData>>(
+    () => ({
+      auth: { bearer },
+      initialEvents: persistence.initialEvents,
+      initialSession: persistence.initialSession,
+      maxReconnectAttempts: 3,
+      onEvent: () => persistence.persistFromSnapshot(agentRef.current),
+      onFinish: (snapshot) => persistence.persistFromSnapshot(snapshot),
+      onSessionChange: () => persistence.persistFromSnapshot(agentRef.current),
+      prepareSend: (input) => ({
+        ...input,
+        clientContext: {
+          surface: "swayzio-admin-agent",
+          route: "/agent",
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          localTime: new Date().toISOString(),
+        },
+      }),
+    }),
+    [bearer, persistence]
+  );
+
+  const agent = useEveAgent(options);
+  const agentRef = useLatestAgentSnapshot(agent);
+
+  const messages = agent.data.messages;
+  const isBusy = agent.status === "submitted" || agent.status === "streaming";
+  const pending = getPendingInputRequest(messages);
+  const hasMessages = messages.length > 0;
+
+  const ask = useCallback(
+    async (message: string) => {
+      const trimmed = message.trim();
+      if (!trimmed || isBusy) return;
+      setDraft("");
+      persistence.saveDraft("");
+      await agent.send({ message: trimmed });
+    },
+    [agent, isBusy, persistence]
+  );
+
+  const answer = useCallback(
+    async ({ optionId, text }: { optionId?: string; text?: string }) => {
+      if (!pending || isBusy) return;
+      await agent.send({ inputResponses: [{ requestId: pending.requestId, optionId, text }] });
+    },
+    [agent, isBusy, pending]
+  );
+
+  const reset = useCallback(() => {
+    agent.reset();
+    setDraft("");
+    persistence.clear();
+  }, [agent, persistence]);
+
+  const updateDraft = useCallback(
+    (value: string) => {
+      setDraft(value);
+      persistence.saveDraft(value);
+    },
+    [persistence]
+  );
 
   return (
-    <div className="flex h-[calc(100vh-7rem)] flex-col rounded-box border border-line bg-base-200">
-      {/* messages */}
-      <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-5">
-        {messages.length === 0 && (
-          <div className="flex h-full flex-col items-center justify-center gap-5 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand/10 text-brand">
-              <Sparkles className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-lg font-semibold text-ink">Ask the OS</p>
-              <p className="mt-1 text-sm text-ink-muted">
-                Grounded in real Stripe, HubSpot &amp; product data — unified by identity.
-              </p>
-            </div>
-            <div className="grid w-full max-w-xl grid-cols-1 gap-2 sm:grid-cols-2">
-              {SUGGESTIONS.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => ask(s)}
-                  className="rounded-box border border-line bg-base-300/40 p-3 text-left text-xs text-ink-muted transition-colors hover:border-brand/40 hover:text-ink"
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {messages.map((m) => (
-          <div key={m.id} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
-            <div
-              className={
-                m.role === "user"
-                  ? "max-w-[80%] rounded-box bg-brand/15 px-4 py-2.5 text-sm text-ink"
-                  : "max-w-[85%] space-y-2 rounded-box border border-line bg-base-300/40 px-4 py-2.5 text-sm text-ink"
-              }
-            >
-              {m.parts.map((part, i) => {
-                if (part.type === "text" && part.text) {
-                  return (
-                    <p key={i} className="whitespace-pre-wrap leading-relaxed">
-                      {part.text}
-                    </p>
-                  );
-                }
-                const tool =
-                  part.toolName ?? (part.type.startsWith("tool-") ? part.type.slice(5) : null);
-                if (tool) {
-                  return (
-                    <div key={i} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-base-200 px-2 py-0.5 text-[0.625rem] text-ink-faint">
-                      <span className="size-1.5 rounded-full bg-brand" />
-                      {tool}
-                    </div>
-                  );
-                }
-                return null;
-              })}
-            </div>
-          </div>
-        ))}
-
-        {isBusy && (
-          <div className="flex items-center gap-2 text-xs text-ink-faint">
-            <span className="size-1.5 animate-pulse rounded-full bg-brand" />
-            {agent.status === "submitted" ? "Thinking…" : "Responding…"}
-          </div>
-        )}
-        {agent.status === "error" && agent.error && (
-          <div className="rounded-box border border-error/30 bg-error/10 p-3 text-xs text-error">
-            {agent.error.message}
-          </div>
-        )}
-      </div>
-
-      {/* human-in-the-loop approval / question */}
-      {pending && (
-        <div className="border-t border-line bg-warning/5 p-3">
-          <p className="mb-2 text-xs text-ink-muted">
-            {pending.prompt ?? "The agent wants to take an action. Approve?"}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {(pending.options ?? [
-              { optionId: "approve", label: "Approve" },
-              { optionId: "deny", label: "Deny" },
-            ]).map((opt) => {
-              const isPositive = /approve|yes|allow|confirm/i.test(`${opt.optionId} ${opt.label ?? ""}`);
-              return (
-                <button
-                  key={opt.optionId}
-                  onClick={() => answer(opt.optionId)}
-                  className={
-                    isPositive
-                      ? "inline-flex h-8 items-center rounded-field bg-brand px-3 text-xs font-medium text-white hover:bg-brand-hover"
-                      : "inline-flex h-8 items-center rounded-field border border-line px-3 text-xs text-ink-muted hover:text-ink"
-                  }
-                >
-                  {opt.label ?? opt.optionId}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+    <div className="flex min-h-[calc(100vh-4rem)] flex-col bg-base-100 pb-40 md:pb-0">
+      {hasMessages ? (
+        <ChatConversation
+          error={agent.status === "error" ? agent.error : undefined}
+          isBusy={isBusy}
+          messages={messages}
+          onReset={reset}
+          status={agent.status}
+        />
+      ) : (
+        <AgentHome suggestions={SUGGESTIONS} onAsk={ask} />
       )}
 
-      {/* composer */}
-      <form
-        className="flex items-center gap-2 border-t border-line p-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (isBusy) return; // Enter mid-stream: don't send AND don't clear what they typed
-          const form = new FormData(e.currentTarget);
-          ask(String(form.get("message") ?? ""));
-          e.currentTarget.reset();
-        }}
-      >
-        <input
-          name="message"
-          autoComplete="off"
-          placeholder="Ask about MRR, churn, an account, a label…"
-          className="flex-1 rounded-field border border-line bg-base-100 px-3.5 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-brand/50 focus:outline-none"
-        />
-        {isBusy ? (
-          <button
-            type="button"
-            onClick={() => agent.stop()}
-            className="inline-flex h-9 items-center gap-1.5 rounded-field bg-base-300 px-3.5 text-sm text-ink-muted hover:text-ink"
-          >
-            <Square className="h-3.5 w-3.5" /> Stop
-          </button>
-        ) : (
-          <button
-            type="submit"
-            className="inline-flex h-9 items-center gap-1.5 rounded-field bg-brand px-3.5 text-sm font-medium text-white transition-colors hover:bg-brand-hover"
-          >
-            <Send className="h-3.5 w-3.5" /> Send
-          </button>
-        )}
-      </form>
+      <div className="fixed bottom-[4.25rem] left-0 right-0 z-40 border-t border-line bg-base-100/95 px-4 py-3 backdrop-blur sm:px-6 md:sticky md:bottom-0 md:left-auto md:right-auto md:z-10">
+        <div className="mx-auto max-w-3xl space-y-3">
+          {pending ? <HitlCard disabled={isBusy} request={pending} onAnswer={answer} /> : null}
+          <ChatComposer
+            disabled={Boolean(pending)}
+            draft={draft}
+            isBusy={isBusy}
+            onChange={updateDraft}
+            onSend={ask}
+            onStop={agent.stop}
+            status={agent.status}
+          />
+        </div>
+      </div>
     </div>
   );
+}
+
+function useLatestAgentSnapshot(snapshot: UseEveAgentSnapshot<EveMessageData>) {
+  const [ref] = useState<{ current: UseEveAgentSnapshot<EveMessageData> }>(() => ({ current: snapshot }));
+  ref.current = snapshot;
+  return ref;
 }

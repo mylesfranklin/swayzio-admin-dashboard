@@ -4,6 +4,7 @@ import { useState } from "react";
 import Sidebar from "./sidebar";
 import Header from "./header";
 import MobileNav from "./mobile-nav";
+import { cn } from "@/lib/utils";
 
 export default function DashboardShell({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -12,8 +13,10 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     <div className="flex min-h-screen overflow-hidden bg-base-100">
       <Sidebar isOpen={isSidebarOpen} />
       <div
-        className="flex flex-1 flex-col overflow-hidden transition-all duration-200"
-        style={{ marginLeft: isSidebarOpen ? "15.25rem" : "0" }}
+        className={cn(
+          "flex flex-1 flex-col overflow-hidden transition-all duration-200",
+          isSidebarOpen ? "md:ml-[15.25rem]" : "md:ml-0"
+        )}
       >
         <Header
           toggleSidebar={() => setIsSidebarOpen((v) => !v)}
