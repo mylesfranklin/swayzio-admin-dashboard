@@ -81,8 +81,16 @@ function AgentChatWorkspace({
   const router = useRouter();
   const searchParams = useSearchParams();
   const chatId = searchParams.get("chat");
+  const pendingRouteChatIdRef = useRef<string | null | undefined>(undefined);
 
   useEffect(() => {
+    if (pendingRouteChatIdRef.current !== undefined) {
+      if (chatId === pendingRouteChatIdRef.current) {
+        pendingRouteChatIdRef.current = undefined;
+      }
+      return;
+    }
+
     if (
       chatId &&
       chatId !== history.activeConversationId &&
@@ -93,12 +101,14 @@ function AgentChatWorkspace({
   }, [chatId, history]);
 
   const handleNewChat = useCallback(() => {
+    pendingRouteChatIdRef.current = null;
     router.replace("/agent", { scroll: false });
     history.newConversation();
   }, [history, router]);
 
   const handleSelectConversation = useCallback(
     (conversationId: string) => {
+      pendingRouteChatIdRef.current = conversationId;
       router.replace(`/agent?chat=${encodeURIComponent(conversationId)}`, { scroll: false });
       history.selectConversation(conversationId);
     },
