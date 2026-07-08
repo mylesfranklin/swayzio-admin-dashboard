@@ -21,11 +21,11 @@ export function AgentMessage({ message }: { message: EveMessage }) {
   }
 
   return (
-    <div className="grid grid-cols-[2rem_minmax(0,1fr)] gap-3">
+    <div className="grid w-full max-w-full grid-cols-[2rem_minmax(0,1fr)] gap-3">
       <div className="flex h-8 w-8 items-center justify-center rounded-full text-primary">
         <Sparkles className="h-4 w-4" />
       </div>
-      <div className="min-w-0 pt-0.5">
+      <div className="min-w-0 max-w-full pt-0.5">
         <MessageParts message={message} />
       </div>
     </div>
