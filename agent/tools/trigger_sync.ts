@@ -4,7 +4,7 @@ import { z } from "zod";
 
 /**
  * The ONE write/action tool. It does not touch the database directly — it dispatches the existing
- * GitHub Actions sync workflow (.github/workflows/os-sync.yml) that re-pulls Stripe/HubSpot/app/Mercury into
+ * GitHub Actions sync workflow (.github/workflows/os-sync.yml) that re-pulls Stripe/HubSpot/app/Mercury/Facebook/Instagram into
  * Swayzio OS. So the agent stays read-only over the data; the only side-effect is kicking the pipeline,
  * and it is gated behind human approval (approval: always()). Non-blocking — the sync runs in CI.
  *
@@ -12,7 +12,7 @@ import { z } from "zod";
  */
 export default defineTool({
   description:
-    "Trigger a fresh sync of Swayzio OS — re-pull Stripe/HubSpot/app/Mercury data into the brain — by dispatching " +
+    "Trigger a fresh sync of Swayzio OS — re-pull Stripe/HubSpot/app/Mercury/Facebook/Instagram data into the brain — by dispatching " +
     "the background sync workflow. Use only when the founder explicitly wants up-to-the-minute data and " +
     "`freshness` shows it's stale. This is a WRITE/action: it requires approval and runs in the background " +
     "(~6 min); it does not block. After dispatching, tell the user to re-check in a few minutes.",
@@ -20,7 +20,7 @@ export default defineTool({
     // Strict enum — this string reaches a GitHub Actions dispatch input, so it must never
     // carry model-authored free text (Codex P1: the workflow shell would execute it).
     feeds: z
-      .array(z.enum(["stripe", "hubspot", "app", "mercury"]))
+      .array(z.enum(["stripe", "hubspot", "app", "mercury", "facebook", "instagram"]))
       .optional()
       .describe("which feeds to sync; omit for all feeds."),
   }),

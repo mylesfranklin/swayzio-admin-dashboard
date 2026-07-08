@@ -60,6 +60,10 @@ The migration runner loads `.env.local` automatically and uses `SWAYZIO_OS_DATAB
 - `src/server/os/feeds/app.ts` — Swayzio-Core app raw/core/metrics feed.
 - `src/server/os/feeds/mercury.ts` — Mercury accounts, transactions, recipients, categories, cards,
   statements, organization, users, events, webhooks, and credit/treasury surfaces when present.
+- `src/server/os/feeds/facebook.ts` — Facebook/Meta Pages, posts, organic insights, ad accounts,
+  campaigns, and Ads Insights when the configured token has permission.
+- `src/server/os/feeds/instagram.ts` — Instagram professional accounts, media, and insights via
+  Instagram API with Facebook Login.
 - `src/server/os/embed.ts` — embedding helper for `memory.*`.
 
 ## Operational Notes
