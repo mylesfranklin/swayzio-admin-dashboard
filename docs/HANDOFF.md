@@ -10,7 +10,7 @@ the same facts in more operational detail — check `deployment`, `swayzio-os`, 
 | Surface | State |
 |---|---|
 | Dashboard | admin.swayzio.com, push-to-main auto-deploys. Stripe page + overview lead with the reconciled MRR triple (collected → collectible → booked). |
-| Swayzio OS | Neon project `swayzio-os` (`sparkling-butterfly-49751147`). ELT every 6h via GitHub Actions. Migrations applied through **0017**. Stripe, HubSpot, app DB, and Mercury feeds are live. Semantic recall live (41 rows embedded). |
+| Swayzio OS | Neon project `swayzio-os` (`sparkling-butterfly-49751147`). ELT every 6h via GitHub Actions. Migrations applied through **0018**. Stripe, HubSpot, app DB, and Mercury feeds are live. Semantic recall live (41 rows embedded). |
 | Eve agent | `/agent` in the dashboard. eve **0.19.0 (pinned exact)**, Sonnet 5 via AI Gateway. Read tools over OS `api.*` views, including Mercury cash/transaction tools, plus approval-gated `trigger_sync`. Clerk "eve" JWT template (dev + prod instances) carries `aud`/`email`/`role`. |
 | Stripe truth | Collected $7.4K/mo · collectible $18.2K (≈ Stripe app tile) · booked $34.5K. Full story: `docs/STRIPE-MRR-INVESTIGATION.md`. |
 

@@ -134,7 +134,7 @@ export async function syncMercuryOrganization() {
   return withSyncRun("mercury", "organization", async (ctx) => {
     const sql = osSql();
     const body = await mercuryGet<JsonRecord>("/organization");
-    const org = child<JsonRecord>(body, "organization");
+    const org = child<JsonRecord>(body, "organization") ?? (body && typeof body === "object" ? body : null);
     const rows = org ? [org] : [];
     ctx.read(rows.length);
     const normalized = rows.map((r) => ({
