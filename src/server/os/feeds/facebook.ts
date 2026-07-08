@@ -35,7 +35,7 @@ const PAGE_FIELDS = [
   "instagram_business_account",
   "connected_instagram_account",
 ].join(",");
-const PAGE_ACCOUNT_FIELDS = `${PAGE_FIELDS},access_token,tasks,perms`;
+const PAGE_ACCOUNT_FIELDS = `${PAGE_FIELDS},access_token,tasks`;
 const POST_FIELDS = [
   "id",
   "message",
@@ -45,12 +45,8 @@ const POST_FIELDS = [
   "permalink_url",
   "full_picture",
   "status_type",
-  "type",
   "is_published",
   "shares",
-  "comments.summary(true).limit(0)",
-  "likes.summary(true).limit(0)",
-  "reactions.summary(total_count).limit(0)",
 ].join(",");
 const AD_ACCOUNT_FIELDS = [
   "id",
@@ -80,14 +76,9 @@ const CAMPAIGN_FIELDS = [
 const DEFAULT_PAGE_INSIGHT_METRICS = [
   "page_post_engagements",
   "page_follows",
-  "page_fans",
-  "page_impressions",
-  "page_impressions_unique",
+  "page_views_total",
 ];
 const DEFAULT_POST_INSIGHT_METRICS = [
-  "post_impressions",
-  "post_impressions_unique",
-  "post_engaged_users",
   "post_clicks",
   "post_reactions_like_total",
   "post_video_views",
