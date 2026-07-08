@@ -18,6 +18,7 @@ export default defineTool({
                    reactions_count AS reactions, comments_count AS comments, shares_count AS shares,
                    (coalesce(reactions_count,0)+coalesce(comments_count,0)+coalesce(shares_count,0)) AS engagement
             FROM api.facebook_posts
+            ORDER BY created_time DESC NULLS LAST
             LIMIT ${limit ?? 25}`) as Record<string, unknown>[])
         : ((await osSql()`SELECT * FROM api.facebook_top_posts LIMIT ${limit ?? 25}`) as Record<string, unknown>[]);
     const top = rows[0];

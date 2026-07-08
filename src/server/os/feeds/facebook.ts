@@ -258,7 +258,7 @@ async function graphList<T extends JsonRecord>(
 
 function isOptionalPermissionError(err: unknown): boolean {
   if (!(err instanceof GraphApiError)) return false;
-  return err.status === 400 || err.status === 403 || err.code === 10 || err.code === 100 || err.code === 190 || err.code === 200;
+  return err.code === 10 || err.code === 200;
 }
 
 async function optionalList<T extends JsonRecord>(
@@ -484,6 +484,11 @@ function countSummary(value: unknown): number | null {
   return int(child(value, "summary")?.total_count);
 }
 
+function shareCount(value: unknown): number | null {
+  if (!value || typeof value !== "object") return null;
+  return int((value as JsonRecord).count);
+}
+
 export async function syncFacebookPosts() {
   return withSyncRun("facebook", "post", async (ctx) => {
     const sql = osSql();
@@ -506,7 +511,7 @@ export async function syncFacebookPosts() {
         status_type: text(r.status_type),
         type: text(r.type),
         is_published: bool(r.is_published),
-        shares_count: int(child(r.shares, "count")),
+        shares_count: shareCount(r.shares),
         comments_count: countSummary(r.comments),
         likes_count: countSummary(r.likes),
         reactions_count: countSummary(r.reactions),
