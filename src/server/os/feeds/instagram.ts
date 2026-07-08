@@ -14,6 +14,7 @@ type Sql = ReturnType<typeof osSql>;
 const GRAPH_BASE_URL = process.env.FACEBOOK_GRAPH_API_BASE_URL ?? "https://graph.facebook.com";
 const GRAPH_VERSION = process.env.FACEBOOK_GRAPH_API_VERSION ?? "v25.0";
 const DEFAULT_MEDIA_LOOKBACK_DAYS = 180;
+const DEFAULT_INSIGHT_LOOKBACK_DAYS = 29;
 const DEFAULT_MEDIA_LIMIT = 500;
 const ACCOUNT_FIELDS = [
   "id",
@@ -43,9 +44,9 @@ const MEDIA_FIELDS = [
 const DEFAULT_ACCOUNT_INSIGHT_METRICS = [
   "reach",
   "follower_count",
+  "online_followers",
   "profile_views",
   "website_clicks",
-  "online_followers",
   "accounts_engaged",
   "total_interactions",
   "likes",
@@ -55,19 +56,26 @@ const DEFAULT_ACCOUNT_INSIGHT_METRICS = [
   "views",
 ];
 const DEFAULT_MEDIA_INSIGHT_METRICS = [
-  "impressions",
   "reach",
-  "engagement",
   "saved",
   "likes",
   "comments",
   "shares",
-  "plays",
   "total_interactions",
-  "profile_visits",
-  "follows",
-  "video_views",
+  "views",
 ];
+const ACCOUNT_TOTAL_VALUE_METRICS = new Set([
+  "profile_views",
+  "website_clicks",
+  "accounts_engaged",
+  "total_interactions",
+  "likes",
+  "comments",
+  "shares",
+  "saves",
+  "views",
+]);
+const ACCOUNT_LIFETIME_METRICS = new Set(["online_followers"]);
 
 class GraphApiError extends Error {
   readonly status: number;
@@ -193,12 +201,32 @@ async function graphList<T extends JsonRecord>(
   return rows;
 }
 
+async function graphData<T extends JsonRecord>(
+  path: string,
+  params: Record<string, string | number | undefined> = {},
+  accessToken = token(),
+): Promise<T[]> {
+  const body = await graphGet<JsonRecord>(path, params, accessToken);
+  return list<T>(body, "data");
+}
+
 function isOptionalPermissionError(err: unknown): boolean {
   return err instanceof GraphApiError && (err.code === 10 || err.code === 200);
 }
 
+function isUnsupportedInsightMetricError(err: unknown): boolean {
+  if (!(err instanceof GraphApiError) || err.code !== 100) return false;
+  return /not support|no longer supported|must be one of|incompatible|should be specified|since param is not valid/i.test(err.message);
+}
+
 function sinceUnix(): number {
   const days = int(process.env.INSTAGRAM_MEDIA_LOOKBACK_DAYS) ?? DEFAULT_MEDIA_LOOKBACK_DAYS;
+  return Math.floor((Date.now() - days * 24 * 60 * 60 * 1000) / 1000);
+}
+
+function insightSinceUnix(): number {
+  const configured = int(process.env.INSTAGRAM_INSIGHT_LOOKBACK_DAYS) ?? DEFAULT_INSIGHT_LOOKBACK_DAYS;
+  const days = Math.min(Math.max(configured, 1), 30);
   return Math.floor((Date.now() - days * 24 * 60 * 60 * 1000) / 1000);
 }
 
@@ -349,7 +377,13 @@ export async function syncInstagramMedia() {
 function insightRows(ownerKey: "instagram_account_id" | "media_id", ownerId: string, rawRows: JsonRecord[], accountId?: string): JsonRecord[] {
   const out: JsonRecord[] = [];
   for (const metric of rawRows) {
-    const values = Array.isArray(metric.values) ? metric.values : [{ value: metric.values ?? metric.value }];
+    const values = Array.isArray(metric.values)
+      ? metric.values
+      : [
+          metric.total_value && typeof metric.total_value === "object"
+            ? metric.total_value
+            : { value: metric.values ?? metric.value },
+        ];
     values.forEach((valueRow, index) => {
       const row = valueRow as JsonRecord;
       const value = row.value ?? null;
@@ -378,14 +412,24 @@ export async function syncInstagramAccountInsights() {
     const rows: JsonRecord[] = [];
     const metrics = metricList("INSTAGRAM_ACCOUNT_INSIGHT_METRICS", DEFAULT_ACCOUNT_INSIGHT_METRICS);
     for (const account of await accountTokens(sql)) {
-      for (const metric of metrics) {
+      const metricGroups: Array<{ metrics: string[]; params: Record<string, string | number> }> = [
+        {
+          metrics: metrics.filter((metric) => !ACCOUNT_TOTAL_VALUE_METRICS.has(metric) && !ACCOUNT_LIFETIME_METRICS.has(metric)),
+          params: { period: "day", since: insightSinceUnix(), limit: 100 },
+        },
+        {
+          metrics: metrics.filter((metric) => ACCOUNT_TOTAL_VALUE_METRICS.has(metric)),
+          params: { period: "day", since: insightSinceUnix(), limit: 100, metric_type: "total_value" },
+        },
+        {
+          metrics: metrics.filter((metric) => ACCOUNT_LIFETIME_METRICS.has(metric)),
+          params: { period: "lifetime" },
+        },
+      ];
+      for (const group of metricGroups.filter((g) => g.metrics.length)) {
+        const params: Record<string, string | number> = { ...group.params, metric: group.metrics.join(",") };
         try {
-          const metricRows = await graphList<JsonRecord>(`/${account.id}/insights`, {
-            metric,
-            period: "day",
-            since: sinceUnix(),
-            limit: 100,
-          }, account.token);
+          const metricRows = await graphData<JsonRecord>(`/${account.id}/insights`, params, account.token);
           rows.push(...insightRows("instagram_account_id", account.id, metricRows));
         } catch (err) {
           if (isOptionalPermissionError(err)) {
@@ -394,6 +438,21 @@ export async function syncInstagramAccountInsights() {
             ctx.wrote(0);
             ctx.setCursor(new Date().toISOString());
             return;
+          }
+          if (isUnsupportedInsightMetricError(err)) {
+            for (const metric of group.metrics) {
+              try {
+                const metricRows = await graphData<JsonRecord>(`/${account.id}/insights`, { ...group.params, metric }, account.token);
+                rows.push(...insightRows("instagram_account_id", account.id, metricRows));
+              } catch (metricErr) {
+                if (isUnsupportedInsightMetricError(metricErr)) {
+                  console.warn(`[instagram] account insight metric ${metric} skipped: ${metricErr instanceof Error ? metricErr.message : String(metricErr)}`);
+                  continue;
+                }
+                throw metricErr;
+              }
+            }
+            continue;
           }
           throw err;
         }
@@ -435,20 +494,33 @@ export async function syncInstagramMediaInsights() {
     const rows: JsonRecord[] = [];
     for (const item of media) {
       const accessToken = tokens.get(item.instagram_account_id) ?? token();
-      for (const metric of metrics) {
-        try {
-          const metricRows = await graphList<JsonRecord>(`/${item.id}/insights`, { metric }, accessToken);
-          rows.push(...insightRows("media_id", item.id, metricRows, item.instagram_account_id));
-        } catch (err) {
-          if (isOptionalPermissionError(err)) {
-            console.warn(`[instagram] media insights skipped; token likely lacks instagram_business_manage_insights: ${err instanceof Error ? err.message : String(err)}`);
-            ctx.read(0);
-            ctx.wrote(0);
-            ctx.setCursor(new Date().toISOString());
-            return;
-          }
-          throw err;
+      try {
+        const metricRows = await graphData<JsonRecord>(`/${item.id}/insights`, { metric: metrics.join(",") }, accessToken);
+        rows.push(...insightRows("media_id", item.id, metricRows, item.instagram_account_id));
+      } catch (err) {
+        if (isOptionalPermissionError(err)) {
+          console.warn(`[instagram] media insights skipped; token likely lacks instagram_business_manage_insights: ${err instanceof Error ? err.message : String(err)}`);
+          ctx.read(0);
+          ctx.wrote(0);
+          ctx.setCursor(new Date().toISOString());
+          return;
         }
+        if (isUnsupportedInsightMetricError(err)) {
+          for (const metric of metrics) {
+            try {
+              const metricRows = await graphData<JsonRecord>(`/${item.id}/insights`, { metric }, accessToken);
+              rows.push(...insightRows("media_id", item.id, metricRows, item.instagram_account_id));
+            } catch (metricErr) {
+              if (isUnsupportedInsightMetricError(metricErr)) {
+                console.warn(`[instagram] media insight metric ${metric} skipped for ${item.id}: ${metricErr instanceof Error ? metricErr.message : String(metricErr)}`);
+                continue;
+              }
+              throw metricErr;
+            }
+          }
+          continue;
+        }
+        throw err;
       }
     }
     ctx.read(rows.length);
