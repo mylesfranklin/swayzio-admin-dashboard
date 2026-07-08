@@ -52,15 +52,15 @@ const components: Components = {
   pre: ({ className, ...props }) => (
     <pre
       className={cn(
-        "my-4 overflow-x-auto rounded-box border border-line bg-base-100 p-3 text-xs leading-5 text-ink",
+        "my-4 max-w-full overflow-x-auto rounded-box border border-line bg-base-100 p-3 text-xs leading-5 text-ink",
         className
       )}
       {...props}
     />
   ),
   table: ({ className, ...props }) => (
-    <div className="my-4 overflow-x-auto rounded-box border border-line bg-base-100">
-      <table className={cn("w-full min-w-max border-collapse text-left text-sm", className)} {...props} />
+    <div className="my-4 max-w-full overflow-x-auto overscroll-x-contain rounded-box border border-line bg-base-100">
+      <table className={cn("w-max min-w-full border-collapse text-left text-sm", className)} {...props} />
     </div>
   ),
   tbody: ({ className, ...props }) => <tbody className={cn("divide-y divide-line/60", className)} {...props} />,
@@ -87,7 +87,7 @@ export function Markdown({ children, streaming }: { children: string; streaming?
     <Streamdown
       animated={streaming ? { animation: "fadeIn", duration: 120, sep: "word", stagger: 12 } : false}
       caret={streaming ? "block" : undefined}
-      className="text-md text-ink"
+      className="min-w-0 max-w-full overflow-hidden text-md text-ink"
       components={components}
       controls={{ code: { copy: true }, table: { copy: true, download: true } }}
       lineNumbers={false}
