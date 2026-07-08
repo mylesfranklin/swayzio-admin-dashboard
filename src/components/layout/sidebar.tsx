@@ -6,11 +6,13 @@ import { useState } from "react";
 import { ChevronDown, ChevronRight, Search, Command } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { navSections } from "./nav-config";
+import { SidebarAgentRecents } from "./sidebar-agent-recents";
 import { SidebarUser } from "./sidebar-user";
 
 export default function Sidebar({ isOpen }: { isOpen: boolean }) {
   const pathname = usePathname();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({
+    Agent: true,
     General: true,
     Socials: true,
     Administration: true,
@@ -98,6 +100,7 @@ export default function Sidebar({ isOpen }: { isOpen: boolean }) {
                   </Link>
                 );
               })}
+              {section.title === "Agent" ? <SidebarAgentRecents /> : null}
             </div>
           </div>
         ))}

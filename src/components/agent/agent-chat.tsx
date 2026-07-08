@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth, useUser } from "@clerk/nextjs";
+import { useSearchParams } from "next/navigation";
 import {
   useEveAgent,
   type EveMessageData,
@@ -14,12 +15,15 @@ import { ChatConversation } from "@/components/agent/chat-conversation";
 import { ChatHistoryMenu } from "@/components/agent/chat-history-menu";
 import { HitlCard } from "@/components/agent/hitl-card";
 import { getPendingInputRequest } from "@/components/agent/message-parts";
-import { useAgentChatHistory } from "@/components/agent/use-agent-chat-history";
+import {
+  agentPersistenceKey,
+  LOCAL_DEV_AGENT_PERSISTENCE_KEY,
+  useAgentChatHistory,
+} from "@/components/agent/use-agent-chat-history";
 import { useAgentSessionPersistence } from "@/components/agent/use-agent-session-persistence";
 import { isClerkConfigured } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
-const LOCAL_DEV_PERSISTENCE_KEY = "swayzio:eve-agent:session:v1:local-dev";
 const NOOP_BEARER = async () => "";
 
 export function AgentChat() {
@@ -28,7 +32,7 @@ export function AgentChat() {
   return isClerkConfigured ? (
     <ClerkAgentChat />
   ) : (
-    <AgentChatInner bearer={NOOP_BEARER} persistenceKey={LOCAL_DEV_PERSISTENCE_KEY} />
+    <AgentChatInner bearer={NOOP_BEARER} persistenceKey={LOCAL_DEV_AGENT_PERSISTENCE_KEY} />
   );
 }
 
@@ -40,7 +44,7 @@ function ClerkAgentChat() {
   if (!isLoaded) return <div className="min-h-[calc(100vh-4rem)] bg-base-100" />;
 
   const founderKey = user?.id ?? user?.primaryEmailAddress?.emailAddress ?? "unknown-founder";
-  return <AgentChatInner bearer={bearer} persistenceKey={`swayzio:eve-agent:session:v1:${founderKey}`} />;
+  return <AgentChatInner bearer={bearer} persistenceKey={agentPersistenceKey(founderKey)} />;
 }
 
 function AgentChatInner({
@@ -69,6 +73,18 @@ function AgentChatWorkspace({
   persistenceBaseKey: string;
 }) {
   const history = useAgentChatHistory(persistenceBaseKey);
+  const searchParams = useSearchParams();
+  const chatId = searchParams.get("chat");
+
+  useEffect(() => {
+    if (
+      chatId &&
+      chatId !== history.activeConversationId &&
+      history.conversations.some((conversation) => conversation.id === chatId)
+    ) {
+      history.selectConversation(chatId);
+    }
+  }, [chatId, history]);
 
   return (
     <AgentChatSession
