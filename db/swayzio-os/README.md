@@ -34,6 +34,16 @@ Current files:
 - `0011_memory.sql` — memory document/fact tables and `memory.recall`.
 - `0012_api_analytics.sql` — Stripe trend and company catalog views.
 - `0013_stripe_collectible.sql` — collectible MRR fields and `api.stripe_snapshot` recreation.
+- `0014_source_depth_quality.sql` — OS-first dashboard views, deeper HubSpot/Stripe coverage, and quality checks.
+- `0015_relax_stripe_ledger_links.sql` — relaxed Stripe ledger foreign-key links for partial historical windows.
+- `0016_fix_stripe_billing_monthly.sql` — Stripe monthly billing rollup fixes.
+- `0017_mercury_source_depth.sql` — Mercury core tables and curated API views.
+- `0018_fix_mercury_counterparties_status.sql` — Mercury counterparty/status view fixes.
+- `0019_facebook_source_depth.sql` — Facebook Pages, posts, insights, ads, and curated API views.
+- `0020_instagram_source_depth.sql` — Instagram account/media/insight core tables and API views.
+- `0021_instagram_insights_permission_label.sql` — Instagram permission label/data dictionary update.
+- `0022_social_engagement_super_followers.sql` — social actors, engagements, and ranked super-follower API view.
+- `0023_super_followers_reach_weighting.sql` — reach-led super-follower scoring refinement.
 
 Add a new migration for every schema change. Do not edit applied migrations; the runner checksums
 applied files and flags drift.
@@ -62,8 +72,8 @@ The migration runner loads `.env.local` automatically and uses `SWAYZIO_OS_DATAB
   statements, organization, users, events, webhooks, and credit/treasury surfaces when present.
 - `src/server/os/feeds/facebook.ts` — Facebook/Meta Pages, posts, organic insights, ad accounts,
   campaigns, and Ads Insights when the configured token has permission.
-- `src/server/os/feeds/instagram.ts` — Instagram professional accounts, media, and insights via
-  Instagram API with Facebook Login.
+- `src/server/os/feeds/instagram.ts` — Instagram professional accounts, media, comments,
+  Business Discovery actor enrichment, and insights via Instagram API with Facebook Login.
 - `src/server/os/embed.ts` — embedding helper for `memory.*`.
 
 ## Operational Notes

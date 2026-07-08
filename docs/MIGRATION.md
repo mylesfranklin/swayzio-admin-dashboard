@@ -16,7 +16,7 @@ does. It is not the active roadmap.
 - The visual system was moved to Tailwind 4 + daisyUI 5 with `design/swayzio.DESIGN.md` as source of
   truth.
 - The `swayzio-os` Neon project became the company brain: raw/core/metrics/memory/ops schemas, feeds
-  through migration `0013`, and curated `api.*` views.
+  through migration `0023`, and curated `api.*` views.
 - Eve is live at `/agent` from the root `agent/` directory, with read-only tools over Swayzio OS plus
   one approval-gated `trigger_sync` action.
 
@@ -60,17 +60,21 @@ Partially complete. Real current pages are:
 - `/analytics/stripe`
 - `/analytics/hubspot`
 - `/database`
+- `/sync-status`
+- `/mercury`
+- `/socials/super-followers`
+- `/socials/instagram`
+- `/socials/facebook`
 - `/design-system`
 - `/agent`
 
 Still planned or represented only in nav/docs unless implemented later:
 
 - Kit newsletter
-- Mercury
 - SEO
-- Socials
 - GitHub analytics
-- Sync status
+- TikTok
+- YouTube
 - Settings
 - Customer list/detail
 

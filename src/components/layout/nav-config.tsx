@@ -8,6 +8,7 @@ import {
   Database,
   Palette,
   Sparkles,
+  UsersRound,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -50,6 +51,7 @@ export const navSections: NavSection[] = [
   {
     title: "Socials",
     items: [
+      { title: "Super Followers", href: "/socials/super-followers", icon: UsersRound },
       { title: "Instagram", href: "/socials/instagram", icon: SiInstagram },
       { title: "Facebook", href: "/socials/facebook", icon: SiFacebook },
       { title: "TikTok", href: "/socials/tiktok", icon: SiTiktok },

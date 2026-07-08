@@ -21,6 +21,10 @@
 - `src/app/(dashboard)/database/page.tsx` — Swayzio-Core app DB analytics.
 - `src/app/(dashboard)/sync-status/page.tsx` — OS sync freshness and quality checks.
 - `src/app/(dashboard)/design-system/page.tsx` — design system browser.
+- `src/app/(dashboard)/mercury/page.tsx` — Mercury cash, spend, transaction, counterparty, and treasury dashboard.
+- `src/app/(dashboard)/socials/super-followers/page.tsx` — high-impact social account engagement table.
+- `src/app/(dashboard)/socials/instagram/page.tsx` — Instagram profile, media, and insight dashboard.
+- `src/app/(dashboard)/socials/facebook/page.tsx` — Facebook organic and ads dashboard.
 
 ## Implemented API Routes
 
@@ -39,6 +43,8 @@
 - `src/components/hubspot/` — HubSpot analytics client surface.
 - `src/components/database/` — database analytics client surface.
 - `src/components/sync-status/` — OS sync health and data-quality surface.
+- `src/components/mercury/` — Mercury OS dashboard client components.
+- `src/components/socials/` — Facebook, Instagram, and super-follower dashboard clients.
 - `src/components/agent/agent-chat.tsx` — Eve chat UI.
 - `src/components/design-system/` — token/component gallery UI.
 
@@ -71,8 +77,8 @@
 - `src/server/os/feeds/app.ts` — Swayzio-Core app raw/core/metrics feed.
 - `src/server/os/feeds/mercury.ts` — Mercury accounts, transactions, recipients, categories, cards, statements, organization, users, events, webhooks, and credit/treasury feed.
 - `src/server/os/feeds/facebook.ts` — Facebook/Meta Pages, posts, organic insights, ad accounts, campaigns, and Ads Insights feed.
-- `src/server/os/feeds/instagram.ts` — Instagram professional account, media, and insights feed via Instagram API with Facebook Login.
-- `db/swayzio-os/migrations/` — migrations `0001` through `0021`.
+- `src/server/os/feeds/instagram.ts` — Instagram professional account, media, comments, public actor enrichment, and insights feed via Instagram API with Facebook Login.
+- `db/swayzio-os/migrations/` — migrations `0001` through `0023`.
 
 ## Eve Agent
 
@@ -106,11 +112,8 @@
 
 These links exist in `src/components/layout/nav-config.tsx` but do not currently have route files:
 
-- `/mercury`
 - `/seo`
 - `/analytics/github`
-- `/socials/instagram`
-- `/socials/facebook`
 - `/socials/tiktok`
 - `/socials/youtube`
 - `/analytics/kit`

@@ -63,6 +63,11 @@ Implemented pages:
 - `/analytics/stripe`
 - `/analytics/hubspot`
 - `/database`
+- `/sync-status`
+- `/mercury`
+- `/socials/super-followers`
+- `/socials/instagram`
+- `/socials/facebook`
 - `/design-system`
 - `/sign-in`, `/sign-up`, `/not-authorized`
 
@@ -73,8 +78,8 @@ Implemented API routes:
 - `/api/cron/refresh`
 - `/eve/v1/*` from eve, co-deployed by `withEve(nextConfig)`
 
-Navigation also lists planned pages for Mercury, SEO, GitHub, socials, Kit, sync status, and settings.
-Those routes do not currently exist unless added later.
+Navigation also lists planned pages for SEO, GitHub, TikTok, YouTube, Kit, and settings. Those
+routes do not currently exist unless added later.
 
 ## Module Boundaries
 
@@ -90,7 +95,7 @@ Those routes do not currently exist unless added later.
 - `src/server/os/` contains Swayzio OS ELT clients, feeds, embedding helpers, and sync wrappers.
 - `agent/` contains the eve agent. It is intentionally at repo root because eve CLI commands resolve
   `agent/agent.ts` from the project root.
-- `db/swayzio-os/migrations/` contains immutable Swayzio OS SQL migrations, currently through `0021`.
+- `db/swayzio-os/migrations/` contains immutable Swayzio OS SQL migrations, currently through `0023`.
 - `scripts/` contains migration, sync, embedding, refresh, and verification utilities.
 
 ## Data Flow
@@ -122,8 +127,9 @@ Current OS feeds include full HubSpot contacts and companies (deals intentionall
 customers/subscriptions/catalog/invoices/charges/refunds/balance transactions, Mercury
 accounts/transactions/recipients/categories/cards/statements/organization/users/events/webhooks plus
 credit/treasury surfaces when present, Facebook Pages/posts/organic insights/ad accounts/campaigns/Ads
-Insights when configured, Instagram professional accounts/media/insights when configured, and
-Swayzio-Core app customers. `/sync-status` reads
+Insights when configured, Instagram professional accounts/media/comments/Business Discovery actor
+enrichment/insights when configured, cross-platform social actor/engagement scoring, and Swayzio-Core
+app customers. `/sync-status` reads
 `api.sync_health` and `api.data_quality`.
 
 The agent reads only curated `api.*` views and `memory.recall()` through the `os_agent_ro` role when
