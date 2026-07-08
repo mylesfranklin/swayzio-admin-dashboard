@@ -219,7 +219,7 @@ const TITLE_TOPIC_WORDS = new Map([
 ]);
 
 const TITLE_PHRASES = [
-  { match: /\bsuper[-\s]?followers?\b/i, title: "Super Followers" },
+  { match: /\b(super[-\s]?followers?|top engaged)\b/i, title: "Top Engaged" },
   { match: /\bhigh[-\s]?impact\b/i, title: "High Impact" },
   { match: /\bbusiness accounts?\b/i, title: "Business Accounts" },
   { match: /\bleft nav(?:igation)?(?: bar)?\b/i, title: "Left Nav" },

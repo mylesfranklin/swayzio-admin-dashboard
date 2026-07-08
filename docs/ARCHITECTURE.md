@@ -65,7 +65,7 @@ Implemented pages:
 - `/database`
 - `/sync-status`
 - `/mercury`
-- `/socials/super-followers`
+- `/socials/top-engaged`
 - `/socials/instagram`
 - `/socials/facebook`
 - `/design-system`

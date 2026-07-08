@@ -184,13 +184,13 @@ over `core` / `metrics` / `memory`.
   sync lands connected professional accounts and media, plus account/media insights when
   `instagram_business_manage_insights` is granted. Eve reads curated `api.instagram_*` views and Instagram tools
   for profile snapshot, media performance, and entity-level inspection with sanitized raw payloads.
-- **Phase K — Social engagement and super followers.** ✅ First pass 2026-07-08. Instagram comment
+- **Phase K — Social engagement and Top Engaged accounts.** ✅ First pass 2026-07-08. Instagram comment
   harvesting lands known external actors and atomic engagement events in `core.social_actor` and
   `core.social_engagement`, enriches reachable accounts through Business Discovery, and exposes
   `api.super_followers` for influencer, partnership, and high-impact community follow-up workflows.
   The score is reach-led with capped engagement/recency boosts so repeated low-reach comments do not
   bury high-reach accounts. Eve reads the same view through the `super_followers` tool; the dashboard has
-  `/socials/super-followers`. Facebook comments and cross-platform DMs are schema-ready but remain
+  `/socials/top-engaged`. Facebook comments and cross-platform DMs are schema-ready but remain
   gated on Meta permissions/access.
 
 ## 9. Open questions

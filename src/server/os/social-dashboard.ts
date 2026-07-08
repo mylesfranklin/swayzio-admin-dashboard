@@ -440,7 +440,6 @@ export async function getSuperFollowersDashboard(): Promise<SuperFollowersDashbo
              latest_engagement_at::text AS latest_engagement_at, impact_score, suggested_action,
              recent_engagements
       FROM api.super_followers
-      LIMIT 500
     ` as Promise<Row[]>,
     sql`
       SELECT
@@ -525,10 +524,10 @@ export async function getCachedInstagramDashboard(): Promise<InstagramDashboard 
 
 export async function getCachedSuperFollowersDashboard(): Promise<SuperFollowersDashboard | null> {
   const cached = await getOrCompute(
-    "os:super-followers-dashboard",
+    "os:top-engaged-dashboard:v2",
     async () => {
       const data = await getSuperFollowersDashboard();
-      if (!data) throw new Error("Swayzio OS super followers dashboard is unavailable");
+      if (!data) throw new Error("Swayzio OS Top Engaged dashboard is unavailable");
       return data;
     },
     15 * MIN,

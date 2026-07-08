@@ -30,7 +30,7 @@ const TOOL_LABELS: Record<string, string> = {
   revenue_health: "Revenue health",
   revenue_monthly: "Monthly revenue",
   stripe_snapshot: "Stripe snapshot",
-  super_followers: "Super followers",
+  super_followers: "Top engaged",
   top_accounts: "Top accounts",
   trigger_sync: "Sync request",
 };

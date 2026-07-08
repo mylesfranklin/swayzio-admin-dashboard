@@ -62,7 +62,7 @@ Partially complete. Real current pages are:
 - `/database`
 - `/sync-status`
 - `/mercury`
-- `/socials/super-followers`
+- `/socials/top-engaged`
 - `/socials/instagram`
 - `/socials/facebook`
 - `/design-system`

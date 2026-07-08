@@ -56,7 +56,7 @@ export const navSections: NavSection[] = [
   {
     title: "Socials",
     items: [
-      { title: "Super Followers", href: "/socials/super-followers", icon: UsersRound },
+      { title: "Top Engaged", href: "/socials/top-engaged", icon: UsersRound },
       { title: "Instagram", href: "/socials/instagram", icon: SiInstagram },
       { title: "Facebook", href: "/socials/facebook", icon: SiFacebook },
       { title: "TikTok", href: "/socials/tiktok", icon: SiTiktok },

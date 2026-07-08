@@ -22,7 +22,7 @@
 - `src/app/(dashboard)/sync-status/page.tsx` — OS sync freshness and quality checks.
 - `src/app/(dashboard)/design-system/page.tsx` — design system browser.
 - `src/app/(dashboard)/mercury/page.tsx` — Mercury cash, spend, transaction, counterparty, and treasury dashboard.
-- `src/app/(dashboard)/socials/super-followers/page.tsx` — high-impact social account engagement table.
+- `src/app/(dashboard)/socials/top-engaged/page.tsx` — Top Engaged account engagement table.
 - `src/app/(dashboard)/socials/instagram/page.tsx` — Instagram profile, media, and insight dashboard.
 - `src/app/(dashboard)/socials/facebook/page.tsx` — Facebook organic and ads dashboard.
 

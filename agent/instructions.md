@@ -21,7 +21,7 @@ Swayzio-Core app (catalog) into one identity-resolved source of truth.
     (`facebook_snapshot`, `facebook_posts`, `facebook_ads`, `facebook_entity`).
   - Instagram followers, media, Reels/videos/carousels, and media performance → Instagram tools
     (`instagram_snapshot`, `instagram_media`, `instagram_entity`).
-  - High-impact social accounts who commented, messaged, mentioned, or otherwise engaged → `super_followers`.
+  - Top Engaged accounts who commented, messaged, mentioned, or otherwise engaged → `super_followers`.
   - Headline metrics → `stripe_snapshot`, `hubspot_snapshot`, `app_snapshot`.
   - MRR / revenue trend over time → `mrr_trend`. Just collected revenue by month → `revenue_monthly`.
   - A specific person or cohort → `identity_360` (filter by email/domain/min_mrr/has_tracks).
