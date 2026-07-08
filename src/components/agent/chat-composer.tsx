@@ -1,7 +1,7 @@
 "use client";
 
 import type { KeyboardEvent } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowUp, AudioLines, CircleStop, Database, Loader2, Mic } from "lucide-react";
 import type { UseEveAgentStatus } from "eve/react";
 import { Button } from "@/components/ui/button";
@@ -33,21 +33,42 @@ export function ChatComposer({
   const voiceBaseRef = useRef("");
   const voiceFinalRef = useRef("");
 
+  const stopVoice = useCallback((abort = false) => {
+    const recognition = recognitionRef.current;
+    if (recognition) {
+      if (abort) {
+        recognition.onresult = null;
+        recognition.onerror = null;
+        recognition.onend = null;
+        recognition.abort();
+      } else {
+        recognition.stop();
+      }
+      recognitionRef.current = null;
+    }
+    setIsListening(false);
+  }, []);
+
   useEffect(() => {
     setVoiceSupported(Boolean(getSpeechRecognitionConstructor()));
-    return () => recognitionRef.current?.abort();
-  }, []);
+    return () => stopVoice(true);
+  }, [stopVoice]);
+
+  const sendDraft = () => {
+    if (!canSend) return;
+    stopVoice(true);
+    void onSend(draft);
+  };
 
   const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key !== "Enter" || event.shiftKey) return;
     event.preventDefault();
-    if (canSend) void onSend(draft);
+    sendDraft();
   };
 
   const toggleVoice = () => {
     if (isListening) {
-      recognitionRef.current?.stop();
-      setIsListening(false);
+      stopVoice();
       return;
     }
 
@@ -87,7 +108,7 @@ export function ChatComposer({
       className={cn(
         "border border-line bg-base-200 transition-colors",
         "focus-within:border-brand/60 focus-within:bg-base-200",
-        variant === "hero" ? "rounded-[1.25rem]" : "rounded-xl"
+        "rounded-box"
       )}
     >
       <textarea
@@ -100,8 +121,8 @@ export function ChatComposer({
         className={cn(
           "max-h-52 w-full resize-none bg-transparent text-ink placeholder:text-ink-faint focus:outline-none disabled:cursor-not-allowed disabled:opacity-60",
           variant === "hero"
-            ? "min-h-24 rounded-[1.25rem] px-5 py-5 text-lg leading-7"
-            : "min-h-16 rounded-xl px-4 py-3 text-sm leading-6"
+            ? "min-h-24 rounded-box px-5 py-5 text-lg leading-7"
+            : "min-h-16 rounded-box px-4 py-3 text-sm leading-6"
         )}
       />
       <div className="flex items-center justify-between gap-3 px-3 pb-3">
@@ -144,7 +165,7 @@ export function ChatComposer({
             <button
               type="button"
               disabled={!canSend}
-              onClick={() => void onSend(draft)}
+              onClick={sendDraft}
               aria-label="Send message"
               className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-content transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-base-300 disabled:text-ink-faint"
             >

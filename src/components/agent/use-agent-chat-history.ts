@@ -19,11 +19,41 @@ function readJson<T>(key: string, fallback: T): T {
   }
 }
 
+function readString(key: string) {
+  if (typeof window === "undefined") return null;
+
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function removeStorage(key: string) {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // Best-effort cleanup only.
+  }
+}
+
 function writeJson<T>(key: string, value: T) {
   if (typeof window === "undefined") return;
 
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Chat history is a convenience layer; failure should not interrupt Eve.
+  }
+}
+
+function writeString(key: string, value: string) {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.setItem(key, value);
   } catch {
     // Chat history is a convenience layer; failure should not interrupt Eve.
   }
@@ -51,9 +81,9 @@ export function useAgentChatHistory(baseKey: string) {
   );
 
   const [activeConversationId, setActiveConversationId] = useState(() => {
-    const current = typeof window === "undefined" ? null : window.localStorage.getItem(keys.current);
+    const current = readString(keys.current);
     const id = current || createId();
-    if (!current && typeof window !== "undefined") window.localStorage.setItem(keys.current, id);
+    if (!current) writeString(keys.current, id);
     return id;
   });
   const [conversations, setConversations] = useState<AgentChatSummary[]>(() =>
@@ -64,6 +94,10 @@ export function useAgentChatHistory(baseKey: string) {
     const trimmed = next
       .sort((a, b) => b.updatedAt - a.updatedAt)
       .slice(0, 24);
+    const trimmedIds = new Set(trimmed.map((conversation) => conversation.id));
+    for (const conversation of next) {
+      if (!trimmedIds.has(conversation.id)) removeStorage(keys.session(conversation.id));
+    }
     setConversations(trimmed);
     writeJson(keys.history, trimmed);
   };
@@ -75,11 +109,11 @@ export function useAgentChatHistory(baseKey: string) {
     newConversation() {
       const id = createId();
       setActiveConversationId(id);
-      if (typeof window !== "undefined") window.localStorage.setItem(keys.current, id);
+      writeString(keys.current, id);
     },
     selectConversation(id: string) {
       setActiveConversationId(id);
-      if (typeof window !== "undefined") window.localStorage.setItem(keys.current, id);
+      writeString(keys.current, id);
     },
     touchConversation(message: string) {
       const now = Date.now();
