@@ -1,6 +1,8 @@
+import { getOrCompute } from "@/server/cache";
 import { osSql } from "./db";
 
 type Row = Record<string, unknown>;
+const MIN = 60 * 1000;
 
 const num = (v: unknown): number => Number(v ?? 0);
 const str = (v: unknown): string | null => (v == null ? null : String(v));
@@ -74,6 +76,7 @@ export interface FacebookDashboard {
   topPosts: Array<{ id: string; pageName: string; createdAt: string | null; permalink: string | null; preview: string; reactions: number; comments: number; shares: number; engagement: number }>;
   recentPosts: Array<{ id: string; pageName: string; createdAt: string | null; permalink: string | null; message: string | null; statusType: string | null; reactions: number; comments: number; shares: number }>;
   adsDaily: Array<{ label: string; spend: number; impressions: number; reach: number; clicks: number; ctr: number; cpc: number; cpm: number }>;
+  adsSummary: { spend: number; impressions: number; reach: number; clicks: number; ctr: number };
   campaigns: Array<{ id: string; name: string; accountName: string | null; currency: string | null; firstSeen: string | null; lastSeen: string | null; spend: number; impressions: number; reach: number; clicks: number; ctr: number; cpc: number; cpm: number }>;
   adAccounts: Array<{ id: string; name: string; status: number; currency: string | null; amountSpent: number; balance: number }>;
 }
@@ -144,7 +147,7 @@ export async function getFacebookDashboard(): Promise<FacebookDashboard | null> 
   const sql = osSql();
   const [snapshot] = (await sql`SELECT * FROM api.facebook_organic_snapshot`) as Row[];
   if (!snapshot) return null;
-  const [fresh, pages, topPosts, recentPosts, adsDaily, campaigns, adAccounts] = await Promise.all([
+  const [fresh, pages, topPosts, recentPosts, adsDaily, adsSummaryRows, campaigns, adAccounts] = await Promise.all([
     freshness("facebook"),
     sql`
       SELECT id, name, username, followers_count, fan_count, is_verified, link
@@ -163,12 +166,30 @@ export async function getFacebookDashboard(): Promise<FacebookDashboard | null> 
     sql`
       SELECT *
       FROM (
-        SELECT date_start::text AS date_start, spend, impressions, reach, clicks, ctr, cpc, cpm
+        SELECT
+          date_start::text AS date_start,
+          round(sum(spend), 2) AS spend,
+          sum(impressions)::bigint AS impressions,
+          sum(reach)::bigint AS reach,
+          sum(clicks)::bigint AS clicks,
+          CASE WHEN sum(impressions) > 0 THEN round((sum(clicks)::numeric / sum(impressions)) * 100, 4) END AS ctr,
+          CASE WHEN sum(clicks) > 0 THEN round(sum(spend) / sum(clicks), 4) END AS cpc,
+          CASE WHEN sum(impressions) > 0 THEN round((sum(spend) / sum(impressions)) * 1000, 4) END AS cpm
         FROM api.facebook_ads_daily
+        GROUP BY date_start
         ORDER BY date_start DESC NULLS LAST
         LIMIT 30
       ) d
       ORDER BY date_start
+    ` as Promise<Row[]>,
+    sql`
+      SELECT
+        round(coalesce(sum(spend), 0), 2) AS spend,
+        coalesce(sum(impressions), 0)::bigint AS impressions,
+        coalesce(sum(reach), 0)::bigint AS reach,
+        coalesce(sum(clicks), 0)::bigint AS clicks,
+        CASE WHEN coalesce(sum(impressions), 0) > 0 THEN round((sum(clicks)::numeric / sum(impressions)) * 100, 4) ELSE 0 END AS ctr
+      FROM api.facebook_ads_daily
     ` as Promise<Row[]>,
     sql`SELECT * FROM api.facebook_campaign_summary LIMIT 12` as Promise<Row[]>,
     sql`
@@ -179,6 +200,7 @@ export async function getFacebookDashboard(): Promise<FacebookDashboard | null> 
     ` as Promise<Row[]>,
   ]);
 
+  const adsSummary = adsSummaryRows[0] ?? {};
   return {
     freshness: fresh,
     snapshot: {
@@ -233,6 +255,13 @@ export async function getFacebookDashboard(): Promise<FacebookDashboard | null> 
       cpc: num(r.cpc),
       cpm: num(r.cpm),
     })),
+    adsSummary: {
+      spend: num(adsSummary.spend),
+      impressions: num(adsSummary.impressions),
+      reach: num(adsSummary.reach),
+      clicks: num(adsSummary.clicks),
+      ctr: num(adsSummary.ctr),
+    },
     campaigns: campaigns.map((r) => ({
       id: String(r.campaign_id ?? "unknown"),
       name: String(r.campaign_name ?? "Untitled campaign"),
@@ -274,20 +303,32 @@ export async function getInstagramDashboard(): Promise<InstagramDashboard | null
       LIMIT 12
     ` as Promise<Row[]>,
     sql`
-      SELECT DISTINCT ON (metric_name) metric_name, title, period, end_time::text AS end_time, numeric_value
-      FROM api.instagram_account_insights
-      WHERE numeric_value IS NOT NULL
-      ORDER BY metric_name, end_time DESC NULLS LAST, synced_at DESC
+      WITH latest AS (
+        SELECT DISTINCT ON (instagram_account_id, metric_name)
+               metric_name, title, period, end_time, numeric_value
+        FROM api.instagram_account_insights
+        WHERE numeric_value IS NOT NULL
+        ORDER BY instagram_account_id, metric_name, end_time DESC NULLS LAST, synced_at DESC
+      )
+      SELECT metric_name, max(title) AS title, max(period) AS period,
+             max(end_time)::text AS end_time, sum(numeric_value)::numeric AS numeric_value
+      FROM latest
+      GROUP BY metric_name
+      ORDER BY metric_name
     ` as Promise<Row[]>,
     sql`
-      SELECT to_char(end_time::date, 'Mon DD') AS label,
-             sum(numeric_value) FILTER (WHERE metric_name = 'reach') AS reach,
-             sum(numeric_value) FILTER (WHERE metric_name = 'follower_count') AS follower_count
-      FROM api.instagram_account_insights
-      WHERE metric_name IN ('reach','follower_count') AND end_time IS NOT NULL
-      GROUP BY end_time::date
-      ORDER BY end_time::date
-      LIMIT 30
+      SELECT to_char(day, 'Mon DD') AS label, reach, follower_count
+      FROM (
+        SELECT end_time::date AS day,
+               sum(numeric_value) FILTER (WHERE metric_name = 'reach') AS reach,
+               sum(numeric_value) FILTER (WHERE metric_name = 'follower_count') AS follower_count
+        FROM api.instagram_account_insights
+        WHERE metric_name IN ('reach','follower_count') AND end_time IS NOT NULL
+        GROUP BY end_time::date
+        ORDER BY end_time::date DESC
+        LIMIT 30
+      ) latest_days
+      ORDER BY day
     ` as Promise<Row[]>,
     sql`SELECT * FROM api.instagram_top_media LIMIT 12` as Promise<Row[]>,
     sql`
@@ -450,4 +491,47 @@ export async function getSuperFollowersDashboard(): Promise<SuperFollowersDashbo
       recentEngagements: jsonArray<SuperFollower["recentEngagements"][number]>(r.recent_engagements),
     })),
   };
+}
+
+function withCachedFreshness<T extends { freshness: SocialFreshness }>(data: T, stale: boolean): T {
+  return { ...data, freshness: { ...data.freshness, stale: data.freshness.stale || stale } };
+}
+
+export async function getCachedFacebookDashboard(): Promise<FacebookDashboard | null> {
+  const cached = await getOrCompute(
+    "os:facebook-dashboard",
+    async () => {
+      const data = await getFacebookDashboard();
+      if (!data) throw new Error("Swayzio OS Facebook dashboard is unavailable");
+      return data;
+    },
+    15 * MIN,
+  );
+  return withCachedFreshness(cached.data, cached.meta.stale);
+}
+
+export async function getCachedInstagramDashboard(): Promise<InstagramDashboard | null> {
+  const cached = await getOrCompute(
+    "os:instagram-dashboard",
+    async () => {
+      const data = await getInstagramDashboard();
+      if (!data) throw new Error("Swayzio OS Instagram dashboard is unavailable");
+      return data;
+    },
+    15 * MIN,
+  );
+  return withCachedFreshness(cached.data, cached.meta.stale);
+}
+
+export async function getCachedSuperFollowersDashboard(): Promise<SuperFollowersDashboard | null> {
+  const cached = await getOrCompute(
+    "os:super-followers-dashboard",
+    async () => {
+      const data = await getSuperFollowersDashboard();
+      if (!data) throw new Error("Swayzio OS super followers dashboard is unavailable");
+      return data;
+    },
+    15 * MIN,
+  );
+  return withCachedFreshness(cached.data, cached.meta.stale);
 }

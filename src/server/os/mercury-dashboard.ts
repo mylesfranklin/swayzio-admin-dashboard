@@ -1,6 +1,8 @@
+import { getOrCompute } from "@/server/cache";
 import { osSql } from "./db";
 
 type Row = Record<string, unknown>;
+const MIN = 60 * 1000;
 
 const num = (v: unknown): number => Number(v ?? 0);
 const str = (v: unknown): string | null => (v == null ? null : String(v));
@@ -205,4 +207,17 @@ export async function getMercuryDashboard(): Promise<MercuryDashboard | null> {
       changedPaths: r.changed_paths,
     })),
   };
+}
+
+export async function getCachedMercuryDashboard(): Promise<MercuryDashboard | null> {
+  const cached = await getOrCompute(
+    "os:mercury-dashboard",
+    async () => {
+      const data = await getMercuryDashboard();
+      if (!data) throw new Error("Swayzio OS Mercury dashboard is unavailable");
+      return data;
+    },
+    15 * MIN,
+  );
+  return { ...cached.data, freshness: { ...cached.data.freshness, stale: cached.data.freshness.stale || cached.meta.stale } };
 }

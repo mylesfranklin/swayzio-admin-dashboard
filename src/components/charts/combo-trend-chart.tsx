@@ -33,7 +33,7 @@ export function ComboTrendChart({
       lineCap: "round",
     },
     fill: {
-      type: series.map((s) => (s.type === "column" ? "gradient" : "gradient")),
+      type: series.map((s) => (s.type === "column" || s.type === "area" ? "gradient" : "solid")),
       gradient: { opacityFrom: 0.55, opacityTo: 0.05, stops: [0, 95] },
     },
     plotOptions: {

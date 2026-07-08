@@ -43,9 +43,9 @@ export function FacebookClient({ data, error }: { data: FacebookDashboard | null
   }
 
   const totalEngagement = data.snapshot.reactions + data.snapshot.comments + data.snapshot.shares;
-  const spend = data.campaigns.reduce((sum, row) => sum + row.spend, 0);
-  const clicks = data.campaigns.reduce((sum, row) => sum + row.clicks, 0);
-  const impressions = data.campaigns.reduce((sum, row) => sum + row.impressions, 0);
+  const spend = data.adsSummary.spend;
+  const clicks = data.adsSummary.clicks;
+  const impressions = data.adsSummary.impressions;
   const campaignBars = data.campaigns.slice(0, 8).map((row) => ({ label: row.name, value: row.spend }));
 
   return (
