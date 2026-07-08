@@ -24,7 +24,7 @@ export function HitlCard({
           <ShieldQuestion className="h-4 w-4" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-ink">Eve needs approval</p>
+          <p className="text-sm font-medium text-ink">Sway needs approval</p>
           <p className="mt-1 text-xs leading-5 text-ink-muted">{request.prompt}</p>
 
           {request.display === "text" || request.allowFreeform ? (
@@ -32,7 +32,7 @@ export function HitlCard({
               value={text}
               onChange={(event) => setText(event.target.value)}
               rows={2}
-              placeholder="Add context for Eve..."
+              placeholder="Add context for Sway..."
               className="mt-3 w-full resize-none rounded-field border border-line bg-base-100 px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-brand/50 focus:outline-none"
             />
           ) : null}

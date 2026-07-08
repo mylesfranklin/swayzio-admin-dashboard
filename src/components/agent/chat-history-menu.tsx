@@ -23,7 +23,7 @@ export function ChatHistoryMenu({
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="inline-flex h-9 items-center gap-1.5 rounded-field border border-line bg-base-200 px-3 text-sm text-ink-muted transition-colors hover:bg-base-300 hover:text-ink"
+        className="inline-flex h-9 items-center gap-1.5 rounded-md border border-line bg-base-200 px-3.5 text-sm font-medium text-ink-muted transition-colors hover:bg-base-300 hover:text-ink"
       >
         <Clock3 className="h-3.5 w-3.5" />
         Chats

@@ -19,7 +19,7 @@ export function AgentHome({
           <Sparkles className="h-5 w-5" />
         </div>
         <h1 className="mb-8 text-3xl font-semibold tracking-normal text-ink sm:text-[2.5rem]">
-          Ask Eve anything
+          Ask Sway anything
         </h1>
 
         <div className="w-full max-w-3xl">{composer}</div>
