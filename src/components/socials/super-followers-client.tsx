@@ -1,12 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowDownUp,
   BadgeCheck,
   CalendarClock,
   ExternalLink,
-  Filter,
   Globe,
   MessageCircle,
   MousePointer2,
@@ -34,6 +32,7 @@ const sources = ["all", "comment", "dm", "mention"] as const;
 const actions = ["all", "Partnership lead", "Warm engager", "Recent touch", "DM follow-up", "Monitor"] as const;
 const platforms = ["all", "instagram", "facebook"] as const;
 const profileFilters = ["all", "enriched", "verified", "has_website", "unknown_reach"] as const;
+const PAGE_SIZE = 100;
 
 function compact(n: number | null | undefined) {
   if (n == null) return "N/A";
@@ -146,6 +145,7 @@ export function SuperFollowersClient({ data, error }: { data: SuperFollowersDash
   const [minFollowers, setMinFollowers] = useState(0);
   const [minTouches, setMinTouches] = useState(0);
   const [sort, setSort] = useState<Sort>("impact");
+  const [page, setPage] = useState(0);
 
   const filtered = useMemo(() => {
     if (!data) return [];
@@ -188,6 +188,10 @@ export function SuperFollowersClient({ data, error }: { data: SuperFollowersDash
       });
   }, [action, data, minFollowers, minTouches, platform, profile, query, recency, sort, source, tier]);
 
+  useEffect(() => {
+    setPage(0);
+  }, [action, minFollowers, minTouches, platform, profile, query, recency, sort, source, tier]);
+
   if (error || !data) {
     return (
       <div className="rounded-box border border-error/30 bg-error/10 p-6 text-sm text-error">
@@ -216,6 +220,12 @@ export function SuperFollowersClient({ data, error }: { data: SuperFollowersDash
   const topRow = filtered[0];
   const visibleHighImpact = filtered.filter((row) => (row.followerCount ?? 0) >= 5000).length;
   const sourceTotal = Math.max(totals.comments + totals.dms + totals.mentions, 1);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages - 1);
+  const pageStart = safePage * PAGE_SIZE;
+  const pageRows = filtered.slice(pageStart, pageStart + PAGE_SIZE);
+  const pageRangeStart = filtered.length ? pageStart + 1 : 0;
+  const pageRangeEnd = Math.min(pageStart + PAGE_SIZE, filtered.length);
 
   return (
     <div className="space-y-6">
@@ -263,17 +273,19 @@ export function SuperFollowersClient({ data, error }: { data: SuperFollowersDash
           </div>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
-          <QuickFilter label="All accounts" active={platform === "all" && tier === "all" && source === "all" && profile === "all" && recency === "all"} onClick={() => {
+          <QuickFilter label="All accounts" active={query.trim() === "" && platform === "all" && tier === "all" && source === "all" && profile === "all" && recency === "all" && action === "all" && minFollowers === 0 && minTouches === 0} onClick={() => {
+            setQuery("");
             setPlatform("all");
             setTier("all");
             setSource("all");
             setProfile("all");
             setRecency("all");
+            setAction("all");
             setMinFollowers(0);
             setMinTouches(0);
           }} />
-          <QuickFilter label="High reach" active={tier === "high" || tier === "major"} onClick={() => {
-            setTier("high");
+          <QuickFilter label="High reach" active={tier === "all" && minFollowers >= 25000} onClick={() => {
+            setTier("all");
             setMinFollowers(25000);
           }} />
           <QuickFilter label="Recent" active={recency === "30"} onClick={() => setRecency("30")} />
@@ -337,6 +349,7 @@ export function SuperFollowersClient({ data, error }: { data: SuperFollowersDash
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Badge tone="info">{formatNumber(filtered.length)} matched</Badge>
+            <Badge tone="neutral">{pageRangeStart}-{pageRangeEnd} shown</Badge>
             <Badge tone="neutral">{formatNumber(totals.enriched)} enriched</Badge>
             <Badge tone="neutral">{formatNumber(totals.verified)} verified</Badge>
           </div>
@@ -357,7 +370,7 @@ export function SuperFollowersClient({ data, error }: { data: SuperFollowersDash
               </tr>
             </thead>
             <tbody>
-              {filtered.map((row) => (
+              {pageRows.map((row) => (
                 <tr key={row.id} className="border-t border-line/60 align-top transition-colors hover:bg-base-300/40">
                   <td className="min-w-[19rem] px-4 py-3">
                     <div className="flex items-start gap-3">
@@ -461,6 +474,34 @@ export function SuperFollowersClient({ data, error }: { data: SuperFollowersDash
             </tbody>
           </table>
         </div>
+        {filtered.length > PAGE_SIZE ? (
+          <div className="flex flex-col gap-3 border-t border-line p-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-ink-faint">
+              Showing {formatNumber(pageRangeStart)}-{formatNumber(pageRangeEnd)} of {formatNumber(filtered.length)} matched accounts.
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setPage((value) => Math.max(0, value - 1))}
+                disabled={safePage === 0}
+                className="h-8 rounded-field border border-line bg-base-300 px-3 text-xs font-medium text-ink-muted transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Previous
+              </button>
+              <span className="min-w-20 text-center text-xs tabular-nums text-ink-faint">
+                {safePage + 1} / {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPage((value) => Math.min(totalPages - 1, value + 1))}
+                disabled={safePage >= totalPages - 1}
+                className="h-8 rounded-field border border-line bg-base-300 px-3 text-xs font-medium text-ink-muted transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        ) : null}
       </Card>
     </div>
   );
