@@ -35,10 +35,15 @@ export interface NavSection {
 
 export const navSections: NavSection[] = [
   {
+    title: "Agent",
+    items: [
+      { title: "Sway", href: "/agent", icon: Sparkles },
+    ],
+  },
+  {
     title: "General",
     items: [
       { title: "Dashboard", href: "/", icon: LayoutDashboard },
-      { title: "Ask the OS", href: "/agent", icon: Sparkles },
       { title: "Stripe", href: "/analytics/stripe", icon: SiStripe },
       { title: "HubSpot", href: "/analytics/hubspot", icon: SiHubspot },
       { title: "Database", href: "/database", icon: Database },

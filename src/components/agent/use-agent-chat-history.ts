@@ -8,6 +8,13 @@ export type AgentChatSummary = {
   updatedAt: number;
 };
 
+export const LOCAL_DEV_AGENT_PERSISTENCE_KEY = "swayzio:eve-agent:session:v1:local-dev";
+export const AGENT_CHAT_HISTORY_CHANGED_EVENT = "swayzio:agent-chat-history-changed";
+
+export function agentPersistenceKey(founderKey: string) {
+  return `swayzio:eve-agent:session:v1:${founderKey}`;
+}
+
 function readJson<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
 
@@ -59,6 +66,11 @@ function writeString(key: string, value: string) {
   }
 }
 
+function notifyHistoryChanged(baseKey: string) {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(AGENT_CHAT_HISTORY_CHANGED_EVENT, { detail: { baseKey } }));
+}
+
 function createId() {
   return typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
@@ -68,6 +80,13 @@ function createId() {
 function titleFromMessage(message: string) {
   const title = message.replace(/\s+/g, " ").trim();
   return title.length > 56 ? `${title.slice(0, 53)}...` : title || "New chat";
+}
+
+export function readAgentChatSummaries(baseKey: string, limit = 24) {
+  const summaries = readJson<AgentChatSummary[]>(`${baseKey}:history`, []);
+  return summaries
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+    .slice(0, limit);
 }
 
 export function useAgentChatHistory(baseKey: string) {
@@ -87,7 +106,7 @@ export function useAgentChatHistory(baseKey: string) {
     return id;
   });
   const [conversations, setConversations] = useState<AgentChatSummary[]>(() =>
-    readJson<AgentChatSummary[]>(keys.history, [])
+    readAgentChatSummaries(baseKey)
   );
 
   const persistHistory = (next: AgentChatSummary[]) => {
@@ -100,6 +119,7 @@ export function useAgentChatHistory(baseKey: string) {
     }
     setConversations(trimmed);
     writeJson(keys.history, trimmed);
+    notifyHistoryChanged(baseKey);
   };
 
   return {
@@ -114,6 +134,7 @@ export function useAgentChatHistory(baseKey: string) {
     selectConversation(id: string) {
       setActiveConversationId(id);
       writeString(keys.current, id);
+      notifyHistoryChanged(baseKey);
     },
     touchConversation(message: string) {
       const now = Date.now();

@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth, useUser } from "@clerk/nextjs";
+import { useSearchParams } from "next/navigation";
 import {
   useEveAgent,
   type EveMessageData,
@@ -14,12 +15,15 @@ import { ChatConversation } from "@/components/agent/chat-conversation";
 import { ChatHistoryMenu } from "@/components/agent/chat-history-menu";
 import { HitlCard } from "@/components/agent/hitl-card";
 import { getPendingInputRequest } from "@/components/agent/message-parts";
-import { useAgentChatHistory } from "@/components/agent/use-agent-chat-history";
+import {
+  agentPersistenceKey,
+  LOCAL_DEV_AGENT_PERSISTENCE_KEY,
+  useAgentChatHistory,
+} from "@/components/agent/use-agent-chat-history";
 import { useAgentSessionPersistence } from "@/components/agent/use-agent-session-persistence";
 import { isClerkConfigured } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
-const LOCAL_DEV_PERSISTENCE_KEY = "swayzio:eve-agent:session:v1:local-dev";
 const NOOP_BEARER = async () => "";
 
 export function AgentChat() {
@@ -28,7 +32,7 @@ export function AgentChat() {
   return isClerkConfigured ? (
     <ClerkAgentChat />
   ) : (
-    <AgentChatInner bearer={NOOP_BEARER} persistenceKey={LOCAL_DEV_PERSISTENCE_KEY} />
+    <AgentChatInner bearer={NOOP_BEARER} firstName="Myles" persistenceKey={LOCAL_DEV_AGENT_PERSISTENCE_KEY} />
   );
 }
 
@@ -40,14 +44,17 @@ function ClerkAgentChat() {
   if (!isLoaded) return <div className="min-h-[calc(100vh-4rem)] bg-base-100" />;
 
   const founderKey = user?.id ?? user?.primaryEmailAddress?.emailAddress ?? "unknown-founder";
-  return <AgentChatInner bearer={bearer} persistenceKey={`swayzio:eve-agent:session:v1:${founderKey}`} />;
+  const firstName = user?.firstName ?? user?.fullName?.split(/\s+/)[0] ?? null;
+  return <AgentChatInner bearer={bearer} firstName={firstName} persistenceKey={agentPersistenceKey(founderKey)} />;
 }
 
 function AgentChatInner({
   bearer,
+  firstName,
   persistenceKey,
 }: {
   bearer: () => Promise<string>;
+  firstName?: string | null;
   persistenceKey: string;
 }) {
   const [mounted, setMounted] = useState(false);
@@ -58,17 +65,31 @@ function AgentChatInner({
 
   if (!mounted) return <div className="min-h-[calc(100vh-4rem)] bg-base-100" />;
 
-  return <AgentChatWorkspace bearer={bearer} persistenceBaseKey={persistenceKey} />;
+  return <AgentChatWorkspace bearer={bearer} firstName={firstName} persistenceBaseKey={persistenceKey} />;
 }
 
 function AgentChatWorkspace({
   bearer,
+  firstName,
   persistenceBaseKey,
 }: {
   bearer: () => Promise<string>;
+  firstName?: string | null;
   persistenceBaseKey: string;
 }) {
   const history = useAgentChatHistory(persistenceBaseKey);
+  const searchParams = useSearchParams();
+  const chatId = searchParams.get("chat");
+
+  useEffect(() => {
+    if (
+      chatId &&
+      chatId !== history.activeConversationId &&
+      history.conversations.some((conversation) => conversation.id === chatId)
+    ) {
+      history.selectConversation(chatId);
+    }
+  }, [chatId, history]);
 
   return (
     <AgentChatSession
@@ -76,6 +97,7 @@ function AgentChatWorkspace({
       activeConversationId={history.activeConversationId}
       bearer={bearer}
       conversations={history.conversations}
+      firstName={firstName}
       onNewChat={history.newConversation}
       onSelectConversation={history.selectConversation}
       onTouchConversation={history.touchConversation}
@@ -88,6 +110,7 @@ function AgentChatSession({
   activeConversationId,
   bearer,
   conversations,
+  firstName,
   onNewChat,
   onSelectConversation,
   onTouchConversation,
@@ -96,6 +119,7 @@ function AgentChatSession({
   activeConversationId: string;
   bearer: () => Promise<string>;
   conversations: readonly { id: string; title: string; updatedAt: number }[];
+  firstName?: string | null;
   onNewChat: () => void;
   onSelectConversation: (id: string) => void;
   onTouchConversation: (message: string) => void;
@@ -106,25 +130,34 @@ function AgentChatSession({
   const agentRef = useRef<UseEveAgentSnapshot<EveMessageData> | undefined>(undefined);
 
   const options = useMemo<UseEveAgentOptions<EveMessageData>>(
-    () => ({
-      auth: { bearer },
-      initialEvents: persistence.initialEvents,
-      initialSession: persistence.initialSession,
-      maxReconnectAttempts: 3,
-      onEvent: () => persistence.persistFromSnapshot(agentRef.current),
-      onFinish: (snapshot) => persistence.persistFromSnapshot(snapshot),
-      onSessionChange: () => persistence.persistFromSnapshot(agentRef.current),
-      prepareSend: (input) => ({
-        ...input,
-        clientContext: {
-          surface: "swayzio-admin-agent",
-          route: "/agent",
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          localTime: new Date().toISOString(),
-        },
-      }),
-    }),
-    [bearer, persistence]
+    () => {
+      const recentChats = conversations.slice(0, 5).map((conversation) => ({
+        title: conversation.title,
+        updatedAt: new Date(conversation.updatedAt).toISOString(),
+      }));
+
+      return {
+        auth: { bearer },
+        initialEvents: persistence.initialEvents,
+        initialSession: persistence.initialSession,
+        maxReconnectAttempts: 3,
+        onEvent: () => persistence.persistFromSnapshot(agentRef.current),
+        onFinish: (snapshot) => persistence.persistFromSnapshot(snapshot),
+        onSessionChange: () => persistence.persistFromSnapshot(agentRef.current),
+        prepareSend: (input) => ({
+          ...input,
+          clientContext: {
+            surface: "swayzio-admin-agent",
+            route: "/agent",
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            localTime: new Date().toISOString(),
+            ...(firstName ? { founderFirstName: firstName } : {}),
+            recentChats,
+          },
+        }),
+      };
+    },
+    [bearer, conversations, firstName, persistence]
   );
 
   const agent = useEveAgent(options);
@@ -173,7 +206,12 @@ function AgentChatSession({
   );
 
   return (
-    <div className={cn("flex min-h-[calc(100vh-4rem)] flex-col bg-base-100", hasMessages && "pb-40 md:pb-0")}>
+    <div
+      className={cn(
+        "flex min-h-[calc(100vh-4rem)] flex-col bg-base-100",
+        hasMessages && (pending ? "pb-80" : "pb-52")
+      )}
+    >
       {hasMessages ? (
         <ChatConversation
           error={agent.status === "error" ? agent.error : undefined}
@@ -195,17 +233,17 @@ function AgentChatSession({
                 onSend={ask}
                 onStop={agent.stop}
                 status={agent.status}
-                variant="hero"
               />
             </>
           }
+          firstName={firstName}
           historyMenu={historyMenu}
         />
       )}
 
       {hasMessages ? (
-        <div className="fixed bottom-[4.25rem] left-0 right-0 z-40 bg-base-100/95 px-4 py-3 backdrop-blur sm:px-6 md:sticky md:bottom-0 md:left-auto md:right-auto md:z-10">
-          <div className="mx-auto max-w-3xl space-y-3">
+        <div className="fixed bottom-[4.75rem] left-0 right-0 z-40 bg-base-100/95 px-4 py-3 backdrop-blur sm:px-6 md:bottom-6 md:left-[var(--dashboard-sidebar-offset)]">
+          <div className="mx-auto max-w-5xl space-y-3">
             {pending ? <HitlCard disabled={isBusy} request={pending} onAnswer={answer} /> : null}
             <ChatComposer
               disabled={Boolean(pending)}

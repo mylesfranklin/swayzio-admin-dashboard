@@ -87,7 +87,7 @@ export function Markdown({ children, streaming }: { children: string; streaming?
     <Streamdown
       animated={streaming ? { animation: "fadeIn", duration: 120, sep: "word", stagger: 12 } : false}
       caret={streaming ? "block" : undefined}
-      className="text-sm text-ink"
+      className="text-md text-ink"
       components={components}
       controls={{ code: { copy: true }, table: { copy: true, download: true } }}
       lineNumbers={false}

@@ -52,7 +52,7 @@ export function ToolActivity({ parts }: { parts: readonly EveDynamicToolPart[] }
         <span className="flex min-w-0 items-center gap-2 text-xs text-ink-muted">
           <StatusIcon running={running} errored={errored} denied={denied} />
           <span className="truncate">
-            Eve checked {parts.length} {parts.length === 1 ? "source" : "sources"}
+            Sway checked {parts.length} {parts.length === 1 ? "source" : "sources"}
           </span>
           {completed ? <span className="text-ink-faint">({completed} complete)</span> : null}
         </span>

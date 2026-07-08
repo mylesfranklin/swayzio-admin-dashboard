@@ -15,7 +15,6 @@ export function ChatComposer({
   onSend,
   onStop,
   status,
-  variant = "default",
 }: {
   disabled?: boolean;
   draft: string;
@@ -24,7 +23,6 @@ export function ChatComposer({
   onSend: (value: string) => void | Promise<void>;
   onStop: () => void;
   status: UseEveAgentStatus;
-  variant?: "default" | "hero";
 }) {
   const canSend = draft.trim().length > 0 && !isBusy && !disabled;
   const [isListening, setIsListening] = useState(false);
@@ -117,12 +115,10 @@ export function ChatComposer({
         onKeyDown={onKeyDown}
         disabled={disabled}
         rows={1}
-        placeholder={disabled ? "Respond to Eve's approval request to continue." : "How can Eve help today?"}
+        placeholder={disabled ? "Respond to Sway's approval request to continue." : "How can Sway help today?"}
         className={cn(
           "max-h-52 w-full resize-none bg-transparent text-ink placeholder:text-ink-faint focus:outline-none disabled:cursor-not-allowed disabled:opacity-60",
-          variant === "hero"
-            ? "min-h-24 rounded-box px-5 py-5 text-lg leading-7"
-            : "min-h-16 rounded-box px-4 py-3 text-sm leading-6"
+          "min-h-24 rounded-box px-5 py-4 text-lg leading-7"
         )}
       />
       <div className="flex items-center justify-between gap-3 px-3 pb-3">

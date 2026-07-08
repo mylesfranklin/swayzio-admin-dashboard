@@ -13,7 +13,7 @@ export function AgentMessage({ message }: { message: EveMessage }) {
 
     return (
       <div className="flex justify-end">
-        <div className="max-w-[82%] rounded-box border border-brand/30 bg-brand/15 px-3.5 py-2.5 text-sm leading-6 text-ink">
+        <div className="max-w-[82%] rounded-box border border-brand/30 bg-brand/15 px-4 py-3 text-md leading-6 text-ink">
           {text}
         </div>
       </div>
