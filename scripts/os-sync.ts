@@ -19,6 +19,7 @@ import { syncHubspot } from "@/server/os/feeds/hubspot";
 import { syncApp } from "@/server/os/feeds/app";
 import { syncMercury } from "@/server/os/feeds/mercury";
 import { syncFacebook } from "@/server/os/feeds/facebook";
+import { syncInstagram } from "@/server/os/feeds/instagram";
 import { osSql } from "@/server/os/db";
 
 const FEEDS: Record<string, () => Promise<void>> = {
@@ -27,6 +28,7 @@ const FEEDS: Record<string, () => Promise<void>> = {
   app: syncApp,
   mercury: syncMercury,
   facebook: syncFacebook,
+  instagram: syncInstagram,
 };
 
 const requested = process.argv.slice(2).filter((a) => !a.startsWith("-"));

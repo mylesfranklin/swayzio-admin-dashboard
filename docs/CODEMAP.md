@@ -71,7 +71,8 @@
 - `src/server/os/feeds/app.ts` — Swayzio-Core app raw/core/metrics feed.
 - `src/server/os/feeds/mercury.ts` — Mercury accounts, transactions, recipients, categories, cards, statements, organization, users, events, webhooks, and credit/treasury feed.
 - `src/server/os/feeds/facebook.ts` — Facebook/Meta Pages, posts, organic insights, ad accounts, campaigns, and Ads Insights feed.
-- `db/swayzio-os/migrations/` — migrations `0001` through `0019`.
+- `src/server/os/feeds/instagram.ts` — Instagram professional account, media, and insights feed via Instagram API with Facebook Login.
+- `db/swayzio-os/migrations/` — migrations `0001` through `0020`.
 
 ## Eve Agent
 

@@ -90,7 +90,7 @@ Those routes do not currently exist unless added later.
 - `src/server/os/` contains Swayzio OS ELT clients, feeds, embedding helpers, and sync wrappers.
 - `agent/` contains the eve agent. It is intentionally at repo root because eve CLI commands resolve
   `agent/agent.ts` from the project root.
-- `db/swayzio-os/migrations/` contains immutable Swayzio OS SQL migrations, currently through `0019`.
+- `db/swayzio-os/migrations/` contains immutable Swayzio OS SQL migrations, currently through `0020`.
 - `scripts/` contains migration, sync, embedding, refresh, and verification utilities.
 
 ## Data Flow
@@ -122,7 +122,8 @@ Current OS feeds include full HubSpot contacts and companies (deals intentionall
 customers/subscriptions/catalog/invoices/charges/refunds/balance transactions, Mercury
 accounts/transactions/recipients/categories/cards/statements/organization/users/events/webhooks plus
 credit/treasury surfaces when present, Facebook Pages/posts/organic insights/ad accounts/campaigns/Ads
-Insights when configured, and Swayzio-Core app customers. `/sync-status` reads
+Insights when configured, Instagram professional accounts/media/insights when configured, and
+Swayzio-Core app customers. `/sync-status` reads
 `api.sync_health` and `api.data_quality`.
 
 The agent reads only curated `api.*` views and `memory.recall()` through the `os_agent_ro` role when
