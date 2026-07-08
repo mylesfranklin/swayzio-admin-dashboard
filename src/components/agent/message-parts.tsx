@@ -111,20 +111,20 @@ function ReasoningBlock({ streaming, text }: { streaming?: boolean; text: string
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="rounded-box border border-line bg-base-200">
+    <div className="text-sm text-ink-muted">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-xs text-ink-muted hover:text-ink"
+        className="group flex w-full items-center justify-between gap-3 py-1.5 text-left transition-colors hover:text-ink"
       >
         <span className="inline-flex items-center gap-2">
           <span className="size-1.5 rounded-full bg-primary" />
           {streaming ? "Thinking" : "Reasoning"}
         </span>
-        <ChevronDown className={open ? "h-3.5 w-3.5 rotate-180" : "h-3.5 w-3.5"} />
+        <ChevronDown className={open ? "h-3.5 w-3.5 rotate-180 text-ink-faint" : "h-3.5 w-3.5 text-ink-faint"} />
       </button>
       {open ? (
-        <div className="border-t border-line px-3 py-2 text-xs text-ink-muted">
+        <div className="ml-1 mt-1 border-l border-line/70 pl-4 text-xs text-ink-muted">
           <Markdown streaming={streaming}>{text}</Markdown>
         </div>
       ) : null}

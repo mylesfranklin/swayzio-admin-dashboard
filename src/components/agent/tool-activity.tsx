@@ -1,7 +1,7 @@
 "use client";
 
 import type { EveDynamicToolPart } from "eve/react";
-import { Check, ChevronDown, CircleAlert, Clock3, Loader2, ShieldX, Wrench } from "lucide-react";
+import { Check, ChevronDown, CircleAlert, Loader2, ShieldX } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -43,24 +43,24 @@ export function ToolActivity({ parts }: { parts: readonly EveDynamicToolPart[] }
   const completed = parts.filter((part) => part.state === "output-available").length;
 
   return (
-    <div className="rounded-box border border-line bg-base-200">
+    <div className="text-sm text-ink-muted">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left"
+        className="group flex w-full items-center justify-between gap-3 py-1.5 text-left transition-colors hover:text-ink"
       >
-        <span className="flex min-w-0 items-center gap-2 text-xs text-ink-muted">
+        <span className="flex min-w-0 items-center gap-2">
           <StatusIcon running={running} errored={errored} denied={denied} />
           <span className="truncate">
             Sway checked {parts.length} {parts.length === 1 ? "source" : "sources"}
           </span>
           {completed ? <span className="text-ink-faint">({completed} complete)</span> : null}
         </span>
-        <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 text-ink-faint", open && "rotate-180")} />
+        <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 text-ink-faint transition-transform", open && "rotate-180")} />
       </button>
 
       {open ? (
-        <div className="space-y-2 border-t border-line p-2">
+        <div className="ml-1 mt-1 space-y-2 border-l border-line/70 pl-4">
           {parts.map((part) => (
             <ToolRow key={part.toolCallId} part={part} />
           ))}
@@ -74,7 +74,7 @@ function ToolRow({ part }: { part: EveDynamicToolPart }) {
   const label = toolLabel(part);
 
   return (
-    <div className="rounded border border-line/70 bg-base-100 p-2">
+    <div className="py-1.5">
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <StatusIcon
@@ -84,7 +84,7 @@ function ToolRow({ part }: { part: EveDynamicToolPart }) {
           />
           <span className="truncate text-xs font-medium text-ink">{label}</span>
         </div>
-        <span className="shrink-0 rounded-full border border-line bg-base-200 px-2 py-0.5 text-[0.6875rem] text-ink-faint">
+        <span className="shrink-0 text-[0.6875rem] uppercase tracking-wider text-ink-faint">
           {statusLabel(part.state)}
         </span>
       </div>
