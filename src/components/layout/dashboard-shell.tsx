@@ -15,7 +15,9 @@ export default function DashboardShell({ children }: { children: React.ReactNode
       <div
         className={cn(
           "flex flex-1 flex-col overflow-hidden transition-all duration-200",
-          isSidebarOpen ? "md:ml-[15.25rem]" : "md:ml-0"
+          isSidebarOpen
+            ? "md:ml-[15.25rem] md:[--dashboard-sidebar-offset:15.25rem]"
+            : "md:ml-0 md:[--dashboard-sidebar-offset:0rem]"
         )}
       >
         <Header

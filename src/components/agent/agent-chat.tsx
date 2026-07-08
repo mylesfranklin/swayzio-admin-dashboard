@@ -173,7 +173,12 @@ function AgentChatSession({
   );
 
   return (
-    <div className={cn("flex min-h-[calc(100vh-4rem)] flex-col bg-base-100", hasMessages && "pb-52")}>
+    <div
+      className={cn(
+        "flex min-h-[calc(100vh-4rem)] flex-col bg-base-100",
+        hasMessages && (pending ? "pb-80" : "pb-52")
+      )}
+    >
       {hasMessages ? (
         <ChatConversation
           error={agent.status === "error" ? agent.error : undefined}
@@ -195,7 +200,6 @@ function AgentChatSession({
                 onSend={ask}
                 onStop={agent.stop}
                 status={agent.status}
-                variant="hero"
               />
             </>
           }
@@ -204,7 +208,7 @@ function AgentChatSession({
       )}
 
       {hasMessages ? (
-        <div className="fixed bottom-[4.75rem] left-0 right-0 z-40 px-4 py-3 sm:px-6 md:bottom-6 md:left-[15.25rem]">
+        <div className="fixed bottom-[4.75rem] left-0 right-0 z-40 bg-base-100/95 px-4 py-3 backdrop-blur sm:px-6 md:bottom-6 md:left-[var(--dashboard-sidebar-offset)]">
           <div className="mx-auto max-w-5xl space-y-3">
             {pending ? <HitlCard disabled={isBusy} request={pending} onAnswer={answer} /> : null}
             <ChatComposer
