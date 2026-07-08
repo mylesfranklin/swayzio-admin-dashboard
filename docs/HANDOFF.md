@@ -10,8 +10,8 @@ the same facts in more operational detail — check `deployment`, `swayzio-os`, 
 | Surface | State |
 |---|---|
 | Dashboard | admin.swayzio.com, push-to-main auto-deploys. Stripe page + overview lead with the reconciled MRR triple (collected → collectible → booked). |
-| Swayzio OS | Neon project `swayzio-os` (`sparkling-butterfly-49751147`). ELT every 6h via GitHub Actions. Migrations applied through **0021**. Stripe, HubSpot, app DB, Mercury, Facebook, and Instagram feeds are live/available. Semantic recall live (41 rows embedded). |
-| Eve agent | `/agent` in the dashboard. eve **0.19.0 (pinned exact)**, Sonnet 5 via AI Gateway. Read tools over OS `api.*` views, including Mercury cash/transaction tools and Facebook/Instagram social tools, plus approval-gated `trigger_sync`. Clerk "eve" JWT template (dev + prod instances) carries `aud`/`email`/`role`. |
+| Swayzio OS | Neon project `swayzio-os` (`sparkling-butterfly-49751147`). ELT every 6h via GitHub Actions. Migrations applied through **0023**. Stripe, HubSpot, app DB, Mercury, Facebook, Instagram, and cross-platform social engagement feeds are live/available. Semantic recall live (41 rows embedded). |
+| Eve agent | `/agent` in the dashboard. eve **0.19.0 (pinned exact)**, Sonnet 5 via AI Gateway. Read tools over OS `api.*` views, including Mercury cash/transaction tools, Facebook/Instagram social tools, `super_followers`, plus approval-gated `trigger_sync`. Clerk "eve" JWT template (dev + prod instances) carries `aud`/`email`/`role`. |
 | Stripe truth | Collected $7.4K/mo · collectible $18.2K (≈ Stripe app tile) · booked $34.5K. Full story: `docs/STRIPE-MRR-INVESTIGATION.md`. |
 
 ## Open threads (in rough priority order)
@@ -68,6 +68,10 @@ the same facts in more operational detail — check `deployment`, `swayzio-os`, 
   `src/proxy.ts` matcher itself; keep it that way.
 - **Postgres views freeze `SELECT *` at creation** — adding columns to `metrics.*` requires
   recreating the dependent `api.*` view in the same migration (see 0013).
+- **Meta engagement depth is permission-bound.** Instagram comments and Business Discovery enrichment
+  are live when `instagram_manage_comments` and `instagram_business_manage_insights` are granted.
+  Facebook comments still need `pages_read_user_content` or Page Public Content Access; Facebook and
+  Instagram DM/conversation harvesting still needs the appropriate messaging access.
 
 ## Key locations
 

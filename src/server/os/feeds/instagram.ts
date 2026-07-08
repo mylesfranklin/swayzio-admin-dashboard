@@ -16,6 +16,9 @@ const GRAPH_VERSION = process.env.FACEBOOK_GRAPH_API_VERSION ?? "v25.0";
 const DEFAULT_MEDIA_LOOKBACK_DAYS = 180;
 const DEFAULT_INSIGHT_LOOKBACK_DAYS = 29;
 const DEFAULT_MEDIA_LIMIT = 500;
+const DEFAULT_COMMENT_MEDIA_LIMIT = 30;
+const DEFAULT_COMMENT_LIMIT_PER_MEDIA = 50;
+const DEFAULT_ACTOR_ENRICH_LIMIT = 25;
 const ACCOUNT_FIELDS = [
   "id",
   "username",
@@ -40,6 +43,25 @@ const MEDIA_FIELDS = [
   "username",
   "like_count",
   "comments_count",
+].join(",");
+const COMMENT_FIELDS = [
+  "id",
+  "text",
+  "timestamp",
+  "username",
+  "like_count",
+  "replies{id,text,timestamp,username,like_count}",
+].join(",");
+const BUSINESS_DISCOVERY_FIELDS = [
+  "id",
+  "username",
+  "name",
+  "biography",
+  "website",
+  "profile_picture_url",
+  "followers_count",
+  "follows_count",
+  "media_count",
 ].join(",");
 const DEFAULT_ACCOUNT_INSIGHT_METRICS = [
   "reach",
@@ -255,6 +277,26 @@ async function syncRows(
   return written;
 }
 
+async function syncSocialRows(
+  sql: Sql,
+  sourceEntity: string,
+  runId: number,
+  rows: JsonRecord[],
+  sourceId: (row: JsonRecord, index: number) => string,
+  upsert: (batch: JsonRecord[]) => Promise<void>,
+): Promise<number> {
+  let written = 0;
+  for (const batch of chunk(rows, 500)) {
+    await landRaw(sql, "social", sourceEntity, runId, batch.map((row, i) => ({
+      sourceId: sourceId(row, written + i),
+      payload: row.raw && typeof row.raw === "object" ? sanitize(row.raw) : sanitize(row),
+    })));
+    await upsert(batch);
+    written += batch.length;
+  }
+  return written;
+}
+
 async function readConnectedInstagramAccounts(): Promise<Array<JsonRecord & { facebook_page_id: string; page_access_token: string }>> {
   const pages = await graphList<JsonRecord>("/me/accounts", {
     fields: "id,name,access_token,instagram_business_account,connected_instagram_account",
@@ -367,6 +409,219 @@ export async function syncInstagramMedia() {
           media_url=EXCLUDED.media_url, permalink=EXCLUDED.permalink, thumbnail_url=EXCLUDED.thumbnail_url,
           timestamp=EXCLUDED.timestamp, username=EXCLUDED.username, like_count=EXCLUDED.like_count,
           comments_count=EXCLUDED.comments_count, raw=EXCLUDED.raw, synced_at=now()
+      `, batch);
+    });
+    ctx.wrote(wrote);
+    ctx.setCursor(new Date().toISOString());
+  });
+}
+
+function actorId(platform: string, username: string): string {
+  return `${platform}:${username.trim().toLowerCase()}`;
+}
+
+function instagramProfileUrl(username: string | null): string | null {
+  return username ? `https://www.instagram.com/${username}/` : null;
+}
+
+function flattenCommentRows(comment: JsonRecord, accountId: string, media: { id: string; permalink: string | null }, parentId?: string): JsonRecord[] {
+  const username = text(comment.username);
+  const id = text(comment.id);
+  const rows: JsonRecord[] = [];
+  if (id && username) {
+    rows.push({
+      id: `instagram:${id}`,
+      actor_id: actorId("instagram", username),
+      platform: "instagram",
+      engagement_type: parentId ? "instagram_reply" : "instagram_comment",
+      source_id: id,
+      parent_id: parentId ?? null,
+      source_account_id: accountId,
+      source_media_id: media.id,
+      permalink: media.permalink,
+      message: text(comment.text),
+      occurred_at: text(comment.timestamp),
+      like_count: int(comment.like_count),
+      reply_count: list(comment, "replies").length,
+      score_weight: parentId ? 4 : 6,
+      raw: sanitize(comment),
+    });
+  }
+  for (const reply of list<JsonRecord>(child(comment, "replies"), "data")) {
+    rows.push(...flattenCommentRows(reply, accountId, media, id ?? parentId));
+  }
+  return rows;
+}
+
+async function enrichInstagramActors(accountId: string, pageToken: string, usernames: string[]): Promise<JsonRecord[]> {
+  const limit = int(process.env.INSTAGRAM_ACTOR_ENRICH_LIMIT) ?? DEFAULT_ACTOR_ENRICH_LIMIT;
+  const rows: JsonRecord[] = [];
+  for (const username of [...new Set(usernames.map((u) => u.trim()).filter(Boolean))].slice(0, limit)) {
+    try {
+      const body = await graphGet<JsonRecord>(`/${accountId}`, {
+        fields: `business_discovery.username(${username}){${BUSINESS_DISCOVERY_FIELDS}}`,
+      }, pageToken);
+      const discovered = child<JsonRecord>(body, "business_discovery");
+      rows.push({
+        id: actorId("instagram", username),
+        platform: "instagram",
+        platform_actor_id: text(discovered?.id),
+        username: text(discovered?.username) ?? username,
+        display_name: text(discovered?.name),
+        biography: text(discovered?.biography),
+        website: text(discovered?.website),
+        profile_url: instagramProfileUrl(text(discovered?.username) ?? username),
+        profile_picture_url: text(discovered?.profile_picture_url),
+        follower_count: int(discovered?.followers_count),
+        follows_count: int(discovered?.follows_count),
+        media_count: int(discovered?.media_count),
+        is_verified: null,
+        is_business_discovery_enriched: Boolean(discovered),
+        raw: sanitize(discovered ?? { username }),
+      });
+    } catch (err) {
+      rows.push({
+        id: actorId("instagram", username),
+        platform: "instagram",
+        platform_actor_id: null,
+        username,
+        display_name: null,
+        biography: null,
+        website: null,
+        profile_url: instagramProfileUrl(username),
+        profile_picture_url: null,
+        follower_count: null,
+        follows_count: null,
+        media_count: null,
+        is_verified: null,
+        is_business_discovery_enriched: false,
+        raw: { username },
+      });
+    }
+  }
+  return rows;
+}
+
+export async function syncInstagramComments() {
+  return withSyncRun("instagram", "comment", async (ctx) => {
+    const sql = osSql();
+    const mediaLimit = int(process.env.INSTAGRAM_COMMENT_MEDIA_LIMIT) ?? DEFAULT_COMMENT_MEDIA_LIMIT;
+    const commentLimit = int(process.env.INSTAGRAM_COMMENT_LIMIT_PER_MEDIA) ?? DEFAULT_COMMENT_LIMIT_PER_MEDIA;
+    const accounts = await accountTokens(sql);
+    const accountTokenById = new Map(accounts.map((account) => [account.id, account.token]));
+    const media = (await sql`
+      SELECT id, instagram_account_id, permalink
+      FROM core.instagram_media
+      WHERE coalesce(comments_count, 0) > 0
+      ORDER BY timestamp DESC NULLS LAST
+      LIMIT ${mediaLimit}
+    `) as Array<{ id: string; instagram_account_id: string; permalink: string | null }>;
+
+    const engagementRows: JsonRecord[] = [];
+    const usernames: string[] = [];
+    for (const item of media) {
+      const accessToken = accountTokenById.get(item.instagram_account_id) ?? token();
+      try {
+        const comments = await graphData<JsonRecord>(`/${item.id}/comments`, {
+          fields: COMMENT_FIELDS,
+          limit: Math.min(commentLimit, 100),
+        }, accessToken);
+        const limited = comments.slice(0, commentLimit);
+        const rows = limited.flatMap((comment) => flattenCommentRows(comment, item.instagram_account_id, item));
+        engagementRows.push(...rows);
+        usernames.push(...rows.map((row) => text(row.raw && typeof row.raw === "object" ? (row.raw as JsonRecord).username : null) ?? "").filter(Boolean));
+      } catch (err) {
+        if (isOptionalPermissionError(err)) {
+          console.warn(`[instagram] comments skipped; token likely lacks instagram_manage_comments: ${err instanceof Error ? err.message : String(err)}`);
+          ctx.read(0);
+          ctx.wrote(0);
+          ctx.setCursor(new Date().toISOString());
+          return;
+        }
+        throw err;
+      }
+    }
+
+    const uniqueUsernames = [...new Set(usernames.map((u) => u.trim()).filter(Boolean))];
+    const actorRows: JsonRecord[] = uniqueUsernames.map((username) => ({
+      id: actorId("instagram", username),
+      platform: "instagram",
+      platform_actor_id: null,
+      username,
+      display_name: null,
+      biography: null,
+      website: null,
+      profile_url: instagramProfileUrl(username),
+      profile_picture_url: null,
+      follower_count: null,
+      follows_count: null,
+      media_count: null,
+      is_verified: null,
+      is_business_discovery_enriched: false,
+      raw: { username },
+    }));
+    for (const account of accounts) {
+      actorRows.push(...await enrichInstagramActors(account.id, account.token, usernames));
+    }
+
+    const dedupedActors = [...new Map(actorRows.map((row) => [String(row.id), row])).values()];
+    await syncSocialRows(sql, "actor", ctx.runId, dedupedActors, (r) => String(r.id), async (batch) => {
+      await upsertJson(sql, sql`
+        INSERT INTO core.social_actor
+          (id, platform, platform_actor_id, username, display_name, biography, website, profile_url,
+           profile_picture_url, follower_count, follows_count, media_count, is_verified,
+           is_business_discovery_enriched, last_enriched_at, raw)
+        SELECT id, platform, platform_actor_id, username, display_name, biography, website, profile_url,
+               profile_picture_url, follower_count, follows_count, media_count, is_verified,
+               is_business_discovery_enriched, now(), raw
+        FROM jsonb_to_recordset(${JSON.stringify(batch)}::jsonb)
+          AS u(id text, platform text, platform_actor_id text, username text, display_name text,
+               biography text, website text, profile_url text, profile_picture_url text,
+               follower_count bigint, follows_count bigint, media_count bigint, is_verified boolean,
+               is_business_discovery_enriched boolean, raw jsonb)
+        ON CONFLICT (id) DO UPDATE SET
+          platform_actor_id=coalesce(EXCLUDED.platform_actor_id, core.social_actor.platform_actor_id),
+          username=coalesce(EXCLUDED.username, core.social_actor.username),
+          display_name=coalesce(EXCLUDED.display_name, core.social_actor.display_name),
+          biography=coalesce(EXCLUDED.biography, core.social_actor.biography),
+          website=coalesce(EXCLUDED.website, core.social_actor.website),
+          profile_url=coalesce(EXCLUDED.profile_url, core.social_actor.profile_url),
+          profile_picture_url=coalesce(EXCLUDED.profile_picture_url, core.social_actor.profile_picture_url),
+          follower_count=coalesce(EXCLUDED.follower_count, core.social_actor.follower_count),
+          follows_count=coalesce(EXCLUDED.follows_count, core.social_actor.follows_count),
+          media_count=coalesce(EXCLUDED.media_count, core.social_actor.media_count),
+          is_verified=coalesce(EXCLUDED.is_verified, core.social_actor.is_verified),
+          is_business_discovery_enriched=core.social_actor.is_business_discovery_enriched OR EXCLUDED.is_business_discovery_enriched,
+          last_enriched_at=CASE WHEN EXCLUDED.is_business_discovery_enriched THEN now() ELSE core.social_actor.last_enriched_at END,
+          raw=CASE WHEN EXCLUDED.is_business_discovery_enriched THEN EXCLUDED.raw ELSE core.social_actor.raw END,
+          synced_at=now()
+      `, batch);
+    });
+
+    const dedupedEngagements = [...new Map(engagementRows.map((row) => [String(row.id), row])).values()];
+    ctx.read(dedupedEngagements.length);
+    const wrote = await syncSocialRows(sql, "engagement", ctx.runId, dedupedEngagements, (r) => String(r.id), async (batch) => {
+      await upsertJson(sql, sql`
+        INSERT INTO core.social_engagement
+          (id, actor_id, platform, engagement_type, source_id, parent_id, source_account_id,
+           source_media_id, source_post_id, permalink, message, occurred_at, like_count,
+           reply_count, score_weight, raw)
+        SELECT id, actor_id, platform, engagement_type, source_id, parent_id, source_account_id,
+               source_media_id, source_post_id, permalink, message, occurred_at, like_count,
+               reply_count, score_weight, raw
+        FROM jsonb_to_recordset(${JSON.stringify(batch)}::jsonb)
+          AS u(id text, actor_id text, platform text, engagement_type text, source_id text,
+               parent_id text, source_account_id text, source_media_id text, source_post_id text,
+               permalink text, message text, occurred_at timestamptz, like_count bigint,
+               reply_count bigint, score_weight numeric, raw jsonb)
+        ON CONFLICT (id) DO UPDATE SET
+          actor_id=EXCLUDED.actor_id, platform=EXCLUDED.platform,
+          engagement_type=EXCLUDED.engagement_type, source_id=EXCLUDED.source_id,
+          parent_id=EXCLUDED.parent_id, source_account_id=EXCLUDED.source_account_id,
+          source_media_id=EXCLUDED.source_media_id, source_post_id=EXCLUDED.source_post_id,
+          permalink=EXCLUDED.permalink, message=EXCLUDED.message, occurred_at=EXCLUDED.occurred_at,
+          like_count=EXCLUDED.like_count, reply_count=EXCLUDED.reply_count,
+          score_weight=EXCLUDED.score_weight, raw=EXCLUDED.raw, synced_at=now()
       `, batch);
     });
     ctx.wrote(wrote);
@@ -552,6 +807,7 @@ export async function syncInstagram() {
   const feeds: Array<[string, () => Promise<unknown>]> = [
     ["account", syncInstagramAccounts],
     ["media", syncInstagramMedia],
+    ["comment", syncInstagramComments],
     ["account_insight", syncInstagramAccountInsights],
     ["media_insight", syncInstagramMediaInsights],
   ];

@@ -5,6 +5,17 @@ type Row = Record<string, unknown>;
 const num = (v: unknown): number => Number(v ?? 0);
 const str = (v: unknown): string | null => (v == null ? null : String(v));
 
+function jsonArray<T>(value: unknown): T[] {
+  if (Array.isArray(value)) return value as T[];
+  if (typeof value !== "string") return [];
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return Array.isArray(parsed) ? parsed as T[] : [];
+  } catch {
+    return [];
+  }
+}
+
 function canReadOs(): boolean {
   return Boolean(process.env.SWAYZIO_OS_DATABASE_URL);
 }
@@ -86,6 +97,46 @@ export interface InstagramDashboard {
   recentMedia: Array<{ id: string; accountUsername: string; mediaType: string | null; mediaProductType: string | null; timestamp: string | null; permalink: string | null; caption: string | null; likes: number; comments: number }>;
   mediaInsights: Array<{ mediaId: string; metric: string; value: number; mediaTimestamp: string | null; permalink: string | null; caption: string | null; mediaType: string | null }>;
   mediaInsightTotals: Array<{ metric: string; value: number }>;
+}
+
+export interface SuperFollower {
+  id: string;
+  platform: string;
+  username: string | null;
+  displayName: string | null;
+  biography: string | null;
+  website: string | null;
+  profileUrl: string | null;
+  profilePictureUrl: string | null;
+  followerCount: number | null;
+  followsCount: number | null;
+  mediaCount: number | null;
+  followerTier: string;
+  isVerified: boolean | null;
+  isEnriched: boolean;
+  totalEngagements: number;
+  commentCount: number;
+  dmCount: number;
+  mentionCount: number;
+  engagementLikes: number;
+  firstEngagementAt: string | null;
+  latestEngagementAt: string | null;
+  impactScore: number;
+  suggestedAction: string;
+  recentEngagements: Array<{ type?: string; platform?: string; message?: string; occurred_at?: string; permalink?: string }>;
+}
+
+export interface SuperFollowersDashboard {
+  freshness: SocialFreshness;
+  summary: {
+    actors: number;
+    highImpact: number;
+    major: number;
+    enriched: number;
+    recent30d: number;
+    totalEngagements: number;
+  };
+  followers: SuperFollower[];
 }
 
 export async function getFacebookDashboard(): Promise<FacebookDashboard | null> {
@@ -332,5 +383,71 @@ export async function getInstagramDashboard(): Promise<InstagramDashboard | null
       mediaType: str(r.media_type),
     })),
     mediaInsightTotals: mediaTotals.map((r) => ({ metric: String(r.metric_name), value: num(r.value) })),
+  };
+}
+
+export async function getSuperFollowersDashboard(): Promise<SuperFollowersDashboard | null> {
+  if (!canReadOs()) return null;
+  const sql = osSql();
+  const [fresh, rows, summaryRows] = await Promise.all([
+    freshness("instagram"),
+    sql`
+      SELECT id, platform, username, display_name, biography, website, profile_url,
+             profile_picture_url, follower_count, follows_count, media_count, follower_tier,
+             is_verified, is_business_discovery_enriched, total_engagements, comment_count,
+             dm_count, mention_count, engagement_likes, first_engagement_at::text AS first_engagement_at,
+             latest_engagement_at::text AS latest_engagement_at, impact_score, suggested_action,
+             recent_engagements
+      FROM api.super_followers
+      LIMIT 500
+    ` as Promise<Row[]>,
+    sql`
+      SELECT
+        count(*)::int AS actors,
+        count(*) FILTER (WHERE coalesce(follower_count, 0) >= 5000)::int AS high_impact,
+        count(*) FILTER (WHERE follower_tier = 'major')::int AS major,
+        count(*) FILTER (WHERE is_business_discovery_enriched)::int AS enriched,
+        count(*) FILTER (WHERE latest_engagement_at >= now() - interval '30 days')::int AS recent_30d,
+        coalesce(sum(total_engagements), 0)::int AS total_engagements
+      FROM api.super_followers
+    ` as Promise<Row[]>,
+  ]);
+  const summary = summaryRows[0] ?? {};
+  return {
+    freshness: fresh,
+    summary: {
+      actors: num(summary.actors),
+      highImpact: num(summary.high_impact),
+      major: num(summary.major),
+      enriched: num(summary.enriched),
+      recent30d: num(summary.recent_30d),
+      totalEngagements: num(summary.total_engagements),
+    },
+    followers: rows.map((r) => ({
+      id: String(r.id),
+      platform: String(r.platform),
+      username: str(r.username),
+      displayName: str(r.display_name),
+      biography: str(r.biography),
+      website: str(r.website),
+      profileUrl: str(r.profile_url),
+      profilePictureUrl: str(r.profile_picture_url),
+      followerCount: r.follower_count == null ? null : num(r.follower_count),
+      followsCount: r.follows_count == null ? null : num(r.follows_count),
+      mediaCount: r.media_count == null ? null : num(r.media_count),
+      followerTier: String(r.follower_tier ?? "unknown"),
+      isVerified: r.is_verified == null ? null : r.is_verified === true,
+      isEnriched: r.is_business_discovery_enriched === true,
+      totalEngagements: num(r.total_engagements),
+      commentCount: num(r.comment_count),
+      dmCount: num(r.dm_count),
+      mentionCount: num(r.mention_count),
+      engagementLikes: num(r.engagement_likes),
+      firstEngagementAt: str(r.first_engagement_at),
+      latestEngagementAt: str(r.latest_engagement_at),
+      impactScore: num(r.impact_score),
+      suggestedAction: String(r.suggested_action ?? "Monitor"),
+      recentEngagements: jsonArray<SuperFollower["recentEngagements"][number]>(r.recent_engagements),
+    })),
   };
 }

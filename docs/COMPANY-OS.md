@@ -1,8 +1,8 @@
 # Swayzio OS — The Agent-Native Company Brain (one Postgres for the whole business)
 
-> **Status:** Phases A–F **ALL LIVE** (2026-07-07). Neon project `swayzio-os` (`sparkling-butterfly-49751147`),
+> **Status:** Phases A–K **ALL LIVE** (2026-07-08). Neon project `swayzio-os` (`sparkling-butterfly-49751147`),
 > PG 18.4, `aws-us-east-1`, autoscale 0.25→2 CU + scale-to-zero. ELT every 6h (GitHub Actions), migrations
-> applied through **0021**, semantic recall active, and the eve agent is live in production (see §8 + `docs/HANDOFF.md`).
+> applied through **0023**, semantic recall active, and the eve agent is live in production (see §8 + `docs/HANDOFF.md`).
 > **One-line:** Make a single Neon Postgres the **system of record** for the entire company —
 > normalized, cron-fed, and built so an agent can retrieve and reason over everything in one query.
 > **Scope note:** This does **not** re-architect the admin dashboard app. The dashboard becomes one
@@ -184,6 +184,14 @@ over `core` / `metrics` / `memory`.
   sync lands connected professional accounts and media, plus account/media insights when
   `instagram_business_manage_insights` is granted. Eve reads curated `api.instagram_*` views and Instagram tools
   for profile snapshot, media performance, and entity-level inspection with sanitized raw payloads.
+- **Phase K — Social engagement and super followers.** ✅ First pass 2026-07-08. Instagram comment
+  harvesting lands known external actors and atomic engagement events in `core.social_actor` and
+  `core.social_engagement`, enriches reachable accounts through Business Discovery, and exposes
+  `api.super_followers` for influencer, partnership, and high-impact community follow-up workflows.
+  The score is reach-led with capped engagement/recency boosts so repeated low-reach comments do not
+  bury high-reach accounts. Eve reads the same view through the `super_followers` tool; the dashboard has
+  `/socials/super-followers`. Facebook comments and cross-platform DMs are schema-ready but remain
+  gated on Meta permissions/access.
 
 ## 9. Open questions
 
