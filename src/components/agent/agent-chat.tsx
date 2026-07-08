@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth, useUser } from "@clerk/nextjs";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   useEveAgent,
   type EveMessageData,
@@ -78,10 +78,19 @@ function AgentChatWorkspace({
   persistenceBaseKey: string;
 }) {
   const history = useAgentChatHistory(persistenceBaseKey);
+  const router = useRouter();
   const searchParams = useSearchParams();
   const chatId = searchParams.get("chat");
+  const pendingRouteChatIdRef = useRef<string | null | undefined>(undefined);
 
   useEffect(() => {
+    if (pendingRouteChatIdRef.current !== undefined) {
+      if (chatId === pendingRouteChatIdRef.current) {
+        pendingRouteChatIdRef.current = undefined;
+      }
+      return;
+    }
+
     if (
       chatId &&
       chatId !== history.activeConversationId &&
@@ -91,6 +100,21 @@ function AgentChatWorkspace({
     }
   }, [chatId, history]);
 
+  const handleNewChat = useCallback(() => {
+    pendingRouteChatIdRef.current = null;
+    router.replace("/agent", { scroll: false });
+    history.newConversation();
+  }, [history, router]);
+
+  const handleSelectConversation = useCallback(
+    (conversationId: string) => {
+      pendingRouteChatIdRef.current = conversationId;
+      router.replace(`/agent?chat=${encodeURIComponent(conversationId)}`, { scroll: false });
+      history.selectConversation(conversationId);
+    },
+    [history, router]
+  );
+
   return (
     <AgentChatSession
       key={history.activeConversationId}
@@ -98,8 +122,8 @@ function AgentChatWorkspace({
       bearer={bearer}
       conversations={history.conversations}
       firstName={firstName}
-      onNewChat={history.newConversation}
-      onSelectConversation={history.selectConversation}
+      onNewChat={handleNewChat}
+      onSelectConversation={handleSelectConversation}
       onTouchConversation={history.touchConversation}
       persistenceKey={history.activeSessionKey}
     />
