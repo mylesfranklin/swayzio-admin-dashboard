@@ -5,7 +5,7 @@ import { coerceNumbers } from "../lib/format.js";
 
 export default defineTool({
   description:
-    "Ranked super followers: high-impact social accounts known through comments, DMs, mentions, and public enrichment. Supports platform, follower, recency, source, and action filters.",
+    "Top Engaged: every known high-signal social account discovered through comments, DMs, mentions, and public enrichment. Supports platform, follower, recency, source, and action filters.",
   inputSchema: z.object({
     platform: z.enum(["all", "instagram", "facebook"]).default("all"),
     minFollowers: z.number().int().min(0).default(0),
@@ -35,8 +35,8 @@ export default defineTool({
     const top = rows[0];
     return {
       summary: top
-        ? `${rows.length} super follower row(s). Top account @${top.username ?? "unknown"} scores ${top.impact_score}.`
-        : "No super follower rows match those filters.",
+        ? `${rows.length} top engaged account(s). Top account @${top.username ?? "unknown"} scores ${top.impact_score}.`
+        : "No top engaged accounts match those filters.",
       rows: rows.map(coerceNumbers),
     };
   },
