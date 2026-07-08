@@ -11,19 +11,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AgentHome } from "@/components/agent/agent-home";
 import { ChatComposer } from "@/components/agent/chat-composer";
 import { ChatConversation } from "@/components/agent/chat-conversation";
+import { ChatHistoryMenu } from "@/components/agent/chat-history-menu";
 import { HitlCard } from "@/components/agent/hitl-card";
 import { getPendingInputRequest } from "@/components/agent/message-parts";
+import { useAgentChatHistory } from "@/components/agent/use-agent-chat-history";
 import { useAgentSessionPersistence } from "@/components/agent/use-agent-session-persistence";
 import { isClerkConfigured } from "@/lib/auth";
+import { cn } from "@/lib/utils";
 
-const SUGGESTIONS = [
-  "How is revenue health right now?",
-  "Show cash, burn, runway, and largest Mercury spend.",
-  "Which high-impact social accounts engaged recently?",
-  "Compare Facebook and Instagram performance this week.",
-  "Is every OS data source fresh right now?",
-  "Who are the top accounts across Stripe, HubSpot, and app data?",
-];
 const LOCAL_DEV_PERSISTENCE_KEY = "swayzio:eve-agent:session:v1:local-dev";
 const NOOP_BEARER = async () => "";
 
@@ -63,14 +58,47 @@ function AgentChatInner({
 
   if (!mounted) return <div className="min-h-[calc(100vh-4rem)] bg-base-100" />;
 
-  return <AgentChatSession bearer={bearer} persistenceKey={persistenceKey} />;
+  return <AgentChatWorkspace bearer={bearer} persistenceBaseKey={persistenceKey} />;
+}
+
+function AgentChatWorkspace({
+  bearer,
+  persistenceBaseKey,
+}: {
+  bearer: () => Promise<string>;
+  persistenceBaseKey: string;
+}) {
+  const history = useAgentChatHistory(persistenceBaseKey);
+
+  return (
+    <AgentChatSession
+      key={history.activeConversationId}
+      activeConversationId={history.activeConversationId}
+      bearer={bearer}
+      conversations={history.conversations}
+      onNewChat={history.newConversation}
+      onSelectConversation={history.selectConversation}
+      onTouchConversation={history.touchConversation}
+      persistenceKey={history.activeSessionKey}
+    />
+  );
 }
 
 function AgentChatSession({
+  activeConversationId,
   bearer,
+  conversations,
+  onNewChat,
+  onSelectConversation,
+  onTouchConversation,
   persistenceKey,
 }: {
+  activeConversationId: string;
   bearer: () => Promise<string>;
+  conversations: readonly { id: string; title: string; updatedAt: number }[];
+  onNewChat: () => void;
+  onSelectConversation: (id: string) => void;
+  onTouchConversation: (message: string) => void;
   persistenceKey: string;
 }) {
   const persistence = useAgentSessionPersistence(persistenceKey);
@@ -113,9 +141,10 @@ function AgentChatSession({
       if (!trimmed || isBusy) return;
       setDraft("");
       persistence.saveDraft("");
+      onTouchConversation(trimmed);
       await agent.send({ message: trimmed });
     },
-    [agent, isBusy, persistence]
+    [agent, isBusy, onTouchConversation, persistence]
   );
 
   const answer = useCallback(
@@ -126,12 +155,6 @@ function AgentChatSession({
     [agent, isBusy, pending]
   );
 
-  const reset = useCallback(() => {
-    agent.reset();
-    setDraft("");
-    persistence.clear();
-  }, [agent, persistence]);
-
   const updateDraft = useCallback(
     (value: string) => {
       setDraft(value);
@@ -140,34 +163,62 @@ function AgentChatSession({
     [persistence]
   );
 
+  const historyMenu = (
+    <ChatHistoryMenu
+      activeConversationId={activeConversationId}
+      conversations={conversations}
+      onNewChat={onNewChat}
+      onSelectConversation={onSelectConversation}
+    />
+  );
+
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] flex-col bg-base-100 pb-40 md:pb-0">
+    <div className={cn("flex min-h-[calc(100vh-4rem)] flex-col bg-base-100", hasMessages && "pb-40 md:pb-0")}>
       {hasMessages ? (
         <ChatConversation
           error={agent.status === "error" ? agent.error : undefined}
+          historyMenu={historyMenu}
           isBusy={isBusy}
           messages={messages}
-          onReset={reset}
+          onNewChat={onNewChat}
           status={agent.status}
         />
       ) : (
-        <AgentHome suggestions={SUGGESTIONS} onAsk={ask} />
+        <AgentHome
+          composer={
+            <>
+              {pending ? <HitlCard disabled={isBusy} request={pending} onAnswer={answer} /> : null}
+              <ChatComposer
+                draft={draft}
+                isBusy={isBusy}
+                onChange={updateDraft}
+                onSend={ask}
+                onStop={agent.stop}
+                status={agent.status}
+                variant="hero"
+              />
+            </>
+          }
+          historyMenu={historyMenu}
+        />
       )}
 
-      <div className="fixed bottom-[4.25rem] left-0 right-0 z-40 border-t border-line bg-base-100/95 px-4 py-3 backdrop-blur sm:px-6 md:sticky md:bottom-0 md:left-auto md:right-auto md:z-10">
-        <div className="mx-auto max-w-3xl space-y-3">
-          {pending ? <HitlCard disabled={isBusy} request={pending} onAnswer={answer} /> : null}
-          <ChatComposer
-            disabled={Boolean(pending)}
-            draft={draft}
-            isBusy={isBusy}
-            onChange={updateDraft}
-            onSend={ask}
-            onStop={agent.stop}
-            status={agent.status}
-          />
+      {hasMessages ? (
+        <div className="fixed bottom-[4.25rem] left-0 right-0 z-40 bg-base-100/95 px-4 py-3 backdrop-blur sm:px-6 md:sticky md:bottom-0 md:left-auto md:right-auto md:z-10">
+          <div className="mx-auto max-w-3xl space-y-3">
+            {pending ? <HitlCard disabled={isBusy} request={pending} onAnswer={answer} /> : null}
+            <ChatComposer
+              disabled={Boolean(pending)}
+              draft={draft}
+              isBusy={isBusy}
+              onChange={updateDraft}
+              onSend={ask}
+              onStop={agent.stop}
+              status={agent.status}
+            />
+          </div>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }
