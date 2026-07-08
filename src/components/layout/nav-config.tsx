@@ -7,7 +7,7 @@ import {
   Landmark,
   Database,
   Palette,
-  Sparkles,
+  Orbit,
   UsersRound,
   type LucideIcon,
 } from "lucide-react";
@@ -37,7 +37,7 @@ export const navSections: NavSection[] = [
   {
     title: "Agent",
     items: [
-      { title: "Sway", href: "/agent", icon: Sparkles },
+      { title: "Sway", href: "/agent", icon: Orbit },
     ],
   },
   {

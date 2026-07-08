@@ -1,16 +1,13 @@
 "use client";
 
 import type { EveMessage } from "eve/react";
-import { Sparkles } from "lucide-react";
 import { MessageParts } from "@/components/agent/message-parts";
+import { ResponseActions } from "@/components/agent/response-actions";
 
 export function AgentMessage({ message }: { message: EveMessage }) {
-  if (message.role === "user") {
-    const text = message.parts
-      .filter((part) => part.type === "text")
-      .map((part) => part.text)
-      .join("\n");
+  const text = messageText(message);
 
+  if (message.role === "user") {
     return (
       <div className="flex justify-end">
         <div className="max-w-[82%] rounded-box border border-brand/30 bg-brand/15 px-4 py-3 text-md leading-6 text-ink">
@@ -21,13 +18,16 @@ export function AgentMessage({ message }: { message: EveMessage }) {
   }
 
   return (
-    <div className="grid w-full max-w-full grid-cols-[2rem_minmax(0,1fr)] gap-3">
-      <div className="flex h-8 w-8 items-center justify-center rounded-full text-primary">
-        <Sparkles className="h-4 w-4" />
-      </div>
-      <div className="min-w-0 max-w-full pt-0.5">
-        <MessageParts message={message} />
-      </div>
+    <div className="min-w-0 max-w-full">
+      <MessageParts message={message} />
+      <ResponseActions text={text} />
     </div>
   );
+}
+
+function messageText(message: EveMessage) {
+  return message.parts
+    .filter((part) => part.type === "text")
+    .map((part) => part.text)
+    .join("\n\n");
 }
